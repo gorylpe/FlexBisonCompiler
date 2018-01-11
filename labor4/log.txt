@@ -1,0 +1,2 @@
+Czytanie pliku prog
+Błąd: Nieznana instrukcja w linii 0.

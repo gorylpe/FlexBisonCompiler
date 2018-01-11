@@ -1,0 +1,5 @@
+VAR
+    a[1234567890]
+BEGIN
+    WRITE 1
+END

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="compiler"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="compiler">
+				<Option output="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/compiler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 compiler"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="compiler/fast">
+				<Option output="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/compiler" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/usr/include/c++/5"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
+					<Add directory="/usr/include/c++/5/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 compiler/fast"/>
+					<CompileFile command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j8 -f &quot;/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Assembly.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Command.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Command.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/CommandsBlock.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/CommandsBlock.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Condition.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Condition.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Expression.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Expression.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Identifier.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Identifier.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/MachineContext.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/MachineContext.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/MemoryManager.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/MemoryManager.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Number.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Number.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Program.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Program.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Utils.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Value.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Value.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Variable.cpp">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/Variable.h">
+			<Option target="compiler"/>
+		</Unit>
+		<Unit filename="/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
