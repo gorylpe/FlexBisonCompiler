@@ -1,3 +1,0 @@
-/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/CMakeFiles/edit_cache.dir
-/mnt/sda1/Studia/5_semestr/Jezyki_formalne/lista4/cmake-build-debug/CMakeFiles/compiler.dir
