@@ -100,68 +100,66 @@ public:
     }
 
     void generateTestAndJumpIfNotSatisfied(stringstream &ss, const cl_I& jumpLength){
-        //TODO refactor for new funcs
         switch (this->type){
-            case EQ:
+            case EQ: {
                 val1->loadToAccumulator(ss);
-                ss << "INC" << endl;
-                machine.increaseCounter();
+                INC(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 4 + jumpLength) << endl; // a < b; pass next condition instructions and jump after cond
-                machine.increaseCounter();
-                ss << "DEC" << endl;
-                machine.increaseCounter();
-                ss << "JZERO " << (machine.getLineCounter() + 2) << endl; // a = b; pass next condition instructions and jump to instructions
-                machine.increaseCounter();
-                ss << "JUMP " << (machine.getLineCounter() + 1 + jumpLength) << endl; // a > b; pass next condition instructions and jump after cond
-                machine.increaseCounter();
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 4 + jumpLength;
+                JZERO(ss, jumpOutsideCommands); // a < b; pass next condition instructions and jump after cond
+                DEC(ss);
+                cl_I jumpToCommands = machine.getLineCounter() + 2;
+                JZERO(ss, jumpToCommands); // a = b; pass next condition instructions and jump to instructions
+                JUMP(ss, jumpOutsideCommands); // a > b; pass next condition instructions and jump after cond
+            }
                 break;
-            case NEQ:
+            case NEQ: {
                 val1->loadToAccumulator(ss);
-                ss << "INC" << endl;
-                machine.increaseCounter();
+                INC(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 3) << endl; // a < b; pass next condition instructions and jump to instructions
-                machine.increaseCounter();
-                ss << "DEC" << endl;
-                machine.increaseCounter();
-                ss << "JZERO " << (machine.getLineCounter() + 1 + jumpLength) << endl; // a = b; pass next condition instructions and jump to instructions
-                machine.increaseCounter();
-                //a > b; satisfy so no jump
+                cl_I jumpToCommands = machine.getLineCounter() + 3;
+                JZERO(ss, jumpToCommands); // a < b; pass next condition instructions and jump to instructions
+                DEC(ss);
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
+                JZERO(ss, jumpOutsideCommands);// a = b; jump outside commands
+                //a > b; condition satisfied so no jump
+            }
                 break;
-            case LT:
+            case LT: {
                 val1->loadToAccumulator(ss);
-                ss << "INC" << endl;
-                machine.increaseCounter();
+                INC(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 2) << endl;  // a < b;
-                machine.increaseCounter();
-                ss << "JUMP " << (machine.getLineCounter() + 1 + jumpLength) << endl;  // a >= b
-                machine.increaseCounter();
+                cl_I jumpToCommands = machine.getLineCounter() + 2;
+                JZERO(ss, jumpToCommands); // a < b
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
+                JUMP(ss, jumpOutsideCommands); // a >= b
+            }
                 break;
-            case GT:
+            case GT: {
                 val1->loadToAccumulator(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 1 + jumpLength) << endl; // a <= b; pass next condition instructions and jump to instructions
-                machine.increaseCounter();
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
+                JZERO(ss, jumpOutsideCommands);// a <= b; jump outside commands
                 // a > b;
+            }
                 break;
-            case LEQ:
+            case LEQ: {
                 val1->loadToAccumulator(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 2) << endl; // a <= b; jump to instructions
-                machine.increaseCounter();
-                ss << "JUMP " << (machine.getLineCounter() + 1 + jumpLength) << endl; // a > b; jump outside instructions
-                machine.increaseCounter();
+                cl_I jumpToCommands = machine.getLineCounter() + 2;
+                JZERO(ss, jumpToCommands); // a <= b; jump to instructions
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
+                JUMP(ss, jumpOutsideCommands); // a > b; jump outside instructions
+            }
                 break;
-            case GEQ:
+            case GEQ: {
                 val1->loadToAccumulator(ss);
-                ss << "INC" << endl;
-                machine.increaseCounter();
+                INC(ss);
                 val2->subFromAccumulator(ss);
-                ss << "JZERO " << (machine.getLineCounter() + 1 + jumpLength) << endl;  // a < b;
-                machine.increaseCounter();
+                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
+                JZERO(ss, jumpOutsideCommands);// a < b;
                 // a >= b
+            }
                 break;
         }
     }
