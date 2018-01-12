@@ -1,5 +1,0 @@
-VAR
-   a
-BEGIN
-   WRITE a 
-END

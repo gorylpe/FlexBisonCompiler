@@ -1,1 +1,0 @@
-VAR a (hehe BEGIN) (koment) END

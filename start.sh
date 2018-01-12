@@ -1,11 +1,12 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
+make clean
 make
 find . -type f -name 'test*.sh' -exec chmod +x {} \;
 export COMPILER=$DIR/compiler
 
-$DIR/tests/exec/test.sh "labor4"
-#$DIR/tests/test.sh "read"
-#$DIR/tests/test.sh "comment"
-#$DIR/tests/test.sh "var"
-#$DIR/tests/test.sh "const_expr"
+$DIR/tests/execution/test.sh "labor4"
+$DIR/tests/compilation/test.sh "read"
+$DIR/tests/compilation/test.sh "comment"
+$DIR/tests/compilation/test.sh "var"
+#$DIR/tests/compilation/test.sh "const_expr"
