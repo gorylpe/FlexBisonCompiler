@@ -3,97 +3,234 @@
 #include "Utils.h"
 #include "MachineContext.h"
 
-inline void GET(stringstream& ss){
-    ss << "GET" << endl;
-    machine.increaseCounter();
-}
+class AssemblyLine{
+    virtual void toStringstream(stringstream& ss) = 0;
+};
 
-inline void PUT(stringstream& ss){
-    ss << "PUT"<< endl;
-    machine.increaseCounter();
-}
+class JumpPosition{
+    unsigned long position;
 
-inline void LOAD(stringstream& ss, cl_I& memoryPtr){
-    ss << "LOAD " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+public:
+    void setPosition(unsigned long position){
+        this->position = position;
+    }
 
-inline void LOADI(stringstream& ss, cl_I& memoryPtr){
-    ss << "LOADI " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+    unsigned long getPosition(){
+        return position;
+    }
+};
 
-inline void STORE(stringstream& ss, cl_I& memoryPtr){
-    ss << "STORE " << memoryPtr << endl;
-    machine.increaseCounter();
-}
 
-inline void STOREI(stringstream& ss, cl_I& memoryPtr){
-    ss << "STOREI " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+class JumpLabel : public AssemblyLine{
+    JumpPosition* position;
+public:
+    void toStringstream(stringstream& ss){}
 
-inline void ADD(stringstream& ss, cl_I& memoryPtr){
-    ss << "ADD " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+    void setLineNumberToJumpPosition(unsigned long position){
+        this->position->setPosition(position);
+    }
+};
 
-inline void ADDI(stringstream& ss, cl_I& memoryPtr){
-    ss << "ADDI " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+class GETAssemblyLine : public AssemblyLine{
+public:
+    explicit GETAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "GET"<< endl;
+    }
+};
 
-inline void SUB(stringstream& ss, cl_I& memoryPtr){
-    ss << "SUB " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+class PUTAssemblyLine : public AssemblyLine{
+public:
+    explicit PUTAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "PUT"<< endl;
+    }
+};
 
-inline void SUBI(stringstream& ss, cl_I& memoryPtr){
-    ss << "SUBI " << memoryPtr << endl;
-    machine.increaseCounter();
-}
+class SHLAssemblyLine : public AssemblyLine{
+public:
+    explicit SHLAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "SHL"<< endl;
+    }
+};
 
-inline void SHR(stringstream& ss){
-    ss << "SHR " << endl;
-    machine.increaseCounter();
-}
+class SHRAssemblyLine : public AssemblyLine{
+public:
+    explicit SHRAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "SHR"<< endl;
+    }
+};
 
-inline void SHL(stringstream& ss){
-    ss << "SHL" << endl;
-    machine.increaseCounter();
-}
+class INCAssemblyLine : public AssemblyLine{
+public:
+    explicit INCAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "INC"<< endl;
+    }
+};
 
-inline void INC(stringstream& ss){
-    ss << "INC" << endl;
-    machine.increaseCounter();
-}
+class DECAssemblyLine : public AssemblyLine{
+public:
+    explicit DECAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "DEC"<< endl;
+    }
+};
 
-inline void DEC(stringstream& ss){
-    ss << "DEC" << endl;
-    machine.increaseCounter();
-}
+class ZEROAssemblyLine : public AssemblyLine{
+public:
+    explicit ZEROAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "ZERO"<< endl;
+    }
+};
 
-inline void ZERO(stringstream& ss){
-    ss << "ZERO" << endl;
-    machine.increaseCounter();
-}
+class HALTAssemblyLine : public AssemblyLine{
+public:
+    explicit HALTAssemblyLine() = default;
+    
+    void toStringstream(stringstream& ss){
+        ss << "HALT"<< endl;
+    }
+};
 
-inline void JUMP(stringstream& ss, cl_I& lineNumber){
-    ss << "JUMP " << lineNumber << endl;
-    machine.increaseCounter();
-}
+class JumpAssemblyLine : public AssemblyLine{
+protected:
+    JumpPosition* position;
+public:
+    explicit JumpAssemblyLine(JumpPosition* position)
+    :position(position){}
 
-inline void JZERO(stringstream& ss, cl_I& lineNumber){
-    ss << "JZERO " << lineNumber << endl;
-    machine.increaseCounter();
-}
+    virtual void toStringstream(stringstream& ss) = 0;
+};
 
-inline void JODD(stringstream& ss, cl_I& lineNumber){
-    ss << "JODD " << lineNumber << endl;
-    machine.increaseCounter();
-}
+class JUMPAssemblyLine : public JumpAssemblyLine{
+public:
+    explicit JUMPAssemblyLine(JumpPosition* position)
+    :JumpAssemblyLine(position){}
 
-inline void HALT(stringstream& ss){
-    ss << "HALT" << endl;
-    machine.increaseCounter();
-}
+    void toStringstream(stringstream& ss){
+        ss << "JUMP " << position->getPosition() << endl;
+    }
+};
+
+
+class JZEROAssemblyLine : public JumpAssemblyLine{
+public:
+    explicit JZEROAssemblyLine(JumpPosition* position)
+    :JumpAssemblyLine(position){}
+
+    void toStringstream(stringstream& ss){
+        ss << "JUMP " << position->getPosition() << endl;
+    }
+};
+
+
+class JODDAssemblyLine : public JumpAssemblyLine{
+public:
+    explicit JODDAssemblyLine(JumpPosition* position)
+    :JumpAssemblyLine(position){}
+
+    void toStringstream(stringstream& ss){
+        ss << "JUMP " << position->getPosition() << endl;
+    }
+};
+
+class SingleMemoryPointerAssemblyLine : public AssemblyLine{
+protected:
+    cl_I memoryPtr;
+public:
+    explicit SingleMemoryPointerAssemblyLine(cl_I& memoryPtr)
+    :memoryPtr(memoryPtr){}
+    
+    virtual void toStringstream(stringstream& ss) = 0;
+};
+
+class LOADAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit LOADAssemblyLine(cl_I& memoryPtr)
+    :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "LOAD " << memoryPtr << endl;
+    }
+};
+
+class LOADIAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit LOADIAssemblyLine(cl_I& memoryPtr)
+    :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "LOADI " << memoryPtr << endl;
+    }
+};
+
+class STOREAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit STOREAssemblyLine(cl_I& memoryPtr)
+    :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "STORE " << memoryPtr << endl;
+    }
+};
+
+class STOREIAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit STOREIAssemblyLine(cl_I& memoryPtr)
+    :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "STOREI " << memoryPtr << endl;
+    }
+};
+
+class ADDAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit ADDAssemblyLine(cl_I& memoryPtr)
+    :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "ADD " << memoryPtr << endl;
+    }
+};
+
+class ADDIAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit ADDIAssemblyLine(cl_I& memoryPtr)
+            :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "ADDI " << memoryPtr << endl;
+    }
+};
+
+class SUBAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit SUBAssemblyLine(cl_I& memoryPtr)
+            :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "SUB " << memoryPtr << endl;
+    }
+};
+
+class SUBIAssemblyLine : public SingleMemoryPointerAssemblyLine{
+public:
+    explicit SUBIAssemblyLine(cl_I& memoryPtr)
+            :SingleMemoryPointerAssemblyLine(memoryPtr){}
+
+    void toStringstream(stringstream& ss){
+        ss << "SUBI " << memoryPtr << endl;
+    }
+};

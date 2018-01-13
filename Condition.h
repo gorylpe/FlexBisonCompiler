@@ -99,109 +99,59 @@ public:
         return "condition " + condType + " of values: " + val1->toString() + ", " + val2->toString();
     }
 
-    void generateTestAndJumpIfNotSatisfied(stringstream &ss, const cl_I& jumpLength){
-        switch (this->type){
+    void generateTestAndJumpIfNotSatisfied(stringstream &ss, JumpPosition* jumpIfTrue, JumpPosition* jumpIfFalse) {
+        //todo think out eq, make leq and lt same as geq gt
+        switch (this->type) {
             case EQ: {
-                val1->loadToAccumulator(ss);
-                INC(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 4 + jumpLength;
-                JZERO(ss, jumpOutsideCommands); // a < b; pass next condition instructions and jump after cond
-                DEC(ss);
-                cl_I jumpToCommands = machine.getLineCounter() + 2;
-                JZERO(ss, jumpToCommands); // a = b; pass next condition instructions and jump to instructions
-                JUMP(ss, jumpOutsideCommands); // a > b; pass next condition instructions and jump after cond
+                val1->loadToAccumulator();
+                machine.INC();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfFalse); // a < b; pass next condition instructions and jump after cond
+                machine.DEC();
+                machine.JZERO(jumpIfTrue); // a = b; pass next condition instructions and jump to instructions
+                machine.JUMP(jumpIfFalse); // a > b; pass next condition instructions and jump after cond
             }
                 break;
             case NEQ: {
-                val1->loadToAccumulator(ss);
-                INC(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpToCommands = machine.getLineCounter() + 3;
-                JZERO(ss, jumpToCommands); // a < b; pass next condition instructions and jump to instructions
-                DEC(ss);
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
-                JZERO(ss, jumpOutsideCommands);// a = b; jump outside commands
+                val1->loadToAccumulator();
+                machine.INC();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfTrue); // a < b; pass next condition instructions and jump to instructions
+                machine.DEC();
+                machine.JZERO(jumpIfFalse);// a = b; jump outside commands
                 //a > b; condition satisfied so no jump
             }
                 break;
             case LT: {
-                val1->loadToAccumulator(ss);
-                INC(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpToCommands = machine.getLineCounter() + 2;
-                JZERO(ss, jumpToCommands); // a < b
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
-                JUMP(ss, jumpOutsideCommands); // a >= b
+                val1->loadToAccumulator();
+                machine.INC();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfTrue); // a < b
+                machine.JUMP(jumpIfFalse); // a >= b
             }
                 break;
             case GT: {
-                val1->loadToAccumulator(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
-                JZERO(ss, jumpOutsideCommands);// a <= b; jump outside commands
+                val1->loadToAccumulator();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfFalse);// a <= b; jump outside commands
                 // a > b;
             }
                 break;
             case LEQ: {
-                val1->loadToAccumulator(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpToCommands = machine.getLineCounter() + 2;
-                JZERO(ss, jumpToCommands); // a <= b; jump to instructions
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
-                JUMP(ss, jumpOutsideCommands); // a > b; jump outside instructions
+                val1->loadToAccumulator();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfTrue); // a <= b; jump to instructions
+                machine.JUMP(jumpIfFalse); // a > b; jump outside instructions
             }
                 break;
             case GEQ: {
-                val1->loadToAccumulator(ss);
-                INC(ss);
-                val2->subFromAccumulator(ss);
-                cl_I jumpOutsideCommands = machine.getLineCounter() + 1 + jumpLength;
-                JZERO(ss, jumpOutsideCommands);// a < b;
+                val1->loadToAccumulator();
+                machine.INC();
+                val2->subFromAccumulator();
+                machine.JZERO(jumpIfFalse);// a < b;
                 // a >= b
             }
                 break;
         }
-    }
-
-    cl_I getTestAndJumpIfNotSatisfiedLinesCount(){
-        cl_I linesCount = 0;
-        switch (this->type) {
-            case EQ:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += 1; //INC
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 4; //JZERO DEC JZERO JUMP
-                break;
-            case NEQ:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += 1; //INC
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 3; //JZERO DEC JZERO
-                break;
-            case LT:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += 1; //INC
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 2; //JZERO JUMP
-                break;
-            case GT:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 1; //JZERO
-                break;
-            case LEQ:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 2; //JZERO JUMP
-                break;
-            case GEQ:
-                linesCount += val1->getLoadToAccumulatorLinesCount();
-                linesCount += 1; //INC
-                linesCount += val2->getSubFromAccumulatorLinesCount();
-                linesCount += 1; //JZERO
-                break;
-        }
-        return linesCount;
     }
 };
