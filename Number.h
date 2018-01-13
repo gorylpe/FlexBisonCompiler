@@ -60,6 +60,20 @@ public:
     }
 
     void addToAccumulator(){
+        if(this->num < 10){
+            addToAccumulatorSmall();
+        } else {
+            addToAccumulatorDefault();
+        }
+    }
+
+    void addToAccumulatorSmall(){
+        for(cl_I i = 0; i < this->num; ++i){
+            machine.INC();
+        }
+    }
+
+    void addToAccumulatorDefault(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
@@ -98,6 +112,20 @@ public:
     }
 
     void subFromAccumulator(){
+        if(this->num < 10){
+            subFromAccumulatorSmall();
+        } else {
+            subFromAccumulatorDefault();
+        }
+    }
+
+    void subFromAccumulatorSmall(){
+        for(cl_I i = 0; i < this->num; ++i){
+            machine.DEC();
+        }
+    }
+
+    void subFromAccumulatorDefault(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
