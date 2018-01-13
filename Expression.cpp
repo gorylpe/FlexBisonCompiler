@@ -233,6 +233,8 @@ void Expression::loadToAccumulatorDivision() {
     machine.INC();
     machine.STORE(currentBit->memoryPtr);
 
+    //optimization, load here or it will be loaded at divider shifting start
+    machine.LOAD(currentDivider->memoryPtr);
     machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
@@ -246,33 +248,34 @@ void Expression::loadToAccumulatorDivision() {
 
     //jumping here first time
     machine.setJumpPosition(firstDividerDividendComparision);
-    machine.LOAD(currentDivider->memoryPtr);
     machine.SUB(currentDividend->memoryPtr);
-    //divider <= dividend
+    //if divider <= dividend shift divider right
     machine.JZERO(dividerShiftingStart);
 
-    //divider > dividend, so shift once right
     machine.setJumpPosition(divisionShiftingStart);
+    //SHIFT CURRENT BIT
+    //divider > dividend, so shift once right
     machine.LOAD(currentBit->memoryPtr);
     machine.SHR();
     machine.STORE(currentBit->memoryPtr);
+
+    //dividing if currentBit > 0
+    //jump to end if currentBit == 0
+    machine.JZERO(divisionEnd);
+
+    //SHIFT CURRENT DIVIDER
     machine.LOAD(currentDivider->memoryPtr);
     machine.SHR();
     machine.STORE(currentDivider->memoryPtr);
 
-    machine.LOAD(currentBit->memoryPtr);
-    //while currentBit > 0
-    //jump if division ended
-    machine.JZERO(divisionEnd);
-    //check if divider > dividend, jump to shift right, else subtract and add current bit to result
-    machine.LOAD(currentDivider->memoryPtr);
     machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend, jump to subtract
     machine.JZERO(divisionSubtraction);
     //divider > dividend
     machine.JUMP(divisionShiftingStart);
-    //subtraction
+
     machine.setJumpPosition(divisionSubtraction);
+    //subtraction
     machine.LOAD(currentDividend->memoryPtr);
     machine.SUB(currentDivider->memoryPtr);
     machine.STORE(currentDividend->memoryPtr);
@@ -315,6 +318,8 @@ void Expression::loadToAccumulatorModulo() {
     machine.INC();
     machine.STORE(currentBit->memoryPtr);
 
+    //optimization, load here or it will be loaded at divider shifting start
+    machine.LOAD(currentDivider->memoryPtr);
     machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
@@ -328,33 +333,34 @@ void Expression::loadToAccumulatorModulo() {
 
     //jumping here first time
     machine.setJumpPosition(firstDividerDividendComparision);
-    machine.LOAD(currentDivider->memoryPtr);
     machine.SUB(currentDividend->memoryPtr);
-    //divider <= dividend
+    //if divider <= dividend shift divider right
     machine.JZERO(dividerShiftingStart);
 
-    //divider > dividend, so shift once right
     machine.setJumpPosition(divisionShiftingStart);
+    //SHIFT CURRENT BIT
+    //divider > dividend, so shift once right
     machine.LOAD(currentBit->memoryPtr);
     machine.SHR();
     machine.STORE(currentBit->memoryPtr);
+
+    //dividing if currentBit > 0
+    //jump to end if currentBit == 0
+    machine.JZERO(divisionEnd);
+
+    //SHIFT CURRENT DIVIDER
     machine.LOAD(currentDivider->memoryPtr);
     machine.SHR();
     machine.STORE(currentDivider->memoryPtr);
 
-    machine.LOAD(currentBit->memoryPtr);
-    //while currentBit > 0
-    //jump if division ended
-    machine.JZERO(divisionEnd);
-    //check if divider > dividend, jump to shift right, else subtract and add current bit to result
-    machine.LOAD(currentDivider->memoryPtr);
     machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend, jump to subtract
     machine.JZERO(divisionSubtraction);
     //divider > dividend
     machine.JUMP(divisionShiftingStart);
-    //subtraction
+
     machine.setJumpPosition(divisionSubtraction);
+    //subtraction
     machine.LOAD(currentDividend->memoryPtr);
     machine.SUB(currentDivider->memoryPtr);
     machine.STORE(currentDividend->memoryPtr);
