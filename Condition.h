@@ -99,7 +99,7 @@ public:
         return "condition " + condType + " of values: " + val1->toString() + ", " + val2->toString();
     }
 
-    void generateTestAndJumpIfNotSatisfied(stringstream &ss, JumpPosition* jumpIfTrue, JumpPosition* jumpIfFalse) {
+    void generateTestWithTrueFalseJumps(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse) {
         //todo think out eq, make leq and lt same as geq gt
         switch (this->type) {
             case EQ: {

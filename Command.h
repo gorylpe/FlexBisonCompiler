@@ -13,13 +13,7 @@ using namespace cln;
 
 class Command {
 public:
-    virtual void generateCode(stringstream& ss){
-
-    };
-
-    virtual cl_I getLinesCount(){
-        return 0;
-    }
+    virtual void generateCode() = 0;
 };
 
 class Assignment : public Command {
@@ -33,18 +27,11 @@ public:
         cerr << "Creating ASSIGNMENT with " << ident->toString() << ", " << expr->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss){
+    virtual void generateCode(){
         cerr << "Generating ASSIGNMENT code" << endl;
-        this->expr->loadToAccumulator(ss);
-        this->ident->storeFromAccumulator(ss);
+        this->expr->loadToAccumulator();
+        this->ident->storeFromAccumulator();
         cerr << "End generating ASSIGNMENT code" << endl;
-    }
-
-    virtual cl_I getLinesCount(){
-        cl_I linesCount = 0;
-        linesCount += this->expr->getLoadToAccumulatorLinesCount();
-        linesCount += this->ident->getStoreFromAccumulatorLinesCount();
-        return linesCount;
     }
 };
 
@@ -57,18 +44,11 @@ public:
         cerr << "Creating READ with " << ident->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss){
+    void generateCode(){
         cerr << "Generating READ code" << endl;
-        GET(ss);
-        ident->storeFromAccumulator(ss);
+        machine.GET();
+        ident->storeFromAccumulator();
         cerr << "End generating READ code" << endl;
-    }
-
-    virtual cl_I getLinesCount(){
-        cl_I linesCount = 0;
-        linesCount += 1; // GET
-        linesCount += ident->getStoreFromAccumulatorLinesCount();
-        return linesCount;
     }
 };
 
@@ -81,18 +61,11 @@ public:
         cerr << "Creating WRITE with " << val->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss){
+    void generateCode(){
         cerr << "Generating WRITE code" << endl;
-        this->val->loadToAccumulator(ss);
-        PUT(ss);
+        this->val->loadToAccumulator();
+        machine.PUT();
         cerr << "End generating WRITE code" << endl;
-    }
-
-    virtual cl_I getLinesCount(){
-        cl_I linesCount = 0;
-        linesCount += 1; // PUT
-        linesCount += this->val->getLoadToAccumulatorLinesCount();
-        return linesCount;
     }
 };
 
@@ -107,43 +80,25 @@ public:
         cerr << "Creating IF with " << cond->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss) {
+    virtual void generateCode() {
         cerr << "Generating IF code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
-            cl_I jumpLength = 0;
-            for(auto cmd : this->block->commands){
-                jumpLength += cmd->getLinesCount();
-            }
+            auto jumpIfTrue = new JumpPosition();
+            auto jumpIfFalse = new JumpPosition();
 
-            this->cond->generateTestAndJumpIfNotSatisfied(ss, jumpLength);
+            this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse);
+            machine.setJumpPosition(jumpIfTrue);
             for(auto cmd : this->block->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
+            machine.setJumpPosition(jumpIfFalse);
         } else if (this->cond->constComparisionResult){
             for(auto cmd : this->block->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
         }
         cerr << "End generating IF code" << endl;
-    }
-
-    virtual cl_I getLinesCount() {
-        cl_I linesCount = 0;
-        if(!this->cond->constComparision) {
-
-            for (auto cmd : this->block->commands) {
-                linesCount += cmd->getLinesCount();
-            }
-
-            linesCount += this->cond->getTestAndJumpIfNotSatisfiedLinesCount();
-        } else if (this->cond->constComparisionResult){
-            for(auto cmd : this->block->commands){
-                linesCount += cmd->getLinesCount();
-            }
-        }
-
-        return linesCount;
     }
 };
 
@@ -160,71 +115,40 @@ public:
         cerr << "Creating IF with " << cond->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss) {
+    virtual void generateCode() {
         cerr << "Generating IF ELSE code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
-            cl_I jumpToElseLength = 0;
+            auto jumpIfTrue = new JumpPosition();
+            auto jumpIfFalse = new JumpPosition();
+            auto passElseBlock = new JumpPosition();
+
+            this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse); //jump to else
+
+            machine.setJumpPosition(jumpIfTrue);
             for(auto cmd : this->block1->commands){
-                jumpToElseLength += cmd->getLinesCount();
-            }
-            jumpToElseLength += 1; //jump outside if instruction
-
-            this->cond->generateTestAndJumpIfNotSatisfied(ss, jumpToElseLength); //jump to else
-
-            for(auto cmd : this->block1->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
 
-            cl_I jumpOutsideIf = machine.getLineCounter() + 1;
+            machine.JUMP(passElseBlock);
+
+            machine.setJumpPosition(jumpIfFalse);
             for(auto cmd : this->block2->commands){
-                jumpOutsideIf += cmd->getLinesCount();
+                cmd->generateCode();
             }
 
-            JUMP(ss, jumpOutsideIf);
-
-            for(auto cmd : this->block2->commands){
-                cmd->generateCode(ss);
-            }
+            machine.setJumpPosition(passElseBlock);
 
         } else if (this->cond->constComparisionResult){
             for(auto cmd : this->block1->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
         } else {
             for(auto cmd : this->block2->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
         }
         cerr << "End generating IF ELSE code" << endl;
-    }
-
-    virtual cl_I getLinesCount() {
-        cl_I linesCount = 0;
-
-        if(!this->cond->constComparision) {
-            linesCount += this->cond->getTestAndJumpIfNotSatisfiedLinesCount();
-
-            for (auto cmd : this->block1->commands) {
-                linesCount += cmd->getLinesCount();
-            }
-
-            linesCount += 1; //jump
-
-            for (auto cmd : this->block2->commands) {
-                linesCount += cmd->getLinesCount();
-            }
-        } else if (this->cond->constComparisionResult){
-            for(auto cmd : this->block1->commands){
-                linesCount += cmd->getLinesCount();
-            }
-        } else {
-            for(auto cmd : this->block2->commands){
-                linesCount += cmd->getLinesCount();
-            }
-        }
-
-        return linesCount;
     }
 };
 
@@ -239,58 +163,38 @@ public:
         cerr << "Creating WHILE with " << cond->toString() << endl;
     }
 
-    virtual void generateCode(stringstream& ss) {
+    virtual void generateCode() {
         cerr << "Generating WHILE code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
+            auto loopStart = new JumpPosition();
+            auto codeStart = new JumpPosition();
+            auto loopOutside = new JumpPosition();
 
-            cl_I jumpLength = 0;
+            machine.setJumpPosition(loopStart);
+
+            this->cond->generateTestWithTrueFalseJumps(codeStart, loopOutside);
+
+            machine.setJumpPosition(codeStart);
             for(auto cmd : this->block->commands){
-                jumpLength += cmd->getLinesCount();
-            }
-            jumpLength += 1; //pass last JUMP
-
-            cl_I startPosition = machine.getLineCounter();
-
-            this->cond->generateTestAndJumpIfNotSatisfied(ss, jumpLength);
-            for(auto cmd : this->block->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
 
-            JUMP(ss, startPosition);
+            machine.JUMP(loopStart);
+
+            machine.setJumpPosition(loopOutside);
 
         } else if (this->cond->constComparisionResult) {
-            cl_I startPosition = machine.getLineCounter();
+            auto loopStart = new JumpPosition();
+            machine.setJumpPosition(loopStart);
 
             for(auto cmd : this->block->commands){
-                cmd->generateCode(ss);
+                cmd->generateCode();
             }
 
-            JUMP(ss, startPosition);
+            machine.JUMP(loopStart);
         }
         cerr << "End generating WHILE code" << endl;
-    }
-
-    virtual cl_I getLinesCount() {
-        cl_I linesCount = 0;
-        if(!this->cond->constComparision) {
-
-            for (auto cmd : this->block->commands) {
-                linesCount += cmd->getLinesCount();
-            }
-
-            linesCount += this->cond->getTestAndJumpIfNotSatisfiedLinesCount();
-
-            linesCount += 1; //last JUMP
-        } else if (this->cond->constComparisionResult){
-            for(auto cmd : this->block->commands){
-                linesCount += cmd->getLinesCount();
-            }
-
-            linesCount += 1; //last JUMP
-        }
-
-        return linesCount;
     }
 };
 
@@ -314,88 +218,72 @@ public:
         cerr << "Creating FOR" << endl;
     }
 
-    virtual void generateCode(stringstream& ss){
+    virtual void generateCode(){
         cerr << "Generating FOR code" << endl;
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
+
+        auto loopStart = new JumpPosition();
+        auto loopOutside = new JumpPosition();
 
         if(iterator == nullptr){
             poserror(pidPos, "for loop temp variable redeclaration");
             return;
         }
 
-        this->from->loadToAccumulator(ss);
-        STORE(ss, iterator->memoryPtr);
+        this->from->loadToAccumulator();
+        machine.STORE(iterator->memoryPtr);
         iterator->initialize();
-        this->to->loadToAccumulator(ss);
-        STORE(ss, tmpTo->memoryPtr);
+        this->to->loadToAccumulator();
+        machine.STORE(tmpTo->memoryPtr);
         tmpTo->initialize();
 
         //first comparision - first check needed for initial condition
         //edge case - if going DOWNTO 0 cant go -1, need checking after loop if equals before iterator inc/dec
         if(this->increasing){
-            LOAD(ss, tmpTo->memoryPtr);
-            INC(ss);
-            SUB(ss, iterator->memoryPtr);
+            machine.LOAD(tmpTo->memoryPtr);
+            machine.INC();
+            machine.SUB(iterator->memoryPtr);
         } else {
-            LOAD(ss, iterator->memoryPtr);
-            INC(ss);
-            SUB(ss, tmpTo->memoryPtr);
+            machine.LOAD(iterator->memoryPtr);
+            machine.INC();
+            machine.SUB(tmpTo->memoryPtr);
         }
 
-        cl_I jumpOutsideLoop = machine.getLineCounter();
-        for(auto cmd : this->block->commands){
-            jumpOutsideLoop += cmd->getLinesCount(); //JUMP OVER ALL BLOCKS
-        }
-        jumpOutsideLoop += 8; // JUMP LINE AFTER THEM, AND 7 LAST INSTRUCTIONS
+        machine.JZERO(loopOutside);
 
-        JZERO(ss, jumpOutsideLoop);
-
-        cl_I loopStart = machine.getLineCounter();
+        machine.setJumpPosition(loopStart);
 
         for(auto cmd : this->block->commands){
-            cmd->generateCode(ss);
+            cmd->generateCode();
         }
 
         if(this->increasing){ //0 when iterator >= to
-            LOAD(ss, tmpTo->memoryPtr);
-            SUB(ss, iterator->memoryPtr);
+            machine.LOAD(tmpTo->memoryPtr);
+            machine.SUB(iterator->memoryPtr);
         } else { // 0 when iterator <= to
-            LOAD(ss, iterator->memoryPtr);
-            SUB(ss, tmpTo->memoryPtr);
+            machine.LOAD(iterator->memoryPtr);
+            machine.SUB(tmpTo->memoryPtr);
         }
 
-        cl_I jumpOutsideLoop2 = machine.getLineCounter() + 5; // LINE AFTER, LOAD, INC/DEC, STORE, JUMP
-
-        JZERO(ss, jumpOutsideLoop2);
+        machine.JZERO(loopOutside);
 
         // update iterator
-        LOAD(ss, iterator->memoryPtr);
+        machine.LOAD(iterator->memoryPtr);
         if(this->increasing)
-            INC(ss);
+            machine.INC();
         else
-            DEC(ss);
-        STORE(ss, iterator->memoryPtr);
+            machine.DEC();
+        machine.STORE(iterator->memoryPtr);
 
-        JUMP(ss, loopStart);
+        machine.JUMP(loopStart);
+
+        machine.setJumpPosition(loopOutside);
 
         memory.popTempVariable(); //iterator
         memory.popTempVariable(); //tmpTo
 
         cerr << "End generating FOR code" << endl;
-    }
-
-    virtual cl_I getLinesCount(){
-        cl_I linesCount = 0;
-        linesCount += this->from->getLoadToAccumulatorLinesCount();
-        linesCount += this->to->getLoadToAccumulatorLinesCount();
-
-        for(auto cmd : this->block->commands){
-            linesCount += cmd->getLinesCount();
-        }
-
-        linesCount += 13;
-        return linesCount;
     }
 };
 

@@ -4,8 +4,7 @@
 #include "Assembly.h"
 
 class MachineContext {
-    MachineContext()
-            :counter(0){ }
+    MachineContext() = default;
 public:
     static MachineContext& getInstance()
     {
@@ -22,17 +21,13 @@ public:
 
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
 
-    cl_I counter;
-
-    void increaseCounter(){
-        this->counter++;
+    void generateCode(stringstream& ss){
+        for(auto line : assemblyCode){
+            line->toStringstream(ss);
+        }
     }
 
-    cl_I getLineCounter(){
-        return this->counter;
-    }
-
-    void setJump(JumpPosition* position){
+    void setJumpPosition(JumpPosition *position){
         position->setPosition(assemblyCode.size());
     }
     

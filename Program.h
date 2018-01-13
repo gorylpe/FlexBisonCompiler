@@ -15,10 +15,12 @@ public:
 
     string generateCode(){
         for(auto cmd : this->block->commands){
-            cmd->generateCode(ss);
+            cmd->generateCode();
         }
-        ss << "HALT" << endl;
-        machine.increaseCounter();
+        machine.HALT();
+
+        machine.generateCode(ss);
+
         return ss.str();
     }
 };

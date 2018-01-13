@@ -27,7 +27,7 @@ public:
         return ss.str();
     }
 
-    void loadToAccumulator(stringstream& ss){
+    void loadToAccumulator(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
@@ -43,23 +43,23 @@ public:
             tmpnum = floor1(tmpnum / two);
         }
 
-        ZERO(ss);
+        machine.ZERO();
 
         while(!bits.empty()){
             int bit = bits.top();
             bits.pop();
 
             if(bit == 1){
-                INC(ss);
+                machine.INC();
             }
 
             if(!bits.empty()){
-                SHL(ss);
+                machine.SHL();
             }
         }
     }
 
-    void addToAccumulator(stringstream& ss){
+    void addToAccumulator(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
@@ -77,27 +77,27 @@ public:
 
         Variable* currentAccumulatorValue = memory.pushTempVariable();
 
-        STORE(ss, currentAccumulatorValue->memoryPtr);
-        ZERO(ss);
+        machine.STORE(currentAccumulatorValue->memoryPtr);
+        machine.ZERO();
 
         while(!bits.empty()){
             int bit = bits.top();
             bits.pop();
 
             if(bit == 1){
-                INC(ss);
+                machine.INC();
             }
 
             if(!bits.empty()){
-                SHL(ss);
+                machine.SHL();
             }
         }
 
-        ADD(ss, currentAccumulatorValue->memoryPtr);
+        machine.ADD(currentAccumulatorValue->memoryPtr);
         memory.popTempVariable(); //currentAccumulatorValue
     }
 
-    void subFromAccumulator(stringstream& ss){
+    void subFromAccumulator(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
@@ -114,141 +114,28 @@ public:
         }
 
         Variable* currentAccumulatorValue = memory.pushTempVariable();
-        STORE(ss, currentAccumulatorValue->memoryPtr);
-        ZERO(ss);
+        machine.STORE(currentAccumulatorValue->memoryPtr);
+        machine.ZERO();
 
         while(!bits.empty()){
             int bit = bits.top();
             bits.pop();
 
             if(bit == 1){
-                INC(ss);
+                machine.INC();
             }
 
             if(!bits.empty()){
-                SHL(ss);
+                machine.SHL();
             }
         }
 
         Variable* numberValue = memory.pushTempVariable();
-        STORE(ss, numberValue->memoryPtr);
-        LOAD(ss, currentAccumulatorValue->memoryPtr);
+        machine.STORE(numberValue->memoryPtr);
+        machine.LOAD(currentAccumulatorValue->memoryPtr);
         memory.popTempVariable(); //currentAccumulatorValue
-        SUB(ss, numberValue->memoryPtr);
+        machine.SUB(numberValue->memoryPtr);
         memory.popTempVariable(); //numberValue
-    }
-
-    cl_I getLoadToAccumulatorLinesCount(){
-        cl_I count = 0;
-        cl_I tmpnum(this->num);
-        const cl_I two = 2;
-
-        stack<int> bits;
-
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
-            if(modulo == 1){
-                bits.push(1);
-            } else {
-                bits.push(0);
-            }
-            tmpnum = floor1(tmpnum / two);
-        }
-
-        count++;
-
-        while(!bits.empty()){
-            int bit = bits.top();
-            bits.pop();
-
-            if(bit == 1){
-                count++;
-            }
-
-            if(!bits.empty()){
-                count++;
-            }
-        }
-
-        return count;
-    }
-
-    cl_I getAddToAccumulatorLinesCount(){
-        cl_I count = 0;
-        cl_I tmpnum(this->num);
-        const cl_I two = 2;
-
-        stack<int> bits;
-
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
-            if(modulo == 1){
-                bits.push(1);
-            } else {
-                bits.push(0);
-            }
-            tmpnum = floor1(tmpnum / two);
-        }
-
-        count++;
-        count++;
-
-        while(!bits.empty()){
-            int bit = bits.top();
-            bits.pop();
-
-            if(bit == 1){
-                count++;
-            }
-
-            if(!bits.empty()){
-                count++;
-            }
-        }
-
-        count++;
-
-        return count;
-    }
-
-    cl_I getSubFromAccumulatorLinesCount(){
-        cl_I count = 0;
-        cl_I tmpnum(this->num);
-        const cl_I two = 2;
-
-        stack<int> bits;
-
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
-            if(modulo == 1){
-                bits.push(1);
-            } else {
-                bits.push(0);
-            }
-            tmpnum = floor1(tmpnum / two);
-        }
-
-        count++;
-        count++;
-
-        while(!bits.empty()){
-            int bit = bits.top();
-            bits.pop();
-
-            if(bit == 1){
-                count++;
-            }
-
-            if(!bits.empty()){
-                count++;
-            }
-        }
-
-        count++;
-        count++;
-        count++;
-
-        return count;
     }
 };
 

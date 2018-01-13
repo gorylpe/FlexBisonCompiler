@@ -1,8 +1,10 @@
 VAR
-    n m[2]
+    n
 BEGIN
-    m[0] := 1
-    WRITE m[0]
-    n := 5
-    WRITE m[n]
+    READ n;
+	WHILE n > 2 DO
+		n := n * n;
+		WRITE n;
+		READ n;
+ENDWHILE
 END

@@ -138,7 +138,7 @@ public:
         return pidpidV;
     }
 
-    void storeFromAccumulator(stringstream& ss){
+    void storeFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
 
@@ -149,11 +149,12 @@ public:
         switch (this->type) {
             case Identifier::Type::PID:
                 pidV->initialize();
-                STORE(ss, pidV->memoryPtr);
+                machine.STORE(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
+                pidV->initialize();
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
-                STORE(ss, arrayIndexMemoryPtr);
+                machine.STORE(arrayIndexMemoryPtr);
                 break;
             }
             case Identifier::Type::PIDPID:
@@ -162,196 +163,136 @@ public:
                     poserror(this->pos, "variable is not initialized");
                 }
                 Variable* acc = memory.pushTempVariable();
-                STORE(ss, acc->memoryPtr);
+                machine.STORE(acc->memoryPtr);
 
                 Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator(ss);
+                pidAddr.loadToAccumulator();
 
-                ADD(ss, pidpidV->memoryPtr);
+                machine.ADD(pidpidV->memoryPtr);
 
                 Variable* ptr = memory.pushTempVariable();
-                STORE(ss, ptr->memoryPtr);
+                machine.STORE(ptr->memoryPtr);
 
-                LOAD(ss, acc->memoryPtr);
+                machine.LOAD(acc->memoryPtr);
 
-                STOREI(ss, ptr->memoryPtr);
+                machine.STOREI(ptr->memoryPtr);
                 memory.popTempVariable(); //acc
                 memory.popTempVariable(); //ptr
                 break;
         }
     }
 
-    cl_I getStoreFromAccumulatorLinesCount(){
-        switch(this->type){
-            case PID:
-            case PIDNUM:
-                return 1;
-            case PIDPID: {
-                Variable *pidV = this->getPidVariable();
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                return 5 + pidAddr.getLoadToAccumulatorLinesCount();
-            }
-        }
-    }
-
-    void loadToAccumulator(stringstream& ss){
+    void loadToAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
 
         switch (this->type){
             case Identifier::Type::PID:
                 if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                LOAD(ss, pidV->memoryPtr);
+                machine.LOAD(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                //cant check single table index initialized
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
-                LOAD(ss, arrayIndexMemoryPtr);
+                machine.LOAD(arrayIndexMemoryPtr);
                 break;
             }
             case Identifier::Type::PIDPID:
                 if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
                 Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator(ss);
+                pidAddr.loadToAccumulator();
 
-                ADD(ss, pidpidV->memoryPtr);
+                machine.ADD(pidpidV->memoryPtr);
 
                 Variable* ptr = memory.pushTempVariable();
-                STORE(ss, ptr->memoryPtr);
+                machine.STORE(ptr->memoryPtr);
 
-                LOADI(ss, ptr->memoryPtr);
+                machine.LOADI(ptr->memoryPtr);
                 memory.popTempVariable(); //ptr
                 break;
         }
     }
 
-    cl_I getLoadToAccumulatorLinesCount(){
-        switch(this->type){
-            case PID:
-            case PIDNUM:
-                return 1;
-            case PIDPID: {
-                Variable *pidV = this->getPidVariable();
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                return 3 + pidAddr.getLoadToAccumulatorLinesCount();
-            }
-        }
-        return 0;
-    }
-
-    void addToAccumulator(stringstream& ss){
+    void addToAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
 
         switch (this->type){
             case Identifier::Type::PID:
                 if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                ADD(ss, pidV->memoryPtr);
+                machine.ADD(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
-                }
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
-                ADD(ss, arrayIndexMemoryPtr);
+                machine.ADD(arrayIndexMemoryPtr);
                 break;
             }
             case Identifier::Type::PIDPID:
                 if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
                 Variable* acc = memory.pushTempVariable();
-                STORE(ss, acc->memoryPtr);
+                machine.STORE(acc->memoryPtr);
 
                 Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator(ss);
+                pidAddr.loadToAccumulator();
 
-                ADD(ss, pidpidV->memoryPtr);
+                machine.ADD(pidpidV->memoryPtr);
 
                 Variable* ptr = memory.pushTempVariable();
-                STORE(ss, ptr->memoryPtr);
+                machine.STORE(ptr->memoryPtr);
 
-                LOAD(ss, acc->memoryPtr);
+                machine.LOAD(acc->memoryPtr);
 
-                ADDI(ss, ptr->memoryPtr);
+                machine.ADDI(ptr->memoryPtr);
                 memory.popTempVariable(); //acc
                 memory.popTempVariable(); //ptr
                 break;
         }
     }
 
-    cl_I getAddToAccumulatorLinesCount(){
-        switch(this->type){
-            case PID:
-            case PIDNUM:
-                return 1;
-            case PIDPID: {
-                Variable *pidV = this->getPidVariable();
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                return 5 + pidAddr.getLoadToAccumulatorLinesCount();
-            }
-        }
-    }
-
-    void subFromAccumulator(stringstream& ss){
+    void subFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
 
         switch (this->type){
             case Identifier::Type::PID:
                 if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                SUB(ss, pidV->memoryPtr);
+                machine.SUB(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
-                }
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
-                SUB(ss, arrayIndexMemoryPtr);
+                machine.SUB(arrayIndexMemoryPtr);
                 break;
             }
             case Identifier::Type::PIDPID:
                 if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
+                    poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
                 Variable* acc = memory.pushTempVariable();
-                STORE(ss, acc->memoryPtr);
+                machine.STORE(acc->memoryPtr);
 
                 Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator(ss);
+                pidAddr.loadToAccumulator();
 
-                ADD(ss, pidpidV->memoryPtr);
+                machine.ADD(pidpidV->memoryPtr);
 
                 Variable* ptr = memory.pushTempVariable();
-                STORE(ss, ptr->memoryPtr);
+                machine.STORE(ptr->memoryPtr);
 
-                LOAD(ss, acc->memoryPtr);
+                machine.LOAD(acc->memoryPtr);
 
-                SUBI(ss, ptr->memoryPtr);
+                machine.SUBI(ptr->memoryPtr);
                 memory.popTempVariable(); //acc
                 memory.popTempVariable(); //ptr
                 break;
-        }
-    }
-
-    cl_I getSubFromAccumulatorLinesCount(){
-        switch(this->type){
-            case PID:
-            case PIDNUM:
-                return 1;
-            case PIDPID: {
-                Variable *pidV = this->getPidVariable();
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                return 5 + pidAddr.getLoadToAccumulatorLinesCount();
-            }
         }
     }
 };

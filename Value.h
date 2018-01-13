@@ -35,67 +35,37 @@ public:
         }
     }
 
-    void loadToAccumulator(stringstream& ss){
+    void loadToAccumulator(){
         switch (this->type){
             case Value::Type::NUM:
-                this->num->loadToAccumulator(ss);
+                this->num->loadToAccumulator();
                 break;
             case Value::Type::IDENTIFIER:
-                this->ident->loadToAccumulator(ss);
-                break;
-        }
-    }
-
-    cl_I getLoadToAccumulatorLinesCount(){
-        switch (this->type){
-            case Value::Type::NUM:
-                return this->num->getLoadToAccumulatorLinesCount();
-            case Value::Type::IDENTIFIER:
-                return this->ident->getLoadToAccumulatorLinesCount();
-        }
-        return 0;
-    }
-
-    void addToAccumulator(stringstream& ss){
-        switch (this->type){
-            case Value::Type::NUM:
-                this->num->addToAccumulator(ss);
-                break;
-            case Value::Type::IDENTIFIER:
-                this->ident->addToAccumulator(ss);
+                this->ident->loadToAccumulator();
                 break;
         }
     }
 
-    cl_I getAddToAccumulatorLinesCount(){
+    void addToAccumulator(){
         switch (this->type){
             case Value::Type::NUM:
-                return this->num->getAddToAccumulatorLinesCount();
-            case Value::Type::IDENTIFIER:
-                return this->ident->getAddToAccumulatorLinesCount();
-        }
-        return 0;
-    }
-
-    void subFromAccumulator(stringstream& ss){
-        switch (this->type){
-            case Value::Type::NUM:
-                this->num->subFromAccumulator(ss);
+                this->num->addToAccumulator();
                 break;
             case Value::Type::IDENTIFIER:
-                this->ident->subFromAccumulator(ss);
+                this->ident->addToAccumulator();
                 break;
         }
     }
 
-    cl_I getSubFromAccumulatorLinesCount(){
+    void subFromAccumulator(){
         switch (this->type){
             case Value::Type::NUM:
-                return this->num->getSubFromAccumulatorLinesCount();
+                this->num->subFromAccumulator();
+                break;
             case Value::Type::IDENTIFIER:
-                return this->ident->getSubFromAccumulatorLinesCount();
+                this->ident->subFromAccumulator();
+                break;
         }
-        return 0;
     }
 };
 

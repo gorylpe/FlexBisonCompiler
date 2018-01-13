@@ -104,117 +104,103 @@ void Expression::oneConstValueOptimizations(){
     }
 }
 
-void Expression::loadToAccumulatorValue(stringstream &ss) {
-    this->val1->loadToAccumulator(ss);
+void Expression::loadToAccumulatorValue() {
+    this->val1->loadToAccumulator();
 }
 
-cl_I Expression::getLoadToAccumulatorValueLinesCount() {
-    return this->val1->getLoadToAccumulatorLinesCount();
+void Expression::loadToAccumulatorAddition() {
+    this->val1->loadToAccumulator();
+    this->val2->addToAccumulator();
 }
 
-void Expression::loadToAccumulatorAddition(stringstream &ss) {
-    this->val1->loadToAccumulator(ss);
-    this->val2->addToAccumulator(ss);
+void Expression::loadToAccumulatorSubtraction() {
+    this->val1->loadToAccumulator();
+    this->val2->subFromAccumulator();
 }
 
-cl_I Expression::getLoadToAccumulatorAdditionLinesCount() {
-    cl_I linesCount = 0;
-    linesCount += this->val1->getLoadToAccumulatorLinesCount();
-    linesCount += this->val2->getAddToAccumulatorLinesCount();
-    return linesCount;
-}
-
-void Expression::loadToAccumulatorSubtraction(stringstream &ss) {
-    this->val1->loadToAccumulator(ss);
-    this->val2->subFromAccumulator(ss);
-}
-
-cl_I Expression::getLoadToAccumulatorSubtractionLinesCount() {
-    cl_I linesCount = 0;
-    linesCount += this->val1->getLoadToAccumulatorLinesCount();
-    linesCount += this->val2->getSubFromAccumulatorLinesCount();
-    return linesCount;
-}
-
-void Expression::loadToAccumulatorMultiplication(stringstream& ss) {
+void Expression::loadToAccumulatorMultiplication() {
     //TODO optimization for multiplication by power of 2
     //optimization for number
-    Variable* tmpVal1 = memory.pushTempVariable();
-    Variable* tmpVal2 = memory.pushTempVariable();
+    auto tmpVal1 = memory.pushTempVariable();
+    auto tmpVal2 = memory.pushTempVariable();
 
-    this->val1->loadToAccumulator(ss);
-    STORE(ss, tmpVal1->memoryPtr);
-    this->val2->loadToAccumulator(ss);
-    STORE(ss, tmpVal2->memoryPtr);
+    this->val1->loadToAccumulator();
+    machine.STORE(tmpVal1->memoryPtr);
+    this->val2->loadToAccumulator();
+    machine.STORE(tmpVal2->memoryPtr);
 
-    Variable* currentShiftedNumber = memory.pushTempVariable();
-    Variable* bits = memory.pushTempVariable();
-    Variable* result = memory.pushTempVariable();
+    auto currentShiftedNumber = memory.pushTempVariable();
+    auto bits = memory.pushTempVariable();
+    auto result = memory.pushTempVariable();
+
+    auto value1LessOrEqualsValue2 = new JumpPosition();
+    auto multiplicationStart = new JumpPosition();
+    auto multiplicationLoopStart = new JumpPosition();
+    auto multiplicationEnd = new JumpPosition();
+    auto multiplicationAdding = new JumpPosition();
+    auto multiplicationShifting = new JumpPosition();
 
 
     //compare values to chose which one is smaller for faster logarithmic multiplication
-    LOAD(ss, tmpVal1->memoryPtr);
-    SUB(ss, tmpVal2->memoryPtr);
+    machine.LOAD(tmpVal1->memoryPtr);
+    machine.SUB(tmpVal2->memoryPtr);
     //val1 <= val2
-    cl_I jumpToLessOrEquals = machine.getLineCounter() + 6;
-    JZERO(ss, jumpToLessOrEquals);
+    machine.JZERO(value1LessOrEqualsValue2);
 
     //val1 > val2
-    LOAD(ss, tmpVal1->memoryPtr);
-    STORE(ss, currentShiftedNumber->memoryPtr);
-    LOAD(ss, tmpVal2->memoryPtr);
-    STORE(ss, bits->memoryPtr);
+    machine.LOAD(tmpVal1->memoryPtr);
+    machine.STORE(currentShiftedNumber->memoryPtr);
+    machine.LOAD(tmpVal2->memoryPtr);
+    machine.STORE(bits->memoryPtr);
+    machine.JUMP(multiplicationStart);
 
-    cl_I jumpToMultiplication = machine.getLineCounter() + 5;
-    JUMP(ss, jumpToMultiplication);
-
+    machine.setJumpPosition(value1LessOrEqualsValue2);
     //val1 <= val2
-    LOAD(ss, tmpVal1->memoryPtr);
-    STORE(ss, bits->memoryPtr);
-    LOAD(ss, tmpVal2->memoryPtr);
-    STORE(ss, currentShiftedNumber->memoryPtr);
+    machine.LOAD(tmpVal1->memoryPtr);
+    machine.STORE(bits->memoryPtr);
+    machine.LOAD(tmpVal2->memoryPtr);
+    machine.STORE(currentShiftedNumber->memoryPtr);
 
 
+    machine.setJumpPosition(multiplicationStart);
     //multiplication, init result
-    ZERO(ss);
-    STORE(ss, result->memoryPtr);
+    machine.ZERO();
+    machine.STORE(result->memoryPtr);
 
-    LOAD(ss, bits->memoryPtr);
+    machine.LOAD(bits->memoryPtr);
 
     //bits from last loop are loaded in accumulator so doesnt need to load again
-    cl_I multiplicationStart = machine.getLineCounter();
+    machine.setJumpPosition(multiplicationLoopStart);
 
     //when multiplier with bits is 0 jump to end
-    cl_I jumpToMultiplicationEnd = machine.getLineCounter() + 13;
-    JZERO(ss, jumpToMultiplicationEnd);
+    machine.JZERO(multiplicationEnd);
 
     //last bit = 1, jump to adding and shifting
-    cl_I jumpToAdding = machine.getLineCounter() + 2;
-    JODD(ss, jumpToAdding);
+    machine.JODD(multiplicationAdding);
 
     //last bit = 0, jump to only shifting
-    cl_I jumpToShifting = machine.getLineCounter() + 4;
-    JUMP(ss, jumpToShifting);
+    machine.JUMP(multiplicationShifting);
 
     //adding
-    LOAD(ss, result->memoryPtr);
-    ADD(ss, currentShiftedNumber->memoryPtr);
-    STORE(ss, result->memoryPtr);
+    machine.setJumpPosition(multiplicationAdding);
+    machine.LOAD(result->memoryPtr);
+    machine.ADD(currentShiftedNumber->memoryPtr);
+    machine.STORE(result->memoryPtr);
 
     //shifting number
-    LOAD(ss, currentShiftedNumber->memoryPtr);
-    SHL(ss);
-    STORE(ss, currentShiftedNumber->memoryPtr);
+    machine.setJumpPosition(multiplicationShifting);
+    machine.LOAD(currentShiftedNumber->memoryPtr);
+    machine.SHL();
+    machine.STORE(currentShiftedNumber->memoryPtr);
     //shifting bits
-    LOAD(ss, bits->memoryPtr);
-    SHR(ss);
-    STORE(ss, bits->memoryPtr);
+    machine.LOAD(bits->memoryPtr);
+    machine.SHR();
+    machine.STORE(bits->memoryPtr);
 
-    //jump to start of loop
-    JUMP(ss, multiplicationStart);
+    machine.JUMP(multiplicationLoopStart);
 
-    //result to accumulator
-    LOAD(ss, result->memoryPtr);
+    machine.setJumpPosition(multiplicationEnd);
+    machine.LOAD(result->memoryPtr);
 
     memory.popTempVariable(); //tmpVal1
     memory.popTempVariable(); //tmpVal2
@@ -223,86 +209,81 @@ void Expression::loadToAccumulatorMultiplication(stringstream& ss) {
     memory.popTempVariable(); //result
 }
 
-cl_I Expression::getLoadToAccumulatorMultiplicationLinesCount() {
-    cl_I linesCount = 0;
-    linesCount += this->val1->getLoadToAccumulatorLinesCount();
-    linesCount += this->val2->getLoadToAccumulatorLinesCount();
-    linesCount += 31;
-    return linesCount;
-}
-
-void Expression::loadToAccumulatorDivision(stringstream &ss) {
+void Expression::loadToAccumulatorDivision() {
     //TODO optimisations pow 2
-    Variable* currentBit = memory.pushTempVariable();
-    Variable* currentDividend = memory.pushTempVariable();
-    Variable* currentDivider = memory.pushTempVariable();
-    Variable* result = memory.pushTempVariable();
+    auto currentBit = memory.pushTempVariable();
+    auto currentDividend = memory.pushTempVariable();
+    auto currentDivider = memory.pushTempVariable();
+    auto result = memory.pushTempVariable();
 
-    this->val1->loadToAccumulator(ss);
-    STORE(ss, currentDividend->memoryPtr);
+    auto firstDividerDividendComparision = new JumpPosition();
+    auto dividerShiftingStart = new JumpPosition();
+    auto divisionShiftingStart = new JumpPosition();
+    auto divisionSubtraction = new JumpPosition();
+    auto divisionEnd = new JumpPosition();
 
-    this->val2->loadToAccumulator(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    this->val1->loadToAccumulator();
+    machine.STORE(currentDividend->memoryPtr);
 
-    ZERO(ss);
-    STORE(ss, result->memoryPtr);
-    INC(ss);
-    STORE(ss, currentBit->memoryPtr);
+    this->val2->loadToAccumulator();
+    machine.STORE(currentDivider->memoryPtr);
 
-    cl_I firstDividerDividendComparision = machine.getLineCounter() + 7;
-    JUMP(ss, firstDividerDividendComparision);
+    machine.ZERO();
+    machine.STORE(result->memoryPtr);
+    machine.INC();
+    machine.STORE(currentBit->memoryPtr);
+
+    machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
-    cl_I dividerShiftingStart = machine.getLineCounter();
-
-    //shifting divider and bit
-    LOAD(ss, currentBit->memoryPtr);
-    SHL(ss);
-    STORE(ss, currentBit->memoryPtr);
-    LOAD(ss, currentDivider->memoryPtr);
-    SHL(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    machine.setJumpPosition(dividerShiftingStart);
+    machine.LOAD(currentBit->memoryPtr);
+    machine.SHL();
+    machine.STORE(currentBit->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SHL();
+    machine.STORE(currentDivider->memoryPtr);
 
     //jumping here first time
-    LOAD(ss, currentDivider->memoryPtr);
-    SUB(ss, currentDividend->memoryPtr);
+    machine.setJumpPosition(firstDividerDividendComparision);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend
-    JZERO(ss, dividerShiftingStart);
+    machine.JZERO(dividerShiftingStart);
 
-    cl_I divisionShiftingStart = machine.getLineCounter();
     //divider > dividend, so shift once right
-    LOAD(ss, currentBit->memoryPtr);
-    SHR(ss);
-    STORE(ss, currentBit->memoryPtr);
-    LOAD(ss, currentDivider->memoryPtr);
-    SHR(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    machine.setJumpPosition(divisionShiftingStart);
+    machine.LOAD(currentBit->memoryPtr);
+    machine.SHR();
+    machine.STORE(currentBit->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SHR();
+    machine.STORE(currentDivider->memoryPtr);
 
-
+    machine.LOAD(currentBit->memoryPtr);
     //while currentBit > 0
-    cl_I outsideDivision = machine.getLineCounter() + 13;
-    LOAD(ss, currentBit->memoryPtr);
     //jump if division ended
-    JZERO(ss, outsideDivision);
+    machine.JZERO(divisionEnd);
     //check if divider > dividend, jump to shift right, else subtract and add current bit to result
-    LOAD(ss, currentDivider->memoryPtr);
-    SUB(ss, currentDividend->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend, jump to subtract
-    cl_I subtracting = machine.getLineCounter() + 2;
-    JZERO(ss, subtracting);
+    machine.JZERO(divisionSubtraction);
     //divider > dividend
-    JUMP(ss, divisionShiftingStart);
+    machine.JUMP(divisionShiftingStart);
     //subtraction
-    LOAD(ss, currentDividend->memoryPtr);
-    SUB(ss, currentDivider->memoryPtr);
-    STORE(ss, currentDividend->memoryPtr);
+    machine.setJumpPosition(divisionSubtraction);
+    machine.LOAD(currentDividend->memoryPtr);
+    machine.SUB(currentDivider->memoryPtr);
+    machine.STORE(currentDividend->memoryPtr);
     //add bit to result
-    LOAD(ss, result->memoryPtr);
-    ADD(ss, currentBit->memoryPtr);
-    STORE(ss, result->memoryPtr);
-    JUMP(ss, divisionShiftingStart);
+    machine.LOAD(result->memoryPtr);
+    machine.ADD(currentBit->memoryPtr);
+    machine.STORE(result->memoryPtr);
+    machine.JUMP(divisionShiftingStart);
 
-    LOAD(ss, result->memoryPtr);
+    machine.setJumpPosition(divisionEnd);
+    machine.LOAD(result->memoryPtr);
 
     memory.popTempVariable(); //currentBit
     memory.popTempVariable(); //currentDividend
@@ -310,99 +291,83 @@ void Expression::loadToAccumulatorDivision(stringstream &ss) {
     memory.popTempVariable(); //result
 }
 
-cl_I Expression::getLoadToAccumulatorDivisionLinesCount() {
-    cl_I linesCount = 0;
-    linesCount += this->val1->getLoadToAccumulatorLinesCount();
-    linesCount += this->val2->getLoadToAccumulatorLinesCount();
-    linesCount += 36;
-    return linesCount;
-}
-
-
-
-void Expression::loadToAccumulatorModulo(stringstream &ss) {
+void Expression::loadToAccumulatorModulo() {
     //TODO optimisations pow 2
     Variable* currentBit = memory.pushTempVariable();
     Variable* currentDividend = memory.pushTempVariable();
     Variable* currentDivider = memory.pushTempVariable();
     Variable* result = memory.pushTempVariable();
 
-    this->val1->loadToAccumulator(ss);
-    STORE(ss, currentDividend->memoryPtr);
+    auto firstDividerDividendComparision = new JumpPosition();
+    auto dividerShiftingStart = new JumpPosition();
+    auto divisionShiftingStart = new JumpPosition();
+    auto divisionSubtraction = new JumpPosition();
+    auto divisionEnd = new JumpPosition();
 
-    this->val2->loadToAccumulator(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    this->val1->loadToAccumulator();
+    machine.STORE(currentDividend->memoryPtr);
 
-    ZERO(ss);
-    STORE(ss, result->memoryPtr);
-    INC(ss);
-    STORE(ss, currentBit->memoryPtr);
+    this->val2->loadToAccumulator();
+    machine.STORE(currentDivider->memoryPtr);
 
-    cl_I firstDividerDividendComparision = machine.getLineCounter() + 7;
-    JUMP(ss, firstDividerDividendComparision);
+    machine.ZERO();
+    machine.STORE(result->memoryPtr);
+    machine.INC();
+    machine.STORE(currentBit->memoryPtr);
+
+    machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
-    cl_I dividerShiftingStart = machine.getLineCounter();
-
-    //shifting divider and bit
-    LOAD(ss, currentBit->memoryPtr);
-    SHL(ss);
-    STORE(ss, currentBit->memoryPtr);
-    LOAD(ss, currentDivider->memoryPtr);
-    SHL(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    machine.setJumpPosition(dividerShiftingStart);
+    machine.LOAD(currentBit->memoryPtr);
+    machine.SHL();
+    machine.STORE(currentBit->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SHL();
+    machine.STORE(currentDivider->memoryPtr);
 
     //jumping here first time
-    LOAD(ss, currentDivider->memoryPtr);
-    SUB(ss, currentDividend->memoryPtr);
+    machine.setJumpPosition(firstDividerDividendComparision);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend
-    JZERO(ss, dividerShiftingStart);
+    machine.JZERO(dividerShiftingStart);
 
-    cl_I divisionShiftingStart = machine.getLineCounter();
     //divider > dividend, so shift once right
-    LOAD(ss, currentBit->memoryPtr);
-    SHR(ss);
-    STORE(ss, currentBit->memoryPtr);
-    LOAD(ss, currentDivider->memoryPtr);
-    SHR(ss);
-    STORE(ss, currentDivider->memoryPtr);
+    machine.setJumpPosition(divisionShiftingStart);
+    machine.LOAD(currentBit->memoryPtr);
+    machine.SHR();
+    machine.STORE(currentBit->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SHR();
+    machine.STORE(currentDivider->memoryPtr);
 
-
+    machine.LOAD(currentBit->memoryPtr);
     //while currentBit > 0
-    cl_I outsideDivision = machine.getLineCounter() + 10;
-    LOAD(ss, currentBit->memoryPtr);
     //jump if division ended
-    JZERO(ss, outsideDivision);
+    machine.JZERO(divisionEnd);
     //check if divider > dividend, jump to shift right, else subtract and add current bit to result
-    LOAD(ss, currentDivider->memoryPtr);
-    SUB(ss, currentDividend->memoryPtr);
+    machine.LOAD(currentDivider->memoryPtr);
+    machine.SUB(currentDividend->memoryPtr);
     //divider <= dividend, jump to subtract
-    cl_I subtracting = machine.getLineCounter() + 2;
-    JZERO(ss, subtracting);
+    machine.JZERO(divisionSubtraction);
     //divider > dividend
-    JUMP(ss, divisionShiftingStart);
+    machine.JUMP(divisionShiftingStart);
     //subtraction
-    LOAD(ss, currentDividend->memoryPtr);
-    SUB(ss, currentDivider->memoryPtr);
-    STORE(ss, currentDividend->memoryPtr);
+    machine.setJumpPosition(divisionSubtraction);
+    machine.LOAD(currentDividend->memoryPtr);
+    machine.SUB(currentDivider->memoryPtr);
+    machine.STORE(currentDividend->memoryPtr);
     //jump to shifting start
-    JUMP(ss, divisionShiftingStart);
+    machine.JUMP(divisionShiftingStart);
 
-    //load
-    LOAD(ss, currentDividend->memoryPtr);
+    machine.setJumpPosition(divisionEnd);
+    machine.LOAD(currentDividend->memoryPtr);
 
     memory.popTempVariable(); //currentBit
     memory.popTempVariable(); //currentDividend
     memory.popTempVariable(); //currentDivider
     memory.popTempVariable(); //result
-}
-
-cl_I Expression::getLoadToAccumulatorModuloLinesCount() {
-    cl_I linesCount = 0;
-    linesCount += this->val1->getLoadToAccumulatorLinesCount();
-    linesCount += this->val2->getLoadToAccumulatorLinesCount();
-    linesCount += 33;
-    return linesCount;
 }
 
 

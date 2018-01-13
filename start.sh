@@ -5,9 +5,10 @@ make
 find . -type f -name 'test*.sh' -exec chmod +x {} \;
 export COMPILER=$DIR/compiler
 
+#$DIR/tests/execution/test.sh "basic"
 $DIR/tests/execution/test.sh "final-tests"
-#$DIR/tests/execution/test.sh "labor4
-#$DIR/tests/compilation/test.sh "read"
-#$DIR/tests/compilation/test.sh "comment"
-#$DIR/tests/compilation/test.sh "var"
-#$DIR/tests/compilation/test.sh "const_expr"
+$DIR/tests/execution/test.sh "labor4"
+$DIR/tests/compilation/test.sh "read"
+$DIR/tests/compilation/test.sh "comment"
+$DIR/tests/compilation/test.sh "var"
+#/tests/compilation/test.sh "const_expr"

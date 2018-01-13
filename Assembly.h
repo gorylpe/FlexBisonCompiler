@@ -4,6 +4,7 @@
 #include "MachineContext.h"
 
 class AssemblyLine{
+public:
     virtual void toStringstream(stringstream& ss) = 0;
 };
 
@@ -130,7 +131,7 @@ public:
     :JumpAssemblyLine(position){}
 
     void toStringstream(stringstream& ss){
-        ss << "JUMP " << position->getPosition() << endl;
+        ss << "JZERO " << position->getPosition() << endl;
     }
 };
 
@@ -141,7 +142,7 @@ public:
     :JumpAssemblyLine(position){}
 
     void toStringstream(stringstream& ss){
-        ss << "JUMP " << position->getPosition() << endl;
+        ss << "JODD " << position->getPosition() << endl;
     }
 };
 

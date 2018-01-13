@@ -60,60 +60,33 @@ public:
         return "expression " + type + " with " + values;
     }
 
-    void loadToAccumulatorValue(stringstream& ss);
-    void loadToAccumulatorAddition(stringstream& ss);
-    void loadToAccumulatorSubtraction(stringstream& ss);
-    void loadToAccumulatorMultiplication(stringstream& ss);
-    void loadToAccumulatorDivision(stringstream& ss);
-    void loadToAccumulatorModulo(stringstream &ss);
+    void loadToAccumulatorValue();
+    void loadToAccumulatorAddition();
+    void loadToAccumulatorSubtraction();
+    void loadToAccumulatorMultiplication();
+    void loadToAccumulatorDivision();
+    void loadToAccumulatorModulo();
 
-    void loadToAccumulator(stringstream& ss){
+    void loadToAccumulator(){
         switch (this->type){
             case VALUE:
-                this->loadToAccumulatorValue(ss);
+                this->loadToAccumulatorValue();
                 break;
             case ADDITION:
-                this->loadToAccumulatorAddition(ss);
+                this->loadToAccumulatorAddition();
                 break;
             case SUBTRACTION:
-                this->loadToAccumulatorSubtraction(ss);
+                this->loadToAccumulatorSubtraction();
                 break;
             case MULTIPLICATION:
-                this->loadToAccumulatorMultiplication(ss);
+                this->loadToAccumulatorMultiplication();
                 break;
             case DIVISION:
-                this->loadToAccumulatorDivision(ss);
+                this->loadToAccumulatorDivision();
                 break;
             case MODULO:
-                this->loadToAccumulatorModulo(ss);
+                this->loadToAccumulatorModulo();
                 break;
         }
     }
-
-    cl_I getLoadToAccumulatorValueLinesCount();
-    cl_I getLoadToAccumulatorAdditionLinesCount();
-    cl_I getLoadToAccumulatorSubtractionLinesCount();
-    cl_I getLoadToAccumulatorMultiplicationLinesCount();
-    cl_I getLoadToAccumulatorDivisionLinesCount();
-    cl_I getLoadToAccumulatorModuloLinesCount();
-
-    cl_I getLoadToAccumulatorLinesCount(){
-        cl_I linesCount = 0;
-        switch (this->type){
-            case VALUE:
-                return this->getLoadToAccumulatorValueLinesCount();
-            case ADDITION:
-                return this->getLoadToAccumulatorAdditionLinesCount();
-            case SUBTRACTION:
-                return this->getLoadToAccumulatorSubtractionLinesCount();
-            case MULTIPLICATION:
-                return this->getLoadToAccumulatorMultiplicationLinesCount();
-            case DIVISION:
-                return this->getLoadToAccumulatorDivisionLinesCount();
-            case MODULO:
-                return this->getLoadToAccumulatorModuloLinesCount();
-        }
-        return 0;
-    }
-
 };
