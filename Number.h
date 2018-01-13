@@ -21,6 +21,10 @@ public:
         cerr << "Creating " << this->toString() << endl;
     }
 
+    bool equals(Number* num2){
+        return this->num == num2->num;
+    }
+
     string toString(){
         stringstream ss;
         ss << "num " << this->num;

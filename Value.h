@@ -35,6 +35,18 @@ public:
         }
     }
 
+    bool equals(Value* val2){
+        if(this->type != val2->type){
+            return false;
+        } else {
+            if(this->type == NUM){
+                return this->num->equals(val2->num);
+            } else if(this->type == IDENTIFIER){
+                return this->ident->equals(val2->ident);
+            }
+        }
+    }
+
     void loadToAccumulator(){
         switch (this->type){
             case Value::Type::NUM:

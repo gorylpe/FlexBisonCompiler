@@ -123,15 +123,15 @@ void Expression::loadToAccumulatorMultiplication() {
     //optimization for number
     auto tmpVal1 = memory.pushTempVariable();
     auto tmpVal2 = memory.pushTempVariable();
-
-    this->val1->loadToAccumulator();
-    machine.STORE(tmpVal1->memoryPtr);
-    this->val2->loadToAccumulator();
-    machine.STORE(tmpVal2->memoryPtr);
-
     auto currentShiftedNumber = memory.pushTempVariable();
     auto bits = memory.pushTempVariable();
     auto result = memory.pushTempVariable();
+
+    this->val1->loadToAccumulator();
+    machine.STORE(tmpVal1->memoryPtr);
+    if(!this->val1->equals(this->val2))
+        this->val2->loadToAccumulator();
+    machine.STORE(tmpVal2->memoryPtr);
 
     auto value1LessOrEqualsValue2 = new JumpPosition();
     auto multiplicationStart = new JumpPosition();
@@ -210,6 +210,14 @@ void Expression::loadToAccumulatorMultiplication() {
 }
 
 void Expression::loadToAccumulatorDivision() {
+
+    //division a/a=1
+    if(this->val1->equals(this->val2)){
+        machine.ZERO();
+        machine.INC();
+        return;
+    }
+
     //TODO optimisations pow 2
     auto currentBit = memory.pushTempVariable();
     auto currentDividend = memory.pushTempVariable();
@@ -224,7 +232,7 @@ void Expression::loadToAccumulatorDivision() {
 
     this->val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
-
+    //check if have to load
     this->val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 
@@ -296,6 +304,13 @@ void Expression::loadToAccumulatorDivision() {
 
 void Expression::loadToAccumulatorModulo() {
     //TODO optimisations pow 2
+
+    //division a%a=0
+    if (this->val1->equals(this->val2)){
+        machine.ZERO();
+        return;
+    }
+
     Variable* currentBit = memory.pushTempVariable();
     Variable* currentDividend = memory.pushTempVariable();
     Variable* currentDivider = memory.pushTempVariable();
@@ -309,7 +324,6 @@ void Expression::loadToAccumulatorModulo() {
 
     this->val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
-
     this->val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 

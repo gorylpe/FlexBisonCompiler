@@ -49,6 +49,21 @@ public:
         cerr << "Creating identifier PIDNUM " << pid << " [" << num << "]" << endl;
     }
 
+    bool equals(Identifier* ident2){
+        if(this->type != ident2->type){
+            return false;
+        } else {
+            switch(this->type){
+                case PID:
+                    return pid == ident2->pid;
+                case PIDNUM:
+                    return pid == ident2->pid && num == ident2->num;
+                case PIDPID:
+                    return pid == ident2->pid && pidpid == ident2->pidpid;
+            }
+        }
+    }
+
     string toString(){
         string type;
         switch(this->type){
