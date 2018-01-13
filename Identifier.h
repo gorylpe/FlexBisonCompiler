@@ -152,7 +152,6 @@ public:
                 STORE(ss, pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                pidV->initialize();
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
                 STORE(ss, arrayIndexMemoryPtr);
                 break;
@@ -207,9 +206,7 @@ public:
                 LOAD(ss, pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
-                }
+                //cant check single table index initialized
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
                 LOAD(ss, arrayIndexMemoryPtr);
                 break;
