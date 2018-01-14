@@ -147,6 +147,11 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     auto multiplicationAdding = new JumpPosition();
     auto multiplicationShifting = new JumpPosition();
 
+
+    //multiplication, init result
+    machine.ZERO();
+    machine.STORE(result->memoryPtr);
+
     //compare values to chose which one is smaller for faster logarithmic multiplication
     val1->loadToAccumulator();
     val2->subFromAccumulator();
@@ -158,28 +163,22 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     machine.STORE(currentShiftedNumber->memoryPtr);
     val2->loadToAccumulator();
     machine.STORE(bits->memoryPtr);
-    machine.JUMP(multiplicationStart);
+    machine.JUMP(multiplicationLoopStart);
 
     machine.setJumpPosition(value1LessOrEqualsValue2);
     //val1 <= val2
-    val1->loadToAccumulator();
-    machine.STORE(bits->memoryPtr);
     val2->loadToAccumulator();
     machine.STORE(currentShiftedNumber->memoryPtr);
-
-
-    machine.setJumpPosition(multiplicationStart);
-    //multiplication, init result
-    machine.ZERO();
-    machine.STORE(result->memoryPtr);
-
-    machine.LOAD(bits->memoryPtr);
+    val1->loadToAccumulator();
+    machine.STORE(bits->memoryPtr);
 
     //bits from last loop are loaded in accumulator so doesnt need to load again
     machine.setJumpPosition(multiplicationLoopStart);
 
     //when multiplier with bits is 0 jump to end
     machine.JZERO(multiplicationEnd);
+    //optimization - not storing when jump to end
+    machine.STORE(bits->memoryPtr);
 
     //last bit = 1, jump to adding and shifting
     machine.JODD(multiplicationAdding);
@@ -201,7 +200,6 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     //shifting bits
     machine.LOAD(bits->memoryPtr);
     machine.SHR();
-    machine.STORE(bits->memoryPtr);
 
     machine.JUMP(multiplicationLoopStart);
 
@@ -253,19 +251,20 @@ void Expression::loadToAccumulatorDivision() {
     auto divisionSubtraction = new JumpPosition();
     auto divisionEnd = new JumpPosition();
 
+    machine.ZERO();
+    machine.STORE(result->memoryPtr);
+    machine.INC();
+    machine.STORE(currentBit->memoryPtr);
+
     this->val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
     //check if have to load
     this->val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 
-    machine.ZERO();
-    machine.STORE(result->memoryPtr);
-    machine.INC();
-    machine.STORE(currentBit->memoryPtr);
-
+    //jump if divider = 0
+    machine.JZERO(divisionEnd);
     //optimization, load here or it will be loaded at divider shifting start
-    machine.LOAD(currentDivider->memoryPtr);
     machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
@@ -288,11 +287,11 @@ void Expression::loadToAccumulatorDivision() {
     //divider > dividend, so shift once right
     machine.LOAD(currentBit->memoryPtr);
     machine.SHR();
-    machine.STORE(currentBit->memoryPtr);
 
     //dividing if currentBit > 0
     //jump to end if currentBit == 0
     machine.JZERO(divisionEnd);
+    machine.STORE(currentBit->memoryPtr);
 
     //SHIFT CURRENT DIVIDER
     machine.LOAD(currentDivider->memoryPtr);
