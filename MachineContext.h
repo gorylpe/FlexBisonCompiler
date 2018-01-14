@@ -53,6 +53,7 @@ public:
             }
             auto storeLine = dynamic_cast<STOREAssemblyLine *>(assemblyCode[i]);
             auto loadLine = dynamic_cast<LOADAssemblyLine *>(assemblyCode[i]);
+
             if (storeLine != nullptr) {
                 currentAccumulatorMemoryPtr = storeLine->getMemoryPtr();
             } else if (loadLine != nullptr) {
@@ -60,6 +61,7 @@ public:
                     !hasJump[i]) {
                     toRemove[i] = true;
                 }
+                currentAccumulatorMemoryPtr = loadLine->getMemoryPtr();
             }
         }
 
