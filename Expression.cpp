@@ -136,17 +136,9 @@ void Expression::loadToAccumulatorMultiplication() {
 }
 
 void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
-    auto tmpVal1 = memory.pushTempVariable();
-    auto tmpVal2 = memory.pushTempVariable();
     auto currentShiftedNumber = memory.pushTempVariable();
     auto bits = memory.pushTempVariable();
     auto result = memory.pushTempVariable();
-
-    val1->loadToAccumulator();
-    machine.STORE(tmpVal1->memoryPtr);
-    if(!val1->equals(val2))
-        val2->loadToAccumulator();
-    machine.STORE(tmpVal2->memoryPtr);
 
     auto value1LessOrEqualsValue2 = new JumpPosition();
     auto multiplicationStart = new JumpPosition();
@@ -155,25 +147,24 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     auto multiplicationAdding = new JumpPosition();
     auto multiplicationShifting = new JumpPosition();
 
-
     //compare values to chose which one is smaller for faster logarithmic multiplication
-    machine.LOAD(tmpVal1->memoryPtr);
-    machine.SUB(tmpVal2->memoryPtr);
+    val1->loadToAccumulator();
+    val2->subFromAccumulator();
     //val1 <= val2
     machine.JZERO(value1LessOrEqualsValue2);
 
     //val1 > val2
-    machine.LOAD(tmpVal1->memoryPtr);
+    val1->loadToAccumulator();
     machine.STORE(currentShiftedNumber->memoryPtr);
-    machine.LOAD(tmpVal2->memoryPtr);
+    val2->loadToAccumulator();
     machine.STORE(bits->memoryPtr);
     machine.JUMP(multiplicationStart);
 
     machine.setJumpPosition(value1LessOrEqualsValue2);
     //val1 <= val2
-    machine.LOAD(tmpVal1->memoryPtr);
+    val1->loadToAccumulator();
     machine.STORE(bits->memoryPtr);
-    machine.LOAD(tmpVal2->memoryPtr);
+    val2->loadToAccumulator();
     machine.STORE(currentShiftedNumber->memoryPtr);
 
 
@@ -217,8 +208,6 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     machine.setJumpPosition(multiplicationEnd);
     machine.LOAD(result->memoryPtr);
 
-    memory.popTempVariable(); //tmpVal1
-    memory.popTempVariable(); //tmpVal2
     memory.popTempVariable(); //currentShiftedNumber
     memory.popTempVariable(); //bits
     memory.popTempVariable(); //result
