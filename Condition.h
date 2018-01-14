@@ -25,51 +25,7 @@ public:
     ,val2(val2){
         //const comparision optimisation
         if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM){
-            this->constComparision = true;
-            switch(this->type){
-                case EQ:
-                    this->constComparisionResult = val1->num->num == val2->num->num;
-                    break;
-                case NEQ:
-                    this->constComparisionResult = val1->num->num != val2->num->num;
-                    break;
-                case LT:
-                    this->constComparisionResult = val1->num->num < val2->num->num;
-                    break;
-                case GT:
-                    this->constComparisionResult = val1->num->num > val2->num->num;
-                    break;
-                case LEQ:
-                    this->constComparisionResult = val1->num->num <= val2->num->num;
-                    break;
-                case GEQ:
-                    this->constComparisionResult = val1->num->num >= val2->num->num;
-                    break;
-            }
-        } else if(val2->type == Value::Type::NUM){
-            //val1 is loaded to accumulator when testing conditions
-            //so it should be constant if there are comparision with const
-            //cause cant add or sub direct value from acc, must be created in there
-            Value* swapTmp = this->val2;
-            this->val2 = this->val1;
-            this->val1 = swapTmp;
-            //swap comparision type
-            switch(this->type){
-                case LT:
-                    this->type = GT;
-                    break;
-                case GT:
-                    this->type = LT;
-                    break;
-                case LEQ:
-                    this->type = GEQ;
-                    break;
-                case GEQ:
-                    this->type = LEQ;
-                    break;
-                default:
-                    break;
-            }
+            this->constComparisionOptimization();
         }
         cerr << "Creating " << this->toString() << endl;
     }
@@ -102,15 +58,8 @@ public:
     void generateTestWithTrueFalseJumps(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse) {
         //todo think out eq, make leq and lt same as geq gt
         switch (this->type) {
-            case EQ: {
-                val1->loadToAccumulator();
-                machine.INC();
-                val2->subFromAccumulator();
-                machine.JZERO(jumpIfFalse); // a < b; pass next condition instructions and jump after cond
-                machine.DEC();
-                machine.JZERO(jumpIfTrue); // a = b; pass next condition instructions and jump to instructions
-                machine.JUMP(jumpIfFalse); // a > b; pass next condition instructions and jump after cond
-            }
+            case EQ:
+                this->generateTestEquals(jumpIfTrue, jumpIfFalse);
                 break;
             case NEQ: {
                 val1->loadToAccumulator();
@@ -151,6 +100,68 @@ public:
                 machine.JZERO(jumpIfFalse);// a < b;
                 // a >= b
             }
+                break;
+        }
+    }
+
+    void generateTestEquals(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
+        if(val1->type == Value::Type::NUM || val2->type == Value::Type::NUM){
+            this->generateTestEqualsForNumber(jumpIfTrue, jumpIfFalse);
+        } else {
+            this->generateTestEqualsDefault(jumpIfTrue, jumpIfFalse);
+        }
+    }
+
+    void generateTestEqualsForNumber(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
+        Value* valNum = val1->type == Value::Type::NUM ? val1 : val2;
+        Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
+
+        //optimization for comparing with small numbers
+        if(valNum->num->num < 2){
+            valNotNum->loadToAccumulator();
+            //jump to false if already zero
+            for(cl_I i = 0; i < valNum->num->num; ++i){
+                machine.JZERO(jumpIfFalse);
+                machine.DEC();
+            }
+            machine.JZERO(jumpIfTrue);
+            machine.JUMP(jumpIfFalse);
+        } else {
+            this->generateTestEqualsDefault(jumpIfTrue, jumpIfFalse);
+        }
+    }
+
+    //atleast lasts 22 time units
+    void generateTestEqualsDefault(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
+        val1->loadToAccumulator();
+        machine.INC();
+        val2->subFromAccumulator();
+        machine.JZERO(jumpIfFalse); // a < b; pass next condition instructions and jump after cond
+        machine.DEC();
+        machine.JZERO(jumpIfTrue); // a = b; pass next condition instructions and jump to instructions
+        machine.JUMP(jumpIfFalse); // a > b; pass next condition instructions and jump after cond
+    }
+
+    void constComparisionOptimization(){
+        this->constComparision = true;
+        switch(this->type){
+            case EQ:
+                this->constComparisionResult = val1->num->num == val2->num->num;
+                break;
+            case NEQ:
+                this->constComparisionResult = val1->num->num != val2->num->num;
+                break;
+            case LT:
+                this->constComparisionResult = val1->num->num < val2->num->num;
+                break;
+            case GT:
+                this->constComparisionResult = val1->num->num > val2->num->num;
+                break;
+            case LEQ:
+                this->constComparisionResult = val1->num->num <= val2->num->num;
+                break;
+            case GEQ:
+                this->constComparisionResult = val1->num->num >= val2->num->num;
                 break;
         }
     }
