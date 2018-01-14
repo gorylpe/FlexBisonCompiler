@@ -31,7 +31,7 @@ public:
         return ss.str();
     }
 
-    void loadToAccumulator(){
+    stack<int> getBits(){
         cl_I tmpnum(this->num);
         const cl_I two = 2;
 
@@ -46,6 +46,12 @@ public:
             }
             tmpnum = floor1(tmpnum / two);
         }
+
+        return bits;
+    }
+
+    void loadToAccumulator(){
+        stack<int> bits = this->getBits();
 
         machine.ZERO();
 
@@ -78,20 +84,7 @@ public:
     }
 
     void addToAccumulatorDefault(){
-        cl_I tmpnum(this->num);
-        const cl_I two = 2;
-
-        stack<int> bits;
-
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
-            if(modulo == 1){
-                bits.push(1);
-            } else {
-                bits.push(0);
-            }
-            tmpnum = floor1(tmpnum / two);
-        }
+        stack<int> bits = this->getBits();
 
         Variable* currentAccumulatorValue = memory.pushTempVariable();
 
@@ -130,20 +123,7 @@ public:
     }
 
     void subFromAccumulatorDefault(){
-        cl_I tmpnum(this->num);
-        const cl_I two = 2;
-
-        stack<int> bits;
-
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
-            if(modulo == 1){
-                bits.push(1);
-            } else {
-                bits.push(0);
-            }
-            tmpnum = floor1(tmpnum / two);
-        }
+        stack<int> bits = this->getBits();
 
         Variable* currentAccumulatorValue = memory.pushTempVariable();
         machine.STORE(currentAccumulatorValue->memoryPtr);

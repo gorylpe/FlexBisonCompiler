@@ -118,19 +118,34 @@ void Expression::loadToAccumulatorSubtraction() {
     this->val2->subFromAccumulator();
 }
 
+void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2);
+void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum);
+
 void Expression::loadToAccumulatorMultiplication() {
     //TODO optimization for multiplication by power of 2
     //optimization for number
+    if(this->val1->type == Value::Type::NUM || this->val2->type == Value::Type::NUM){
+        Value* valNum = val1->type == Value::Type::NUM ? val1 : val2;
+        Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
+
+        loadToAccumulatorMultiplicationByNumber(valNotNum, valNum);
+        //loadToAccumulatorMultiplicationDefault(this->val1, this->val2);
+    } else {
+        loadToAccumulatorMultiplicationDefault(this->val1, this->val2);
+    }
+}
+
+void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     auto tmpVal1 = memory.pushTempVariable();
     auto tmpVal2 = memory.pushTempVariable();
     auto currentShiftedNumber = memory.pushTempVariable();
     auto bits = memory.pushTempVariable();
     auto result = memory.pushTempVariable();
 
-    this->val1->loadToAccumulator();
+    val1->loadToAccumulator();
     machine.STORE(tmpVal1->memoryPtr);
-    if(!this->val1->equals(this->val2))
-        this->val2->loadToAccumulator();
+    if(!val1->equals(val2))
+        val2->loadToAccumulator();
     machine.STORE(tmpVal2->memoryPtr);
 
     auto value1LessOrEqualsValue2 = new JumpPosition();
@@ -207,6 +222,25 @@ void Expression::loadToAccumulatorMultiplication() {
     memory.popTempVariable(); //currentShiftedNumber
     memory.popTempVariable(); //bits
     memory.popTempVariable(); //result
+}
+
+void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
+    stack<int> bits = valNum->num->getBits();
+
+    //first bit always 1
+    bits.pop();
+    valNotNum->loadToAccumulator();
+
+    while(!bits.empty()){
+        machine.SHL();
+
+        int bit = bits.top();
+        bits.pop();
+
+        if(bit == 1){
+            valNotNum->addToAccumulator();
+        }
+    }
 }
 
 void Expression::loadToAccumulatorDivision() {
