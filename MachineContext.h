@@ -24,7 +24,7 @@ public:
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
 
     void optimizeContinuousCodeBlocks() {
-        int linesNum = assemblyCode.size();
+        unsigned long linesNum = assemblyCode.size();
         bool hasJump[linesNum];
         for (int i = 0; i < linesNum; ++i) {
             hasJump[i] = dynamic_cast<JumpAssemblyLine *>(assemblyCode[i]) != nullptr;
@@ -92,7 +92,7 @@ public:
         }
 
         //remove unused lines
-        for(int i = linesNum - 1; i >= 0; --i){
+        for(unsigned long i = linesNum - 1; i >= 0; --i){
             if(toRemove[i]){
                 assemblyCode.erase(assemblyCode.begin() + i);
             }
