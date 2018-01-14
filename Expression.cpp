@@ -311,10 +311,8 @@ void Expression::loadToAccumulatorModulo() {
         return;
     }
 
-    Variable* currentBit = memory.pushTempVariable();
     Variable* currentDividend = memory.pushTempVariable();
     Variable* currentDivider = memory.pushTempVariable();
-    Variable* result = memory.pushTempVariable();
 
     auto firstDividerDividendComparision = new JumpPosition();
     auto dividerShiftingStart = new JumpPosition();
@@ -327,36 +325,25 @@ void Expression::loadToAccumulatorModulo() {
     this->val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 
-    machine.ZERO();
-    machine.STORE(result->memoryPtr);
-    machine.INC();
-    machine.STORE(currentBit->memoryPtr);
-
-    //optimization, load here or it will be loaded at divider shifting start
-    machine.LOAD(currentDivider->memoryPtr);
     machine.JUMP(firstDividerDividendComparision);
 
     //shift current bit and divider, and to divider must be <= divident
     machine.setJumpPosition(dividerShiftingStart);
-    machine.LOAD(currentBit->memoryPtr);
-    machine.SHL();
-    machine.STORE(currentBit->memoryPtr);
     machine.LOAD(currentDivider->memoryPtr);
     machine.SHL();
     machine.STORE(currentDivider->memoryPtr);
 
     //jumping here first time
     machine.setJumpPosition(firstDividerDividendComparision);
+    //currentDivider already in accumulator - optimization
     machine.SUB(currentDividend->memoryPtr);
     //if divider <= dividend shift divider right
     machine.JZERO(dividerShiftingStart);
 
     machine.setJumpPosition(divisionShiftingStart);
-    //SHIFT CURRENT BIT
-    //divider > dividend, so shift once right
-    machine.LOAD(currentBit->memoryPtr);
-    machine.SHR();
-    machine.STORE(currentBit->memoryPtr);
+    //divider reached starting value end sub = 0 so end
+    machine.LOAD(currentDivider->memoryPtr);
+    this->val2->subFromAccumulator();
 
     //dividing if currentBit > 0
     //jump to end if currentBit == 0
@@ -384,10 +371,8 @@ void Expression::loadToAccumulatorModulo() {
     machine.setJumpPosition(divisionEnd);
     machine.LOAD(currentDividend->memoryPtr);
 
-    memory.popTempVariable(); //currentBit
     memory.popTempVariable(); //currentDividend
     memory.popTempVariable(); //currentDivider
-    memory.popTempVariable(); //result
 }
 
 
