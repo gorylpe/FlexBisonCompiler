@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include "MemoryManager.h"
 #include "Assembly.h"
 
@@ -18,8 +19,86 @@ public:
 
 
     vector<AssemblyLine*> assemblyCode;
+    set<JumpPosition*> jumps;
 
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
+
+    void optimizeContinuousCodeBlocks() {
+        int linesNum = assemblyCode.size();
+        bool hasJump[linesNum];
+        for (int i = 0; i < linesNum; ++i) {
+            hasJump[i] = dynamic_cast<JumpAssemblyLine *>(assemblyCode[i]) != nullptr;
+        }
+
+        for (auto jump : jumps) {
+            hasJump[jump->getPosition()] = true;
+        }
+
+        //debug
+        /*for(int i = 0; i < linesNum; ++i){
+            cerr << "Line: " << i << " Jump: " << hasJump[i] << endl;
+        }*/
+
+        bool toRemove[linesNum];
+        for (int i = 0; i < linesNum; ++i) {
+            toRemove[i] = false;
+        }
+
+        //OPTIMIZE STORE LOADS
+        cl_I currentAccumulatorMemoryPtr = -1;
+        for (int i = 0; i < linesNum; ++i) {
+            if (hasJump[i]) {
+                //reset current accumulator memory ptr
+                currentAccumulatorMemoryPtr = -1;
+            }
+            auto storeLine = dynamic_cast<STOREAssemblyLine *>(assemblyCode[i]);
+            auto loadLine = dynamic_cast<LOADAssemblyLine *>(assemblyCode[i]);
+            if (storeLine != nullptr) {
+                currentAccumulatorMemoryPtr = storeLine->getMemoryPtr();
+            } else if (loadLine != nullptr) {
+                if (loadLine->getMemoryPtr() == currentAccumulatorMemoryPtr &&
+                    !hasJump[i]) {
+                    toRemove[i] = true;
+                }
+            }
+        }
+
+        //todo optimize INC DEC
+
+        //debug
+        /*for (int i = 0; i < linesNum; ++i) {
+            cerr << "Line: " << i << " To remove: " << toRemove[i] << endl;
+        }*/
+
+        //calculate jump shifts
+        int jumpShift[linesNum];
+        jumpShift[0] = 0;
+        for (int i = 1; i < linesNum; ++i) {
+            jumpShift[i] = jumpShift[i - 1] + (toRemove[i] ? 1 : 0);
+        }
+
+        //debug
+        /*for (int i = 0; i < linesNum; ++i) {
+            cerr << "Line: " << i << " Jump shift: " << jumpShift[i] << endl;
+        }*/
+
+        //sift jumps
+        for (auto jump : jumps) {
+            unsigned long position = jump->getPosition();
+            //cerr << "Jump old: " << position;
+            position -= jumpShift[position];
+            //cerr << " new: " << position << endl;
+            jump->setPosition(position);
+        }
+
+        //remove unused lines
+        for(int i = linesNum - 1; i >= 0; --i){
+            if(toRemove[i]){
+                assemblyCode.erase(assemblyCode.begin() + i);
+            }
+        }
+    }
+
 
     void generateCode(stringstream& ss){
         for(auto line : assemblyCode){
@@ -93,14 +172,17 @@ public:
 
     void JUMP(JumpPosition* position){
         assemblyCode.push_back(new JUMPAssemblyLine(position));
+        jumps.insert(position);
     }
 
     void JZERO(JumpPosition* position){
         assemblyCode.push_back(new JZEROAssemblyLine(position));
+        jumps.insert(position);
     }
 
     void JODD(JumpPosition* position){
         assemblyCode.push_back(new JODDAssemblyLine(position));
+        jumps.insert(position);
     }
 
     void HALT(){

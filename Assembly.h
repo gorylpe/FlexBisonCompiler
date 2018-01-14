@@ -21,17 +21,6 @@ public:
     }
 };
 
-
-class JumpLabel : public AssemblyLine{
-    JumpPosition* position;
-public:
-    void toStringstream(stringstream& ss){}
-
-    void setLineNumberToJumpPosition(unsigned long position){
-        this->position->setPosition(position);
-    }
-};
-
 class GETAssemblyLine : public AssemblyLine{
 public:
     explicit GETAssemblyLine() = default;
@@ -111,6 +100,8 @@ public:
     explicit JumpAssemblyLine(JumpPosition* position)
     :position(position){}
 
+    JumpPosition* getJump(){return position;}
+
     virtual void toStringstream(stringstream& ss) = 0;
 };
 
@@ -152,6 +143,8 @@ protected:
 public:
     explicit SingleMemoryPointerAssemblyLine(cl_I& memoryPtr)
     :memoryPtr(memoryPtr){}
+
+    cl_I getMemoryPtr(){return memoryPtr;}
     
     virtual void toStringstream(stringstream& ss) = 0;
 };

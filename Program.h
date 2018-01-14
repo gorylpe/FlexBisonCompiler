@@ -19,6 +19,7 @@ public:
         }
         machine.HALT();
 
+        machine.optimizeContinuousCodeBlocks();
         machine.generateCode(ss);
 
         return ss.str();
