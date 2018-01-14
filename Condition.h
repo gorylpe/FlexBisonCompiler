@@ -61,22 +61,14 @@ public:
             case EQ:
                 this->generateTestEquals(jumpIfTrue, jumpIfFalse);
                 break;
-            case NEQ: {
-                val1->loadToAccumulator();
-                machine.INC();
-                val2->subFromAccumulator();
-                machine.JZERO(jumpIfTrue); // a < b; pass next condition instructions and jump to instructions
-                machine.DEC();
-                machine.JZERO(jumpIfFalse);// a = b; jump outside commands
-                //a > b; condition satisfied so no jump
-            }
+            case NEQ:
+                this->generateTestNotEquals(jumpIfTrue, jumpIfFalse);
                 break;
             case LT: {
-                val1->loadToAccumulator();
-                machine.INC();
-                val2->subFromAccumulator();
-                machine.JZERO(jumpIfTrue); // a < b
-                machine.JUMP(jumpIfFalse); // a >= b
+                val2->loadToAccumulator();
+                val1->subFromAccumulator();
+                machine.JZERO(jumpIfFalse); //b <= a; jump outside
+                // b > a
             }
                 break;
             case GT: {
@@ -104,6 +96,42 @@ public:
         }
     }
 
+    void generateTestNotEquals(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
+        if(val1->type == Value::Type::NUM || val2->type == Value::Type::NUM){
+            this->generateTestNotEqualsForNumber(jumpIfTrue, jumpIfFalse);
+        } else {
+            this->generateTestNotEqualsDefault(jumpIfTrue, jumpIfFalse);
+        }
+    }
+
+    void generateTestNotEqualsForNumber(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
+        Value* valNum = val1->type == Value::Type::NUM ? val1 : val2;
+        Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
+
+        //optimization for comparing with small numbers tested empirically
+        if(valNum->num->num < 3){
+            valNotNum->loadToAccumulator();
+            //jump to false if already zero
+            for(cl_I i = 0; i < valNum->num->num; ++i){
+                machine.JZERO(jumpIfTrue);
+                machine.DEC();
+            }
+            machine.JZERO(jumpIfFalse);
+        } else {
+            this->generateTestNotEqualsDefault(jumpIfTrue, jumpIfFalse);
+        }
+    }
+
+    void generateTestNotEqualsDefault(JumpPosition* jumpIfTrue, JumpPosition* jumpIfFalse){
+        val1->loadToAccumulator();
+        machine.INC();
+        val2->subFromAccumulator();
+        machine.JZERO(jumpIfTrue); // a < b; pass next condition instructions and jump to instructions
+        machine.DEC();
+        machine.JZERO(jumpIfFalse);// a = b; jump outside commands
+        //a > b; condition satisfied so no jump
+    }
+
     void generateTestEquals(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
         if(val1->type == Value::Type::NUM || val2->type == Value::Type::NUM){
             this->generateTestEqualsForNumber(jumpIfTrue, jumpIfFalse);
@@ -117,7 +145,7 @@ public:
         Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
 
         //optimization for comparing with small numbers
-        if(valNum->num->num < 2){
+        if(valNum->num->num < 3){
             valNotNum->loadToAccumulator();
             //jump to false if already zero
             for(cl_I i = 0; i < valNum->num->num; ++i){
