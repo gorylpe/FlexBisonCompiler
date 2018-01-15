@@ -249,6 +249,7 @@ void Expression::loadToAccumulatorDivision() {
     auto divisionShiftingStart = new JumpPosition();
     auto divisionSubtraction = new JumpPosition();
     auto divisionEnd = new JumpPosition();
+    auto outsideDivision = new JumpPosition();
 
     machine.ZERO();
     machine.STORE(result->memoryPtr);
@@ -262,7 +263,7 @@ void Expression::loadToAccumulatorDivision() {
     machine.STORE(currentDivider->memoryPtr);
 
     //jump if divider = 0
-    machine.JZERO(divisionEnd);
+    machine.JZERO(outsideDivision);
     //optimization, load here or it will be loaded at divider shifting start
     machine.JUMP(firstDividerDividendComparision);
 
@@ -316,6 +317,9 @@ void Expression::loadToAccumulatorDivision() {
 
     machine.setJumpPosition(divisionEnd);
     machine.LOAD(result->memoryPtr);
+    //edge case, if divider = 0 then result = 0 so jump outside immidiately
+    //OPTIMIZATION no need to load result
+    machine.setJumpPosition(outsideDivision);
 
     memory.popTempVariable(); //currentBit
     memory.popTempVariable(); //currentDividend
@@ -340,6 +344,7 @@ void Expression::loadToAccumulatorModulo() {
     auto divisionShiftingStart = new JumpPosition();
     auto divisionSubtraction = new JumpPosition();
     auto divisionEnd = new JumpPosition();
+    auto outsideDivision = new JumpPosition();
 
     this->val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
@@ -347,7 +352,7 @@ void Expression::loadToAccumulatorModulo() {
     machine.STORE(currentDivider->memoryPtr);
 
     //jump if divider = 0
-    machine.JZERO(divisionEnd);
+    machine.JZERO(outsideDivision);
 
     machine.JUMP(firstDividerDividendComparision);
 
@@ -394,6 +399,9 @@ void Expression::loadToAccumulatorModulo() {
 
     machine.setJumpPosition(divisionEnd);
     machine.LOAD(currentDividend->memoryPtr);
+    //edge case, if divider = 0 then result = 0 so jump outside immidiately
+    //loading divident will make error
+    machine.setJumpPosition(outsideDivision);
 
     memory.popTempVariable(); //currentDividend
     memory.popTempVariable(); //currentDivider
