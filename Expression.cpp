@@ -111,25 +111,25 @@ void Expression::loadToAccumulatorValue() {
 void Expression::loadToAccumulatorAddition() {
     this->val1->loadToAccumulator();
     this->val2->addToAccumulator();
+    //TODO OPTIMIZATION FOR PIDPID IDENTIFIERS
 }
 
 void Expression::loadToAccumulatorSubtraction() {
     this->val1->loadToAccumulator();
     this->val2->subFromAccumulator();
+    //TODO OPTIMIZATION FOR PIDPID IDENTIFIERS
 }
 
 void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2);
 void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum);
 
 void Expression::loadToAccumulatorMultiplication() {
-    //TODO optimization for multiplication by power of 2
     //optimization for number
     if(this->val1->type == Value::Type::NUM || this->val2->type == Value::Type::NUM){
         Value* valNum = val1->type == Value::Type::NUM ? val1 : val2;
         Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
 
         loadToAccumulatorMultiplicationByNumber(valNotNum, valNum);
-        //loadToAccumulatorMultiplicationDefault(this->val1, this->val2);
     } else {
         loadToAccumulatorMultiplicationDefault(this->val1, this->val2);
     }
@@ -141,7 +141,6 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
     auto result = memory.pushTempVariable();
 
     auto value1LessOrEqualsValue2 = new JumpPosition();
-    auto multiplicationStart = new JumpPosition();
     auto multiplicationLoopStart = new JumpPosition();
     auto multiplicationEnd = new JumpPosition();
     auto multiplicationAdding = new JumpPosition();
@@ -346,6 +345,9 @@ void Expression::loadToAccumulatorModulo() {
     machine.STORE(currentDividend->memoryPtr);
     this->val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
+
+    //jump if divider = 0
+    machine.JZERO(divisionEnd);
 
     machine.JUMP(firstDividerDividendComparision);
 

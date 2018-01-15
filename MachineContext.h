@@ -21,8 +21,9 @@ public:
     vector<AssemblyLine*> assemblyCode;
     set<JumpPosition*> jumps;
 
-    //todo code generation, look for STORE LOAD duplications, JUMP to line after
+    //todo CHECK FOR UNUSED VARS
 
+    //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeContinuousCodeBlocks() {
         int linesNum = assemblyCode.size();
         bool hasJump[linesNum];
