@@ -240,17 +240,12 @@ public:
 
         //first comparision - first check needed for initial condition
         //edge case - if going DOWNTO 0 cant go -1, need checking after loop if equals before iterator inc/dec
-        if(this->increasing){
-            machine.LOAD(tmpTo->memoryPtr);
-            machine.INC();
-            machine.SUB(iterator->memoryPtr);
-        } else {
+        if(!this->increasing){
             machine.LOAD(iterator->memoryPtr);
             machine.INC();
             machine.SUB(tmpTo->memoryPtr);
+            machine.JZERO(loopOutside);
         }
-
-        machine.JZERO(loopOutside);
 
         machine.setJumpPosition(loopStart);
 
