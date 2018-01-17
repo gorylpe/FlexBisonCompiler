@@ -48,26 +48,25 @@ public:
     }
 
     void prepareIfNeeded(){
-        cerr << "val " << type << " prep" << endl;
-        switch (this->type){
-            case Value::Type::NUM:
-                //this->num->prepareIfNeeded();
-                break;
-            case Value::Type::IDENTIFIER:
-                this->ident->prepareIfNeeded();
-                break;
+        //prepare for PIDPID type
+        if (this->type == Value::Type::IDENTIFIER){
+            this->ident->prepareIfNeeded();
         }
-        cerr << "val " << type << " prep" << endl;
     }
 
     void unprepareIfNeeded(){
-        switch (this->type){
+        //free memory after PIDPID type preparation
+        if (this->type == Value::Type::IDENTIFIER){
+            this->ident->unprepareIfNeeded();
+        }
+    }
+
+    bool isLoadBetterThanAdd() {
+        switch (this->type) {
             case Value::Type::NUM:
-                //this->num->unprepareIfNeeded();
-                break;
+                return this->num->isLoadBetterThanAdd();
             case Value::Type::IDENTIFIER:
-                this->ident->unprepareIfNeeded();
-                break;
+                return this->ident->isLoadBetterThanAdd();
         }
     }
 

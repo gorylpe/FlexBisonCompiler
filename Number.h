@@ -14,8 +14,6 @@ public:
     //PLUS PROPAGACJA STALYCH
     Position* pos;
     cl_I num;
-    /*Variable* preparedNumber;
-    bool isPrepared;*/
 
     const int swapToDefaultAlgorithmValue = 10;
 
@@ -41,26 +39,10 @@ public:
         return ss.str();
     }
 
-    /*void prepareIfNeeded(){
-        if(!isSmall() && !isPrepared){
-            Variable* numberValue = memory.pushTempVariable();
-
-            this->loadToAccumulator();
-
-            machine.STORE(numberValue->memoryPtr);
-
-            this->preparedNumber = numberValue;
-            this->isPrepared = true;
-        }
+    //checks when better to load number to accumulator than add using incs - for commutative addition
+    bool isLoadBetterThanAdd(){
+        return this->num > 5;
     }
-
-    void unprepareIfNeeded(){
-        if(isPrepared){
-            isPrepared = false;
-            memory.popTempVariable(); //preparedNumber
-            preparedNumber = nullptr;
-        }
-    }*/
 
     stack<int> getBits(){
         cl_I tmpnum(this->num);

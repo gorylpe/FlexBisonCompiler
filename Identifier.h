@@ -187,6 +187,11 @@ public:
         }
     }
 
+    //they are the same - compatible function with this Number one
+    bool isLoadBetterThanAdd(){
+        return false;
+    }
+
     void storeFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();

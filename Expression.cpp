@@ -161,8 +161,18 @@ void Expression::loadToAccumulatorValue() {
 }
 
 void Expression::loadToAccumulatorAddition() {
-    this->val1->loadToAccumulator();
-    this->val2->addToAccumulator();
+    //todo change if NUMBER loading changes
+    //addition is commutative and its cheaper to load number first
+    //cause adding number to accumulator needs to hold accumulator in temporary variable (LOAD and STORE faster)
+    if(this->val2->isLoadBetterThanAdd()){
+        this->val2->loadToAccumulator();
+        this->val1->addToAccumulator();
+    } else {
+        this->val1->loadToAccumulator();
+        this->val2->addToAccumulator();
+    }
+/*  this->val1->loadToAccumulator();
+    this->val2->addToAccumulator();*/
 }
 
 void Expression::loadToAccumulatorSubtraction() {
