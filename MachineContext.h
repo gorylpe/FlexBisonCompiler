@@ -21,7 +21,9 @@ public:
     vector<AssemblyLine*> assemblyCode;
     set<JumpPosition*> jumps;
 
-    //todo CHECK FOR UNUSED VARS
+    //todo constants propagation in AST - 9-sort test, 5-tab, 1-numbers, program2
+
+    //todo CHECK FOR UNUSED VARS (not likely)
 
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeContinuousCodeBlocks() {
