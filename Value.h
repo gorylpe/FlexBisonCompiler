@@ -47,6 +47,30 @@ public:
         }
     }
 
+    void prepareIfNeeded(){
+        cerr << "val " << type << " prep" << endl;
+        switch (this->type){
+            case Value::Type::NUM:
+                //this->num->prepareIfNeeded();
+                break;
+            case Value::Type::IDENTIFIER:
+                this->ident->prepareIfNeeded();
+                break;
+        }
+        cerr << "val " << type << " prep" << endl;
+    }
+
+    void unprepareIfNeeded(){
+        switch (this->type){
+            case Value::Type::NUM:
+                //this->num->unprepareIfNeeded();
+                break;
+            case Value::Type::IDENTIFIER:
+                this->ident->unprepareIfNeeded();
+                break;
+        }
+    }
+
     void loadToAccumulator(){
         switch (this->type){
             case Value::Type::NUM:

@@ -46,6 +46,10 @@ public:
         cerr << "Declaring array name " << pid << " size " << size << endl;
     }
 
+    ~Variable(){
+        cerr << "Deleting variable " << pid << endl;
+    }
+
     bool isModifiable(){
         return this->modifiable;
     }

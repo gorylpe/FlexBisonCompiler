@@ -55,6 +55,17 @@ public:
         return "condition " + condType + " of values: " + val1->toString() + ", " + val2->toString();
     }
 
+    void prepareValuesIfNeeded(){
+        this->val1->prepareIfNeeded();
+        this->val2->prepareIfNeeded();
+    }
+
+    void unprepareValuesIfNeeded(){
+        this->val1->unprepareIfNeeded();
+        this->val2->unprepareIfNeeded();
+    }
+
+
     void generateTestWithTrueFalseJumps(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse) {
         //todo think out eq, make leq and lt same as geq gt
         switch (this->type) {
@@ -104,12 +115,16 @@ public:
         }
     }
 
+    bool isSmall(Value* valNum){
+        return valNum->num->num < 3;
+    }
+
     void generateTestNotEqualsForNumber(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse){
         Value* valNum = val1->type == Value::Type::NUM ? val1 : val2;
         Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
 
         //optimization for comparing with small numbers tested empirically
-        if(valNum->num->num < 3){
+        if(isSmall(valNum)){
             valNotNum->loadToAccumulator();
             //jump to false if already zero
             for(cl_I i = 0; i < valNum->num->num; ++i){
@@ -145,7 +160,7 @@ public:
         Value* valNotNum = val1->type == Value::Type::NUM ? val2 : val1;
 
         //optimization for comparing with small numbers
-        if(valNum->num->num < 3){
+        if(isSmall(valNum)){
             valNotNum->loadToAccumulator();
             //jump to false if already zero
             for(cl_I i = 0; i < valNum->num->num; ++i){

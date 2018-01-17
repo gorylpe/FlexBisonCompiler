@@ -8,6 +8,7 @@ export COMPILER=$DIR/compiler
 #$DIR/tests/execution/test.sh "basic"
 $DIR/tests/execution/test.sh "final-tests"
 $DIR/tests/execution/test.sh "labor4"
+$DIR/tests/execution/test.sh "numbers"
 #$DIR/tests/compilation/test.sh "read"
 #$DIR/tests/compilation/test.sh "comment"
 #$DIR/tests/compilation/test.sh "var"

@@ -29,8 +29,14 @@ public:
 
     virtual void generateCode(){
         cerr << "Generating ASSIGNMENT code" << endl;
+        this->ident->prepareIfNeeded();
+        this->expr->prepareValuesIfNeeded();
+
         this->expr->loadToAccumulator();
         this->ident->storeFromAccumulator();
+
+        this->ident->unprepareIfNeeded();
+        this->expr->unprepareValuesIfNeeded();
         cerr << "End generating ASSIGNMENT code" << endl;
     }
 };
@@ -46,8 +52,12 @@ public:
 
     void generateCode(){
         cerr << "Generating READ code" << endl;
+        this->ident->prepareIfNeeded();
+
         machine.GET();
         ident->storeFromAccumulator();
+
+        this->ident->unprepareIfNeeded();
         cerr << "End generating READ code" << endl;
     }
 };
@@ -63,8 +73,14 @@ public:
 
     void generateCode(){
         cerr << "Generating WRITE code" << endl;
+        if(this->val->type != Value::Type::NUM)
+            this->val->prepareIfNeeded();
+
         this->val->loadToAccumulator();
         machine.PUT();
+
+        if(this->val->type != Value::Type::NUM)
+            this->val->unprepareIfNeeded();
         cerr << "End generating WRITE code" << endl;
     }
 };
@@ -84,6 +100,8 @@ public:
         cerr << "Generating IF code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
+            this->cond->prepareValuesIfNeeded();
+
             auto jumpIfTrue = new JumpPosition();
             auto jumpIfFalse = new JumpPosition();
 
@@ -93,6 +111,8 @@ public:
                 cmd->generateCode();
             }
             machine.setJumpPosition(jumpIfFalse);
+
+            this->cond->unprepareValuesIfNeeded();
         } else if (this->cond->constComparisionResult){
             for(auto cmd : this->block->commands){
                 cmd->generateCode();
@@ -119,6 +139,8 @@ public:
         cerr << "Generating IF ELSE code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
+            this->cond->prepareValuesIfNeeded();
+
             auto jumpIfTrue = new JumpPosition();
             auto jumpIfFalse = new JumpPosition();
             auto passElseBlock = new JumpPosition();
@@ -139,6 +161,7 @@ public:
 
             machine.setJumpPosition(passElseBlock);
 
+            this->cond->unprepareValuesIfNeeded();
         } else if (this->cond->constComparisionResult){
             for(auto cmd : this->block1->commands){
                 cmd->generateCode();
@@ -167,6 +190,8 @@ public:
         cerr << "Generating WHILE code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
+            this->cond->prepareValuesIfNeeded();
+
             auto loopStart = new JumpPosition();
             auto codeStart = new JumpPosition();
             auto loopOutside = new JumpPosition();
@@ -184,6 +209,7 @@ public:
 
             machine.setJumpPosition(loopOutside);
 
+            this->cond->unprepareValuesIfNeeded();
         } else if (this->cond->constComparisionResult) {
             auto loopStart = new JumpPosition();
             machine.setJumpPosition(loopStart);
@@ -219,6 +245,12 @@ public:
     }
 
     virtual void generateCode(){
+        //only loading to accumulator so no need to prepare
+        if(this->from->type != Value::Type::NUM)
+            this->from->prepareIfNeeded();
+        if(this->to->type != Value::Type::NUM)
+            this->to->prepareIfNeeded();
+
         cerr << "Generating FOR code" << endl;
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
@@ -277,6 +309,11 @@ public:
 
         memory.popTempVariable(); //iterator
         memory.popTempVariable(); //tmpTo
+
+        if(this->from->type != Value::Type::NUM)
+            this->from->unprepareIfNeeded();
+        if(this->to->type != Value::Type::NUM)
+            this->to->unprepareIfNeeded();
 
         cerr << "End generating FOR code" << endl;
     }

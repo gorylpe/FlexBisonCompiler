@@ -28,6 +28,12 @@ extern "C"
 #include "Condition.h"
 #include "Position.h"
 
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 using namespace std;
 
 struct YYLTYPE;

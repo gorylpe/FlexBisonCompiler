@@ -163,13 +163,11 @@ void Expression::loadToAccumulatorValue() {
 void Expression::loadToAccumulatorAddition() {
     this->val1->loadToAccumulator();
     this->val2->addToAccumulator();
-    //TODO OPTIMIZATION FOR PIDPID IDENTIFIERS
 }
 
 void Expression::loadToAccumulatorSubtraction() {
     this->val1->loadToAccumulator();
     this->val2->subFromAccumulator();
-    //TODO OPTIMIZATION FOR PIDPID IDENTIFIERS
 }
 
 void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2);
@@ -264,9 +262,11 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
 
 void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
     stack<int> bits = valNum->num->getBits();
+    valNotNum->prepareIfNeeded();
 
     //first bit always 1
     bits.pop();
+
     valNotNum->loadToAccumulator();
 
     while(!bits.empty()){

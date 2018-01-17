@@ -22,6 +22,8 @@ public:
         machine.optimizeContinuousCodeBlocks();
         machine.generateCode(ss);
 
+        cerr << "End generating PROGRAM" << endl;
+
         return ss.str();
     }
 };

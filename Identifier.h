@@ -24,12 +24,15 @@ public:
     Type type;
     string pid;
     string pidpid;
+    Variable* preparedAddressForPidpid;
+    bool isPreparedForPidpid;
     cl_I num;
 
     explicit Identifier(Position* pos, const string& pid)
     :pos(pos)
     ,pid(pid)
-    ,type(PID){
+    ,type(PID)
+    ,isPreparedForPidpid(false){
         cerr << "Creating identifier PID " << pid << endl;
     }
 
@@ -37,7 +40,8 @@ public:
     :pos(pos)
     ,pid(pid)
     ,pidpid(pidpid)
-    ,type(PIDPID){
+    ,type(PIDPID)
+    ,isPreparedForPidpid(false){
         cerr << "Creating identifier PIDPID " << pid << " [" << pidpid << "]" << endl;
     }
 
@@ -45,7 +49,8 @@ public:
     :pos(pos)
     ,pid(pid)
     ,type(PIDNUM)
-    ,num(num){
+    ,num(num)
+    ,isPreparedForPidpid(false){
         cerr << "Creating identifier PIDNUM " << pid << " [" << num << "]" << endl;
     }
 
@@ -153,6 +158,35 @@ public:
         return pidpidV;
     }
 
+    void prepareIfNeeded(){
+        if(this->type == Identifier::Type::PIDPID && !isPreparedForPidpid){
+            Variable* pidV = this->getPidVariable();
+            Variable* pidpidV = this->getPidPidVariable();
+
+            Number pidAddr(pos, pidV->memoryPtr);
+            pidAddr.loadToAccumulator();
+
+            machine.ADD(pidpidV->memoryPtr);
+
+            Variable* ptr = memory.pushTempVariable();
+            machine.STORE(ptr->memoryPtr);
+
+            preparedAddressForPidpid = ptr;
+            isPreparedForPidpid = true;
+
+            cerr << "Identifier " << pid << "[" << pidpid << "] prepared" << endl;
+        }
+    }
+
+    void unprepareIfNeeded(){
+        if(isPreparedForPidpid){
+            isPreparedForPidpid = false;
+            memory.popTempVariable(); //preparedAddressForPidpid
+            preparedAddressForPidpid = nullptr;
+            cerr << "Identifier " << pid << "[" << pidpid << "] unprepared" << endl;
+        }
+    }
+
     void storeFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
@@ -177,22 +211,13 @@ public:
                 if(!pidpidV->isInitialized()){
                     poserror(this->pos, "variable is not initialized");
                 }
-                Variable* acc = memory.pushTempVariable();
-                machine.STORE(acc->memoryPtr);
-
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator();
-
-                machine.ADD(pidpidV->memoryPtr);
-
-                Variable* ptr = memory.pushTempVariable();
-                machine.STORE(ptr->memoryPtr);
-
-                machine.LOAD(acc->memoryPtr);
-
-                machine.STOREI(ptr->memoryPtr);
-                memory.popTempVariable(); //acc
-                memory.popTempVariable(); //ptr
+                if(isPreparedForPidpid){
+                    machine.STOREI(preparedAddressForPidpid->memoryPtr);
+                } else {
+                    //cant ever happen, means mistake in C++ code
+                    cerr << "Identifier " << pid << "[" << pidpid << "] STORE error not prepared" << endl;
+                    throw exception();
+                }
                 break;
         }
     }
@@ -217,16 +242,13 @@ public:
                 if(!pidpidV->isInitialized()){
                     poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator();
-
-                machine.ADD(pidpidV->memoryPtr);
-
-                Variable* ptr = memory.pushTempVariable();
-                machine.STORE(ptr->memoryPtr);
-
-                machine.LOADI(ptr->memoryPtr);
-                memory.popTempVariable(); //ptr
+                if(isPreparedForPidpid){
+                    machine.LOADI(this->preparedAddressForPidpid->memoryPtr);
+                } else {
+                    //cant ever happen, means mistake in C++ code
+                    cerr << "Identifier " << pid << "[" << pidpid << "] LOAD error not prepared" << endl;
+                    throw exception();
+                }
                 break;
         }
     }
@@ -251,22 +273,13 @@ public:
                 if(!pidpidV->isInitialized()){
                     poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                Variable* acc = memory.pushTempVariable();
-                machine.STORE(acc->memoryPtr);
-
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator();
-
-                machine.ADD(pidpidV->memoryPtr);
-
-                Variable* ptr = memory.pushTempVariable();
-                machine.STORE(ptr->memoryPtr);
-
-                machine.LOAD(acc->memoryPtr);
-
-                machine.ADDI(ptr->memoryPtr);
-                memory.popTempVariable(); //acc
-                memory.popTempVariable(); //ptr
+                if(isPreparedForPidpid){
+                    machine.ADDI(this->preparedAddressForPidpid->memoryPtr);
+                } else {
+                    //cant ever happen, means mistake in C++ code
+                    cerr << "Identifier " << pid << "[" << pidpid << "] ADD error not prepared" << endl;
+                    throw exception();
+                }
                 break;
         }
     }
@@ -291,22 +304,13 @@ public:
                 if(!pidpidV->isInitialized()){
                     poserror(this->pos, "variable " + this->pid + " is not initialized");
                 }
-                Variable* acc = memory.pushTempVariable();
-                machine.STORE(acc->memoryPtr);
-
-                Number pidAddr(this->pos, pidV->memoryPtr);
-                pidAddr.loadToAccumulator();
-
-                machine.ADD(pidpidV->memoryPtr);
-
-                Variable* ptr = memory.pushTempVariable();
-                machine.STORE(ptr->memoryPtr);
-
-                machine.LOAD(acc->memoryPtr);
-
-                machine.SUBI(ptr->memoryPtr);
-                memory.popTempVariable(); //acc
-                memory.popTempVariable(); //ptr
+                if(isPreparedForPidpid){
+                    machine.SUBI(this->preparedAddressForPidpid->memoryPtr);
+                } else {
+                    //cant ever happen, means mistake in C++ code
+                    cerr << "Identifier " << pid << "[" << pidpid << "] SUB error not prepared" << endl;
+                    throw exception();
+                }
                 break;
         }
     }

@@ -14,12 +14,16 @@ public:
     //PLUS PROPAGACJA STALYCH
     Position* pos;
     cl_I num;
+    /*Variable* preparedNumber;
+    bool isPrepared;*/
 
-    const int swapToDefaultValue = 10;
+    const int swapToDefaultAlgorithmValue = 10;
 
     explicit Number(Position* pos, const cl_I& num)
     :pos(pos)
-    ,num(num){
+    ,num(num)
+    //,isPrepared(false)
+    {
         cerr << "Creating " << this->toString() << endl;
     }
 
@@ -27,11 +31,36 @@ public:
         return this->num == num2->num;
     }
 
+    bool isSmall(){
+        return this->num < swapToDefaultAlgorithmValue;
+    }
+
     string toString(){
         stringstream ss;
         ss << "num " << this->num;
         return ss.str();
     }
+
+    /*void prepareIfNeeded(){
+        if(!isSmall() && !isPrepared){
+            Variable* numberValue = memory.pushTempVariable();
+
+            this->loadToAccumulator();
+
+            machine.STORE(numberValue->memoryPtr);
+
+            this->preparedNumber = numberValue;
+            this->isPrepared = true;
+        }
+    }
+
+    void unprepareIfNeeded(){
+        if(isPrepared){
+            isPrepared = false;
+            memory.popTempVariable(); //preparedNumber
+            preparedNumber = nullptr;
+        }
+    }*/
 
     stack<int> getBits(){
         cl_I tmpnum(this->num);
@@ -69,10 +98,16 @@ public:
                 machine.SHL();
             }
         }
+
+        /*if(isSmall()){
+            loadToAccumulatorCommands();
+        } else {
+            machine.LOAD(preparedNumber->memoryPtr);
+        }*/
     }
 
     void addToAccumulator(){
-        if(this->num < swapToDefaultValue){
+        if(isSmall()){
             addToAccumulatorSmall();
         } else {
             addToAccumulatorDefault();
@@ -91,27 +126,15 @@ public:
         Variable* currentAccumulatorValue = memory.pushTempVariable();
 
         machine.STORE(currentAccumulatorValue->memoryPtr);
-        machine.ZERO();
 
-        while(!bits.empty()){
-            int bit = bits.top();
-            bits.pop();
-
-            if(bit == 1){
-                machine.INC();
-            }
-
-            if(!bits.empty()){
-                machine.SHL();
-            }
-        }
+        this->loadToAccumulator();
 
         machine.ADD(currentAccumulatorValue->memoryPtr);
         memory.popTempVariable(); //currentAccumulatorValue
     }
 
     void subFromAccumulator(){
-        if(this->num < swapToDefaultValue){
+        if(isSmall()){
             subFromAccumulatorSmall();
         } else {
             subFromAccumulatorDefault();
@@ -129,20 +152,8 @@ public:
 
         Variable* currentAccumulatorValue = memory.pushTempVariable();
         machine.STORE(currentAccumulatorValue->memoryPtr);
-        machine.ZERO();
 
-        while(!bits.empty()){
-            int bit = bits.top();
-            bits.pop();
-
-            if(bit == 1){
-                machine.INC();
-            }
-
-            if(!bits.empty()){
-                machine.SHL();
-            }
-        }
+        this->loadToAccumulator();
 
         Variable* numberValue = memory.pushTempVariable();
         machine.STORE(numberValue->memoryPtr);

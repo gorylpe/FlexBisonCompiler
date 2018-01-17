@@ -61,6 +61,30 @@ public:
         return "expression " + type + " with " + values;
     }
 
+    void prepareValuesIfNeeded(){
+        switch(this->type){
+            case VALUE:
+                this->val1->prepareIfNeeded();
+                break;
+            default:
+                this->val1->prepareIfNeeded();
+                this->val2->prepareIfNeeded();
+                break;
+        }
+    }
+
+    void unprepareValuesIfNeeded(){
+        switch(this->type){
+            case VALUE:
+                this->val1->unprepareIfNeeded();
+                break;
+            default:
+                this->val1->unprepareIfNeeded();
+                this->val2->unprepareIfNeeded();
+                break;
+        }
+    }
+
     void loadToAccumulatorValue();
     void loadToAccumulatorAddition();
     void loadToAccumulatorSubtraction();

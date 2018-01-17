@@ -98,7 +98,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 45 "compiler.y" /* yacc.c:1909  */
+#line 51 "compiler.y" /* yacc.c:1909  */
 
     std::string* str;
     cln::cl_I*   num;
