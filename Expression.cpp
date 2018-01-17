@@ -161,7 +161,13 @@ void Expression::loadToAccumulatorValue() {
 }
 
 void Expression::loadToAccumulatorAddition() {
-    //todo change if NUMBER loading changes
+    //addition a+a = 2*a = a << 1
+    if(this->val1->equals(this->val2)){
+        this->val1->loadToAccumulator();
+        machine.SHL();
+        return;
+    }
+
     //addition is commutative and its cheaper to load number first
     //cause adding number to accumulator needs to hold accumulator in temporary variable (LOAD and STORE faster)
     if(this->val2->isLoadBetterThanIncs()){
@@ -174,6 +180,12 @@ void Expression::loadToAccumulatorAddition() {
 }
 
 void Expression::loadToAccumulatorSubtraction() {
+    //subtraction a-a=0
+    if(this->val1->equals(this->val2)){
+        machine.ZERO();
+        return;
+    }
+
     //returns true only for number if create number and store is better than DECing, then do this in most optimized way
     if(this->val2->isLoadStoreInTempBetterThanDecs()){
         Variable* tmpVal2 = memory.pushTempVariable();
