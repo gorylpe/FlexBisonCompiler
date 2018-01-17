@@ -18,9 +18,12 @@ Expression::Expression(Expression::Type type, Value *val1, Value *val2)
     if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM) {
 
         this->bothConstValuesOptimizations();
-    } else if (val2->type == Value::Type::NUM || val1->type == Value::Type::NUM){
+    } else if (val1->type == Value::Type::NUM) {
 
-        this->oneConstValueOptimizations();
+        this->oneConstLeftValueOptimizations();
+    } else if (val2->type == Value::Type::NUM) {
+
+        this->oneConstRightValueOptimizations();
     }
 
     cerr << "Creating " << this->toString() << endl;
@@ -59,48 +62,97 @@ void Expression::bothConstValuesOptimizations() {
     this->type = VALUE;
 }
 
-void Expression::oneConstValueOptimizations(){
-    bool swapped = false;
-    if(this->val1->type == Value::Type::NUM){
-        //swap for more general code
-        Value* tmp = this->val1;
-        this->val1 = this->val2;
-        this->val2 = tmp;
-        swapped = true;
-    }
+void Expression::oneConstLeftValueOptimizations(){
     //some operations optimisations
-    switch(this->type){
+    switch(this->type) {
         case ADDITION:
+            if (this->val1->num->num == 0) {
+                //adding zero gives second value
+                this->type = VALUE;
+                this->val1 = this->val2;
+            }
+            break;
         case SUBTRACTION:
-            if(this->val2->num->num == 0){
-                //leave single val1
+            if (this->val1->num->num == 0) {
+                //subtracting from zero so output is always zero
                 this->type = VALUE;
             }
             break;
         case MULTIPLICATION:
+            if (this->val1->num->num == 0) {
+                //multiplication by zero leaves zero
+                this->type = VALUE;
+            } else if (this->val1->num->num == 1) {
+                //multiplication by one leaves only second value
+                this->type = VALUE;
+                this->val1 = this->val2;
+            }
+            break;
         case DIVISION:
+            if (this->val1->num->num == 0) {
+                //division zero by something leaves zero
+                this->type = VALUE;
+            }
+            break;
         case MODULO:
-            if(this->val2->num->num == 0){
-                //leave single val1
+            if (this->val1->num->num == 0) {
+                //modulo zero by something leaves zero
                 this->type = VALUE;
-                if(this->val1->type == Value::Type::NUM){
-                    this->val1->num->num = 0;
-                } else {
-                    this->val1 = new Value(new Number(this->val1->ident->pos, 0));
-                }
-            } else if(this->val2->num->num == 1){
-                //leave single val1
+            } else if (this->val1->num->num == 1) {
+                //modulo one by something leaves zero
                 this->type = VALUE;
+                this->val1->num->num = 0;
             }
             break;
         default:
             break;
     }
-    //unswap
-    if(swapped){
-        Value* tmp = this->val1;
-        this->val1 = this->val2;
-        this->val2 = tmp;
+}
+
+void Expression::oneConstRightValueOptimizations(){
+    //some operations optimisations
+    switch(this->type) {
+        case ADDITION:
+        case SUBTRACTION:
+            if (this->val2->num->num == 0) {
+                //subtracting and adding zero leaves value1
+                this->type = VALUE;
+            }
+            break;
+        case MULTIPLICATION:
+            if (this->val2->num->num == 0) {
+                //multiplication by 0 leaves always zero
+                this->type = VALUE;
+                this->val1 = this->val2; //val2 is number 0 already
+            } else if (this->val2->num->num == 1) {
+                //multiplication by 1 leaves value1
+                this->type = VALUE;
+            }
+            break;
+        case DIVISION:
+            if (this->val2->num->num == 0) {
+                //division by 0 leaves always zero
+                this->type = VALUE;
+                this->val1 = this->val2; //val2 is number 0 already
+            } else if (this->val2->num->num == 1) {
+                //division by 1 leaves value1
+                this->type = VALUE;
+            }
+            break;
+        case MODULO:
+            if (this->val2->num->num == 0) {
+                //modulo by 0 leaves always zero
+                this->type = VALUE;
+                this->val1 = this->val2; //val2 is number 0 already
+            } else if (this->val2->num->num == 1) {
+                //modulo by 1 leaves always zero
+                this->type = VALUE;
+                this->val2->num->num = 0; //val2 is number, set to 0
+                this->val1 = this->val2; //use val2 as main val
+            }
+            break;
+        default:
+            break;
     }
 }
 

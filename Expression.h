@@ -24,7 +24,8 @@ public:
     explicit Expression(Type type, Value* val1, Value* val2);
 
     void bothConstValuesOptimizations();
-    void oneConstValueOptimizations();
+    void oneConstLeftValueOptimizations();
+    void oneConstRightValueOptimizations();
 
     string toString(){
         string values;

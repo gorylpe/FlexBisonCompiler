@@ -15,6 +15,8 @@ public:
     Position* pos;
     cl_I num;
 
+    const int swapToDefaultValue = 10;
+
     explicit Number(Position* pos, const cl_I& num)
     :pos(pos)
     ,num(num){
@@ -70,7 +72,7 @@ public:
     }
 
     void addToAccumulator(){
-        if(this->num < 10){
+        if(this->num < swapToDefaultValue){
             addToAccumulatorSmall();
         } else {
             addToAccumulatorDefault();
@@ -109,7 +111,7 @@ public:
     }
 
     void subFromAccumulator(){
-        if(this->num < 10){
+        if(this->num < swapToDefaultValue){
             subFromAccumulatorSmall();
         } else {
             subFromAccumulatorDefault();
