@@ -6,7 +6,6 @@
 #include "Identifier.h"
 #include "Expression.h"
 #include "Condition.h"
-#include "CommandsBlock.h"
 
 using namespace std;
 using namespace cln;
@@ -14,6 +13,31 @@ using namespace cln;
 class Command {
 public:
     virtual void generateCode() = 0;
+
+    virtual bool equals(Command* command){
+        return false;
+    }
+};
+
+class CommandsBlock {
+public:
+    vector<Command*> commands;
+
+    void addCommand(Command* command){
+        commands.push_back(command);
+    }
+
+    bool equals(CommandsBlock* block2){
+        if(this->commands.size() != block2->commands.size())
+            return false;
+
+        for(int i = 0; i < this->commands.size(); ++i){
+            if(!this->commands[i]->equals(block2->commands[i]))
+                return false;
+        }
+
+        return true;
+    }
 };
 
 class Assignment : public Command {
@@ -38,6 +62,21 @@ public:
         this->ident->unprepareIfNeeded();
         this->expr->unprepareValuesIfNeeded();
         cerr << "End generating ASSIGNMENT code" << endl;
+    }
+
+
+    bool equals(Command* command){
+        auto assgn2 = dynamic_cast<Assignment*>(command);
+        if(assgn2 == nullptr)
+            return false;
+
+        if(!this->ident->equals(assgn2->ident))
+            return false;
+
+        if(!this->expr->equals(assgn2->expr))
+            return false;
+
+        return true;
     }
 };
 
@@ -136,8 +175,19 @@ public:
     }
 
     virtual void generateCode() {
+        //optimization when blocks equals
+        if(this->block1->equals(this->block2)){
+            cerr << "Optimizing IF ELSE code, same blocks in IF and ELSE" << endl;
+
+            for(auto cmd : this->block1->commands){
+                cmd->generateCode();
+            }
+
+            cerr << "End optimizing IF ELSE code" << endl;
+            return;
+        }
+
         cerr << "Generating IF ELSE code" << endl;
-        //TODO check if num of commands > 0
         if(!this->cond->constComparision){
             this->cond->prepareValuesIfNeeded();
 

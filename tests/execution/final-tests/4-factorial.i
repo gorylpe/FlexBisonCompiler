@@ -20,4 +20,20 @@ BEGIN
     ENDFOR
     WRITE s[n];
 END
+(
+must looks like this after optimization
+VAR
+  s[101] n m a j
+BEGIN
+    READ n;
+    s[0]:=1;
+    m:=n;
+    FOR i FROM 1 TO m DO
+		j:=i-1;
+			s[i]:=s[j]*m;
+		m:=m-1; //maybe remove this too
+    ENDFOR
+    WRITE s[n];
+END
+)
 

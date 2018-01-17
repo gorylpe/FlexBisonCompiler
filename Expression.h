@@ -61,6 +61,32 @@ public:
         return "expression " + type + " with " + values;
     }
 
+    bool equals(Expression* expr2){
+        if(this->type != expr2->type)
+            return false;
+
+        switch(this->type){
+            case VALUE:
+                if(this->val1->equals(expr2->val1))
+                    return true;
+            case ADDITION:
+            case MULTIPLICATION:
+                if(this->val1->equals(expr2->val1) && this->val2->equals(expr2->val2))
+                    return true;
+                if(this->val2->equals(expr2->val1) && this->val1->equals(expr2->val2))
+                    return true;
+                break;
+            case SUBTRACTION:
+            case DIVISION:
+            case MODULO:
+                if(this->val1->equals(expr2->val1) && this->val2->equals(expr2->val2))
+                    return true;
+                break;
+        }
+
+        return false;
+    }
+
     void prepareValuesIfNeeded(){
         switch(this->type){
             case VALUE:
