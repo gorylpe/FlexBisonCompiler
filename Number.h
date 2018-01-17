@@ -15,8 +15,6 @@ public:
     Position* pos;
     cl_I num;
 
-    const int swapToDefaultAlgorithmValue = 10;
-
     explicit Number(Position* pos, const cl_I& num)
     :pos(pos)
     ,num(num)
@@ -29,19 +27,10 @@ public:
         return this->num == num2->num;
     }
 
-    bool isSmall(){
-        return this->num < swapToDefaultAlgorithmValue;
-    }
-
     string toString(){
         stringstream ss;
         ss << "num " << this->num;
         return ss.str();
-    }
-
-    //checks when better to load number to accumulator than add using incs - for commutative addition
-    bool isLoadBetterThanAdd(){
-        return this->num > 5;
     }
 
     stack<int> getBits(){
@@ -63,6 +52,28 @@ public:
         return bits;
     }
 
+    int getLoadToAccumulatorOperations(){
+        stack<int> bits = this->getBits();
+
+        int numOfOps = 0;
+        numOfOps++; //ZERO
+
+        while(!bits.empty()){
+            int bit = bits.top();
+            bits.pop();
+
+            if(bit == 1){
+                numOfOps++; //INC
+            }
+
+            if(!bits.empty()){
+                numOfOps++; //SHL
+            }
+        }
+
+        return numOfOps;
+    }
+
     void loadToAccumulator(){
         stack<int> bits = this->getBits();
 
@@ -80,69 +91,28 @@ public:
                 machine.SHL();
             }
         }
+    }
 
-        /*if(isSmall()){
-            loadToAccumulatorCommands();
-        } else {
-            machine.LOAD(preparedNumber->memoryPtr);
-        }*/
+    //checks if better use INCs or LOAD current accumulator
+    bool isLoadBetterThanIncs(){
+        return this->getLoadToAccumulatorOperations() < this->num;
     }
 
     void addToAccumulator(){
-        if(isSmall()){
-            addToAccumulatorSmall();
-        } else {
-            addToAccumulatorDefault();
-        }
-    }
-
-    void addToAccumulatorSmall(){
         for(cl_I i = 0; i < this->num; ++i){
             machine.INC();
         }
     }
 
-    void addToAccumulatorDefault(){
-        stack<int> bits = this->getBits();
-
-        Variable* currentAccumulatorValue = memory.pushTempVariable();
-
-        machine.STORE(currentAccumulatorValue->memoryPtr);
-
-        this->loadToAccumulator();
-
-        machine.ADD(currentAccumulatorValue->memoryPtr);
-        memory.popTempVariable(); //currentAccumulatorValue
+    //checks if better use DECs or LOAD current accumulator
+    bool isLoadStoreInTempBetterThanDecs(){
+        return this->getLoadToAccumulatorOperations() + 10 < this->num; //loadToAcc + STORE
     }
 
     void subFromAccumulator(){
-        if(isSmall()){
-            subFromAccumulatorSmall();
-        } else {
-            subFromAccumulatorDefault();
-        }
-    }
-
-    void subFromAccumulatorSmall(){
         for(cl_I i = 0; i < this->num; ++i){
             machine.DEC();
         }
-    }
-
-    void subFromAccumulatorDefault(){
-        stack<int> bits = this->getBits();
-
-        Variable* currentAccumulatorValue = memory.pushTempVariable();
-        machine.STORE(currentAccumulatorValue->memoryPtr);
-
-        this->loadToAccumulator();
-
-        Variable* numberValue = memory.pushTempVariable();
-        machine.STORE(numberValue->memoryPtr);
-        machine.LOAD(currentAccumulatorValue->memoryPtr);
-        memory.popTempVariable(); //currentAccumulatorValue
-        machine.SUB(numberValue->memoryPtr);
-        memory.popTempVariable(); //numberValue
     }
 };
 

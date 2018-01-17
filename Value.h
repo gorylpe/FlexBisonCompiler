@@ -61,12 +61,21 @@ public:
         }
     }
 
-    bool isLoadBetterThanAdd() {
+    bool isLoadBetterThanIncs() {
         switch (this->type) {
             case Value::Type::NUM:
-                return this->num->isLoadBetterThanAdd();
+                return this->num->isLoadBetterThanIncs();
             case Value::Type::IDENTIFIER:
-                return this->ident->isLoadBetterThanAdd();
+                return false;
+        }
+    }
+
+    bool isLoadStoreInTempBetterThanDecs() {
+        switch (this->type) {
+            case Value::Type::NUM:
+                return this->num->isLoadStoreInTempBetterThanDecs();
+            case Value::Type::IDENTIFIER:
+                return false;
         }
     }
 

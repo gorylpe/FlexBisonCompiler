@@ -164,20 +164,29 @@ void Expression::loadToAccumulatorAddition() {
     //todo change if NUMBER loading changes
     //addition is commutative and its cheaper to load number first
     //cause adding number to accumulator needs to hold accumulator in temporary variable (LOAD and STORE faster)
-    if(this->val2->isLoadBetterThanAdd()){
+    if(this->val2->isLoadBetterThanIncs()){
         this->val2->loadToAccumulator();
         this->val1->addToAccumulator();
     } else {
         this->val1->loadToAccumulator();
         this->val2->addToAccumulator();
     }
-/*  this->val1->loadToAccumulator();
-    this->val2->addToAccumulator();*/
 }
 
 void Expression::loadToAccumulatorSubtraction() {
-    this->val1->loadToAccumulator();
-    this->val2->subFromAccumulator();
+    if(this->val2->isLoadStoreInTempBetterThanDecs()){
+        Variable* tmpVal2 = memory.pushTempVariable();
+
+        this->val2->loadToAccumulator();
+        machine.STORE(tmpVal2->memoryPtr);
+        this->val1->loadToAccumulator();
+        machine.SUB(tmpVal2->memoryPtr);
+
+        memory.popTempVariable();
+    } else {
+        this->val1->loadToAccumulator();
+        this->val2->subFromAccumulator();
+    }
 }
 
 void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2);
