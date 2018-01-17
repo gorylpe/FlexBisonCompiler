@@ -294,7 +294,6 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
 
 void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
     stack<int> bits = valNum->num->getBits();
-    valNotNum->prepareIfNeeded();
 
     //first bit always 1
     bits.pop();
@@ -313,10 +312,50 @@ void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
     }
 }
 
+void loadToAccumulatorDivisionDefault(Value* val1, Value* val2);
+void loadToAccumulatorDivisionByNumber(Value* val1Ident, Value* val2Num);
+
 void Expression::loadToAccumulatorDivision() {
+    //optimization for number
+    if(this->val1->type == Value::Type::IDENTIFIER && this->val2->type == Value::Type::NUM){
+        loadToAccumulatorDivisionByNumber(this->val1, this->val2);
+    } else {
+        loadToAccumulatorDivisionDefault(this->val1, this->val2);
+    }
+}
+
+//optimization for powers of 2
+void loadToAccumulatorDivisionByNumber(Value* val1Ident, Value* val2Num){
+    //when dividing by 0 result is 0
+    if(val2Num->num->num == 0){
+        machine.ZERO();
+        return;
+    }
+    //when dividing by 1 result is 1
+    if(val2Num->num->num == 1){
+        val1Ident->loadToAccumulator();
+        return;
+    }
+
+    auto num = val2Num->num->num;
+    auto numMinus1 = num - 1;
+    bool isPowOf2 = (num & numMinus1) == 0;
+    if(isPowOf2){
+        val1Ident->loadToAccumulator();
+
+        int shifts = val2Num->num->getBits().size() - 1;
+        for(int i = 0; i < shifts; ++i){
+            machine.SHR();
+        }
+    } else {
+        loadToAccumulatorDivisionDefault(val1Ident, val2Num);
+    }
+}
+
+void loadToAccumulatorDivisionDefault(Value* val1, Value* val2) {
 
     //division a/a=1
-    if(this->val1->equals(this->val2)){
+    if(val1->equals(val2)){
         machine.ZERO();
         machine.INC();
         return;
@@ -340,10 +379,10 @@ void Expression::loadToAccumulatorDivision() {
     machine.INC();
     machine.STORE(currentBit->memoryPtr);
 
-    this->val1->loadToAccumulator();
+    val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
     //check if have to load
-    this->val2->loadToAccumulator();
+    val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 
     //jump if divider = 0
@@ -411,11 +450,54 @@ void Expression::loadToAccumulatorDivision() {
     memory.popTempVariable(); //result
 }
 
+
+void loadToAccumulatorModuloDefault(Value* val1, Value* val2);
+void loadToAccumulatorModuloByNumber(Value* val1Ident, Value* val2Num);
+
 void Expression::loadToAccumulatorModulo() {
+    //optimization for number
+    if(this->val1->type == Value::Type::IDENTIFIER && this->val2->type == Value::Type::NUM){
+        loadToAccumulatorModuloByNumber(this->val1, this->val2);
+    } else {
+        loadToAccumulatorModuloDefault(this->val1, this->val2);
+    }
+}
+
+//optimization for 2
+void loadToAccumulatorModuloByNumber(Value* val1Ident, Value* val2Num){
+    //when modulo by 0 result is 0
+    if(val2Num->num->num == 0){
+        machine.ZERO();
+        return;
+    }
+    //when modulo by 1 result is 0
+    if(val2Num->num->num == 1){
+        machine.ZERO();
+        return;
+    }
+    if(val2Num->num->num == 2){
+        val1Ident->loadToAccumulator();
+
+        auto one = new JumpPosition();
+        auto outside = new JumpPosition();
+
+        machine.JODD(one);
+        machine.ZERO();
+        machine.JUMP(outside);
+        machine.setJumpPosition(one);
+        machine.ZERO();
+        machine.INC();
+        machine.setJumpPosition(outside);
+    } else {
+        loadToAccumulatorModuloDefault(val1Ident, val2Num);
+    }
+}
+
+void loadToAccumulatorModuloDefault(Value* val1, Value* val2) {
     //TODO optimisations pow 2
 
     //division a%a=0
-    if (this->val1->equals(this->val2)){
+    if (val1->equals(val2)){
         machine.ZERO();
         return;
     }
@@ -430,9 +512,9 @@ void Expression::loadToAccumulatorModulo() {
     auto divisionEnd = new JumpPosition();
     auto outsideDivision = new JumpPosition();
 
-    this->val1->loadToAccumulator();
+    val1->loadToAccumulator();
     machine.STORE(currentDividend->memoryPtr);
-    this->val2->loadToAccumulator();
+    val2->loadToAccumulator();
     machine.STORE(currentDivider->memoryPtr);
 
     //jump if divider = 0
@@ -456,7 +538,7 @@ void Expression::loadToAccumulatorModulo() {
     machine.setJumpPosition(divisionShiftingStart);
     //divider reached starting value end sub = 0 so end
     machine.LOAD(currentDivider->memoryPtr);
-    this->val2->subFromAccumulator();
+    val2->subFromAccumulator();
 
     //dividing if currentBit > 0
     //jump to end if currentBit == 0
