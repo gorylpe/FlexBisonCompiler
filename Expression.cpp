@@ -174,6 +174,7 @@ void Expression::loadToAccumulatorAddition() {
 }
 
 void Expression::loadToAccumulatorSubtraction() {
+    //returns true only for number if create number and store is better than DECing, then do this in most optimized way
     if(this->val2->isLoadStoreInTempBetterThanDecs()){
         Variable* tmpVal2 = memory.pushTempVariable();
 
