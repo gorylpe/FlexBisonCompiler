@@ -75,34 +75,29 @@ public:
             case NEQ:
                 this->generateTestNotEquals(jumpIfTrue, jumpIfFalse);
                 break;
-            case LT: {
+            case LT:
                 val2->loadToAccumulator();
                 val1->subFromAccumulator();
                 machine.JZERO(jumpIfFalse); //b <= a; jump outside
                 // b > a
-            }
                 break;
-            case GT: {
+            case GT:
                 val1->loadToAccumulator();
                 val2->subFromAccumulator();
                 machine.JZERO(jumpIfFalse);// a <= b; jump outside commands
                 // a > b;
-            }
                 break;
-            case LEQ: {
+            case LEQ:
                 val1->loadToAccumulator();
                 val2->subFromAccumulator();
                 machine.JZERO(jumpIfTrue); // a <= b; jump to instructions
                 machine.JUMP(jumpIfFalse); // a > b; jump outside instructions
-            }
                 break;
-            case GEQ: {
-                val1->loadToAccumulator();
-                machine.INC();
-                val2->subFromAccumulator();
-                machine.JZERO(jumpIfFalse);// a < b;
-                // a >= b
-            }
+            case GEQ:
+                val2->loadToAccumulator();
+                val1->subFromAccumulator();
+                machine.JZERO(jumpIfTrue); // a <= b; jump to instructions
+                machine.JUMP(jumpIfFalse); // a > b; jump outside instructions
                 break;
         }
     }
