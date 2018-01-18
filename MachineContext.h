@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <algorithm>
 #include "MemoryManager.h"
 #include "Assembly.h"
 
@@ -25,32 +26,23 @@ public:
 
     //todo CHECK FOR UNUSED VARS (not likely)
 
+    //todo optimize STOREs, if there's 2 assignments
+
+    //todo optimize INC DEC
+
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeContinuousCodeBlocks() {
-        int linesNum = assemblyCode.size();
-        bool hasJump[linesNum];
-        for (int i = 0; i < linesNum; ++i) {
-            hasJump[i] = dynamic_cast<JumpAssemblyLine *>(assemblyCode[i]) != nullptr;
-        }
+        size_t linesNum = (size_t)assemblyCode.size();
 
-        for (auto jump : jumps) {
-            hasJump[jump->getPosition()] = true;
-        }
+        vector<bool> linesWithJump = this->getLinesWithJump();
 
-        //debug
-        /*for(int i = 0; i < linesNum; ++i){
-            cerr << "Line: " << i << " Jump: " << hasJump[i] << endl;
-        }*/
-
-        bool toRemove[linesNum];
-        for (int i = 0; i < linesNum; ++i) {
-            toRemove[i] = false;
-        }
+        vector<bool> linesToRemove(linesNum);
+        std::fill(linesToRemove.begin(), linesToRemove.end(), false);
 
         //OPTIMIZE STORE LOADS
         cl_I currentAccumulatorMemoryPtr = -1;
         for (int i = 0; i < linesNum; ++i) {
-            if (hasJump[i]) {
+            if (linesWithJump[i]) {
                 //reset current accumulator memory ptr
                 currentAccumulatorMemoryPtr = -1;
             }
@@ -60,45 +52,51 @@ public:
             if (storeLine != nullptr) {
                 currentAccumulatorMemoryPtr = storeLine->getMemoryPtr();
             } else if (loadLine != nullptr) {
-                if (loadLine->getMemoryPtr() == currentAccumulatorMemoryPtr &&
-                    !hasJump[i]) {
-                    toRemove[i] = true;
+                if (loadLine->getMemoryPtr() == currentAccumulatorMemoryPtr && !linesWithJump[i]) {
+                    linesToRemove[i] = true;
                 }
                 currentAccumulatorMemoryPtr = loadLine->getMemoryPtr();
             }
         }
 
-        //todo optimize INC DEC
+        this->removeLines(linesToRemove);
+    }
 
-        //debug
-        /*for (int i = 0; i < linesNum; ++i) {
-            cerr << "Line: " << i << " To remove: " << toRemove[i] << endl;
-        }*/
+    vector<bool> getLinesWithJump(){
+        int linesNum = (int)assemblyCode.size();
 
-        //calculate jump shifts
-        int jumpShift[linesNum];
-        jumpShift[0] = 0;
-        for (int i = 1; i < linesNum; ++i) {
-            jumpShift[i] = jumpShift[i - 1] + (toRemove[i] ? 1 : 0);
+        vector<bool> linesWithJump(linesNum);
+        for (int i = 0; i < linesNum; ++i) {
+            linesWithJump[i] = dynamic_cast<JumpAssemblyLine *>(assemblyCode[i]) != nullptr;
         }
 
-        //debug
-        /*for (int i = 0; i < linesNum; ++i) {
-            cerr << "Line: " << i << " Jump shift: " << jumpShift[i] << endl;
-        }*/
+        for (auto jump : jumps) {
+            linesWithJump[jump->getPosition()] = true;
+        }
 
-        //sift jumps
+        return linesWithJump;
+    }
+
+    void removeLines(vector<bool>& linesToRemove){
+        int linesNum = (int)assemblyCode.size();
+
+        //calculate jump shifts
+        vector<int> jumpShift(linesNum);
+        jumpShift[0] = 0;
+        for (int i = 1; i < linesNum; ++i) {
+            jumpShift[i] = jumpShift[i - 1] + (linesToRemove[i] ? true : false);
+        }
+
+        //shift jumps
         for (auto jump : jumps) {
             unsigned long position = jump->getPosition();
-            //cerr << "Jump old: " << position;
             position -= jumpShift[position];
-            //cerr << " new: " << position << endl;
             jump->setPosition(position);
         }
 
         //remove unused lines
         for(int i = linesNum - 1; i >= 0; --i){
-            if(toRemove[i]){
+            if(linesToRemove[i]){
                 assemblyCode.erase(assemblyCode.begin() + i);
             }
         }
