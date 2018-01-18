@@ -20,6 +20,9 @@ public:
         PIDNUM
     };
 
+    //TODO PIDPID if array starts at zero no need to prepare and add addresses
+    //move array to start of variables
+
     Position* pos;
     Type type;
     string pid;

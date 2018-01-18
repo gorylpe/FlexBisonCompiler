@@ -31,7 +31,7 @@ BEGIN
     FOR i FROM 1 TO m DO
 		j:=i-1;
 			s[i]:=s[j]*m;
-		m:=m-1; //maybe remove this too
+		m:=m-1;
     ENDFOR
     WRITE s[n];
 END

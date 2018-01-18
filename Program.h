@@ -12,6 +12,9 @@ public:
         this->block = block;
     }
 
+    //todo move this to machine context
+    //todo optimizations for high level instructions
+
     string generateCode(){
         for(auto cmd : this->block->commands){
             cmd->generateCode();
