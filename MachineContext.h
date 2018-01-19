@@ -34,6 +34,8 @@ public:
     //(something else is using this LOAD)
     //then GENERATE JUMP TO NEXT INSTRUCTION -> easier to jump than load
 
+    //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS
+
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeContinuousCodeBlocks() {
         size_t linesNum = (size_t)assemblyCode.size();

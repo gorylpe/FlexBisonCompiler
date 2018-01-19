@@ -1,4 +1,6 @@
-( sito Eratostenesa )
+( sito Eratostenesa 
+	ROZWIJANIE PETLI FOR
+)
 VAR
     n j sito[100]
 BEGIN

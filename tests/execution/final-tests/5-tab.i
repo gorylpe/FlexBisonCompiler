@@ -1,4 +1,6 @@
-( tab.imp )
+( tab.imp 
+	STALE I ROZWIJANIE PETLI FOR
+)
 VAR
 	n j ta[25] tb[25] tc[25]
 BEGIN
