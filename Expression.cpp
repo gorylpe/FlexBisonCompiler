@@ -508,6 +508,7 @@ void loadToAccumulatorModuloDefault(Value* val1, Value* val2) {
     auto firstDividerDividendComparision = new JumpPosition();
     auto dividerShiftingStart = new JumpPosition();
     auto divisionShiftingStart = new JumpPosition();
+    auto divisionShiftingStartWithDividentLoad = new JumpPosition();
     auto divisionSubtraction = new JumpPosition();
     auto divisionEnd = new JumpPosition();
     auto outsideDivision = new JumpPosition();
@@ -535,13 +536,12 @@ void loadToAccumulatorModuloDefault(Value* val1, Value* val2) {
     //if divider <= dividend shift divider right
     machine.JZERO(dividerShiftingStart);
 
+    //cmp currentDivident + 1 <= divisor -> currentDivident  < divisor so its RESULT, mod < divisor
+    machine.setJumpPosition(divisionShiftingStartWithDividentLoad);
+    machine.LOAD(currentDividend->memoryPtr);
     machine.setJumpPosition(divisionShiftingStart);
-    //divider reached starting value end sub = 0 so end
-    machine.LOAD(currentDivider->memoryPtr);
+    machine.INC();
     val2->subFromAccumulator();
-
-    //dividing if currentBit > 0
-    //jump to end if currentBit == 0
     machine.JZERO(divisionEnd);
 
     //SHIFT CURRENT DIVIDER
@@ -549,11 +549,10 @@ void loadToAccumulatorModuloDefault(Value* val1, Value* val2) {
     machine.SHR();
     machine.STORE(currentDivider->memoryPtr);
 
+    //cmp current divider <= current dividend
     machine.SUB(currentDividend->memoryPtr);
-    //divider <= dividend, jump to subtract
     machine.JZERO(divisionSubtraction);
-    //divider > dividend
-    machine.JUMP(divisionShiftingStart);
+    machine.JUMP(divisionShiftingStartWithDividentLoad);
 
     machine.setJumpPosition(divisionSubtraction);
     //subtraction
@@ -572,5 +571,3 @@ void loadToAccumulatorModuloDefault(Value* val1, Value* val2) {
     memory.popTempVariable(); //currentDividend
     memory.popTempVariable(); //currentDivider
 }
-
-

@@ -29,6 +29,7 @@ BEGIN
     s[0]:=1;
     m:=n;
     FOR i FROM 1 TO m DO
+		a:=i%2; //need to remove that
 		j:=i-1;
 			s[i]:=s[j]*m;
 		m:=m-1;
