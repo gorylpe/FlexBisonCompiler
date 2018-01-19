@@ -30,6 +30,10 @@ public:
 
     //todo optimize INC DEC
 
+    //todo if we have assignment -> storing val and next one is loading this val and HAS JUMP TO THIS INSTRUCTION
+    //(something else is using this LOAD)
+    //then GENERATE JUMP TO NEXT INSTRUCTION -> easier to jump than load
+
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeContinuousCodeBlocks() {
         size_t linesNum = (size_t)assemblyCode.size();
