@@ -104,15 +104,43 @@ public:
     string memoryToString(){
         stringstream ss;
 
-        for(auto& entry : variables){
-            Variable* var = entry.second;
+        vector<Variable*> variablesVector;
+        for(auto& entry : variables) {
+            variablesVector.push_back( entry.second );
+        }
 
-            ss << var->pid << "   ";
-            ss << var->memoryPtr;
-            if(var->type == Variable::Type::PIDNUM){
-                ss << "-" << var->memoryPtr + var->size - 1;
+        sort(variablesVector.begin(), variablesVector.end(), [](const Variable* lhs, const Variable* rhs)
+        {
+            return lhs->memoryPtr < rhs->memoryPtr;
+        });
+
+        ss << "MEMORY DUMP" << endl;
+
+        const int maxPidSize = 20;
+        const int maxMemorySize = 20;
+
+        ss << "PID                 PTR                 NUM OF USAGES" << endl;
+
+        for(auto var : variablesVector){
+
+            ss << var->pid.substr(0, maxPidSize);
+            for(int i = var->pid.length(); i < maxPidSize; ++i){
+                ss << " ";
             }
-            ss << "   " << var->getUsage();
+
+            stringstream tmpss;
+            tmpss << var->memoryPtr;
+            if(var->type == Variable::Type::PIDNUM){
+                tmpss << "-" << var->memoryPtr + var->size - 1;
+            }
+            string mem = tmpss.str().substr(0, maxMemorySize);
+
+            ss << mem;
+            for(int i = mem.length(); i < maxMemorySize; ++i){
+                ss << " ";
+            }
+
+            ss << var->getUsage();
             ss << endl;
         }
 
@@ -160,6 +188,7 @@ public:
             }
         }
 
+        cerr << "AFTER OPTIMIZATION" << endl;
         cerr << memoryToString();
         cerr << "---OPTIMIZATION END---" << endl;
     }
