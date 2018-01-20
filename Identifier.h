@@ -162,19 +162,24 @@ public:
     }
 
     void prepareIfNeeded(){
-        if(this->type == Identifier::Type::PIDPID && !isPreparedForPidpid){
-            Variable* pidV = this->getPidVariable();
-            Variable* pidpidV = this->getPidPidVariable();
+        if(this->type == Identifier::Type::PIDPID && !isPreparedForPidpid) {
+            Variable *pidV = this->getPidVariable();
+            Variable *pidpidV = this->getPidPidVariable();
 
-            Number pidAddr(pos, pidV->memoryPtr);
-            pidAddr.loadToAccumulator();
+            //tab start at 0 indirect address is exact one in pidpidV
+            if (pidV->memoryPtr == 0) {
+                preparedAddressForPidpid = pidpidV;
+            }else {
+                Number pidAddr(pos, pidV->memoryPtr);
+                pidAddr.loadToAccumulator();
 
-            machine.ADD(pidpidV->memoryPtr);
+                machine.ADD(pidpidV->memoryPtr);
 
-            Variable* ptr = memory.pushTempVariable();
-            machine.STORE(ptr->memoryPtr);
+                Variable* ptr = memory.pushTempVariable();
+                machine.STORE(ptr->memoryPtr);
 
-            preparedAddressForPidpid = ptr;
+                preparedAddressForPidpid = ptr;
+            }
             isPreparedForPidpid = true;
 
             cerr << "Identifier " << pid << "[" << pidpid << "] prepared" << endl;
@@ -184,8 +189,13 @@ public:
     void unprepareIfNeeded(){
         if(isPreparedForPidpid){
             isPreparedForPidpid = false;
-            memory.popTempVariable(); //preparedAddressForPidpid
-            preparedAddressForPidpid = nullptr;
+
+            Variable *pidV = this->getPidVariable();
+
+            if (pidV->memoryPtr != 0) {
+                memory.popTempVariable(); //preparedAddressForPidpid tmp variable
+                preparedAddressForPidpid = nullptr;
+            }
             cerr << "Identifier " << pid << "[" << pidpid << "] unprepared" << endl;
         }
     }
