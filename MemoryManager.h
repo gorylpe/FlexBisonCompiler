@@ -5,6 +5,7 @@
 #include <vector>
 #include <sstream>
 #include <map>
+#include <algorithm>
 #include "Variable.h"
 #include "Position.h"
 #include "Utils.h"
@@ -111,6 +112,7 @@ public:
             if(var->type == Variable::Type::PIDNUM){
                 ss << "-" << var->memoryPtr + var->size - 1;
             }
+            ss << "   " << var->getUsage();
             ss << endl;
         }
 
@@ -122,39 +124,42 @@ public:
     }
 
     void optimizeArraysMemoryPointers(){
-        cerr << "---BIGGEST ARRAY MOVING TO MEMORY START OPTIMIZATION---" << endl;
+        cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION---" << endl;
         cerr << memoryToString();
 
-        string biggestArrayPid;
-        cl_I biggestArraySize = 0;
-        //biggest array optimization, move it to start of memory addresses so no need to create indirect addresses
-        for(auto& entry : variables){
-            Variable* var = entry.second;
-            if(var->type == Variable::Type::PIDNUM){
-                if(var->size > biggestArraySize){
-                    biggestArraySize = var->size;
-                    biggestArrayPid = var->pid;
-                }
+        vector<Variable*> singles;
+        for(auto& entry : variables) {
+            if(entry.second->type == Variable::Type::PID)
+            singles.push_back( entry.second );
+        }
+
+        vector<Variable*> arrays;
+        for(auto& entry : variables) {
+            if(entry.second->type == Variable::Type::PIDNUM)
+            arrays.push_back( entry.second );
+        }
+
+        //sort based on how many times was used, most used first
+        sort(arrays.begin(), arrays.end(), [](const Variable* lhs, const Variable* rhs)
+        {
+            return lhs->getUsage() > rhs->getUsage();
+        });
+
+        if(!arrays.empty()){
+            cl_I newMemoryPtr = 0;
+
+            for(auto i = arrays.begin(); i != arrays.end(); ++i){
+                Variable* array = *i;
+                array->memoryPtr = newMemoryPtr;
+                newMemoryPtr += array->size;
+            }
+
+            for(auto single : singles){
+                single->memoryPtr = newMemoryPtr;
+                newMemoryPtr += 1;
             }
         }
 
-        //found
-        if(!biggestArrayPid.empty()){
-            const cl_I size = variables[biggestArrayPid]->size;
-            const cl_I biggestMemoryPtr = variables[biggestArrayPid]->memoryPtr;
-
-            cerr << "Moving array " << biggestArrayPid << "[" << size << "] to memory start" << endl;
-
-            for(auto& entry : variables){
-                Variable* var = entry.second;
-                if(var->pid != biggestArrayPid){
-                    if(var->memoryPtr < biggestMemoryPtr)
-                        var->memoryPtr += size;
-                }
-            }
-
-            variables[biggestArrayPid]->memoryPtr = 0;
-        }
         cerr << memoryToString();
         cerr << "---OPTIMIZATION END---" << endl;
     }

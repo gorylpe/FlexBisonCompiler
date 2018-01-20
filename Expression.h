@@ -111,6 +111,19 @@ public:
         }
     }
 
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) {
+        switch(this->type){
+            case VALUE:
+                this->val1->calculateVariablesUsage(numberOfNestedLoops);
+                break;
+            default:
+                this->val1->calculateVariablesUsage(numberOfNestedLoops);
+                this->val2->calculateVariablesUsage(numberOfNestedLoops);
+                break;
+        }
+    }
+
     void loadToAccumulatorValue();
     void loadToAccumulatorAddition();
     void loadToAccumulatorSubtraction();

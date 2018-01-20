@@ -67,7 +67,6 @@ public:
 
 
     void generateTestWithTrueFalseJumps(JumpPosition *jumpIfTrue, JumpPosition *jumpIfFalse) {
-        //todo think out eq, make leq and lt same as geq gt
         switch (this->type) {
             case EQ:
                 this->generateTestEquals(jumpIfTrue, jumpIfFalse);
@@ -202,5 +201,10 @@ public:
                 this->constComparisionResult = val1->num->num >= val2->num->num;
                 break;
         }
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) {
+        this->val1->calculateVariablesUsage(numberOfNestedLoops);
+        this->val2->calculateVariablesUsage(numberOfNestedLoops);
     }
 };

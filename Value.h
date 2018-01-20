@@ -49,15 +49,21 @@ public:
 
     void prepareIfNeeded(){
         //prepare for PIDPID type
-        if (this->type == Value::Type::IDENTIFIER){
+        if (this->type == IDENTIFIER){
             this->ident->prepareIfNeeded();
         }
     }
 
     void unprepareIfNeeded(){
         //free memory after PIDPID type preparation
-        if (this->type == Value::Type::IDENTIFIER){
+        if (this->type == IDENTIFIER){
             this->ident->unprepareIfNeeded();
+        }
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops){
+        if(this->type == IDENTIFIER){
+            this->ident->calculateVariablesUsage(numberOfNestedLoops);
         }
     }
 
@@ -74,9 +80,8 @@ public:
         switch (this->type) {
             case Value::Type::NUM:
                 return this->num->isLoadStoreInTempBetterThanDecs();
-            case Value::Type::IDENTIFIER:
-                return false;
         }
+        return false;
     }
 
     void loadToAccumulator(){

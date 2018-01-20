@@ -17,6 +17,8 @@ public:
     virtual bool equals(Command* command){
         return false;
     }
+
+    virtual void calculateVariablesUsage(cl_I numberOfNestedLoops) = 0;
 };
 
 class CommandsBlock : public Command {
@@ -47,6 +49,12 @@ public:
     void generateCode() final {
         for(auto cmd : this->commands){
             cmd->generateCode();
+        }
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        for(auto cmd : this->commands){
+            cmd->calculateVariablesUsage(numberOfNestedLoops);
         }
     }
 };
@@ -89,6 +97,13 @@ public:
 
         return true;
     }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        cerr << "Calculating Variables usage in ASSIGNMENT" << endl;
+        this->ident->calculateVariablesUsage(numberOfNestedLoops);
+        this->expr->calculateVariablesUsage(numberOfNestedLoops);
+        cerr << "End alculating Variables usage in ASSIGNMENT" << endl;
+    }
 };
 
 class Read : public Command {
@@ -109,6 +124,10 @@ public:
 
         this->ident->unprepareIfNeeded();
         cerr << "End generating READ code" << endl;
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 };
 
@@ -132,6 +151,10 @@ public:
         if(this->val->type != Value::Type::NUM)
             this->val->unprepareIfNeeded();
         cerr << "End generating WRITE code" << endl;
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        this->val->calculateVariablesUsage(numberOfNestedLoops);
     }
 };
 
@@ -169,6 +192,11 @@ public:
             }
         }
         cerr << "End generating IF code" << endl;
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        this->cond->calculateVariablesUsage(numberOfNestedLoops);
+        this->block->calculateVariablesUsage(numberOfNestedLoops);
     }
 };
 
@@ -228,6 +256,12 @@ public:
         }
         cerr << "End generating IF ELSE code" << endl;
     }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        this->cond->calculateVariablesUsage(numberOfNestedLoops);
+        this->block1->calculateVariablesUsage(numberOfNestedLoops);
+        this->block2->calculateVariablesUsage(numberOfNestedLoops);
+    }
 };
 
 class While : public Command {
@@ -272,6 +306,11 @@ public:
             machine.JUMP(loopStart);
         }
         cerr << "End generating WHILE code" << endl;
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        this->cond->calculateVariablesUsage(numberOfNestedLoops + 1);
+        this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
     }
 };
 
@@ -365,6 +404,12 @@ public:
             this->to->unprepareIfNeeded();
 
         cerr << "End generating FOR code" << endl;
+    }
+
+    void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
+        auto iterator = memory.pushTempNamedVariable(pid, false);
+        this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
+        memory.popTempVariable(); //iterator
     }
 };
 

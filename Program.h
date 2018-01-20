@@ -40,11 +40,13 @@ public:
         this->ASTOptimizations();
 
         //after removing unused variables
+
+        this->block->calculateVariablesUsage(0);
+
         memory.optimize();
 
-        for(auto cmd : this->block->commands){
-            cmd->generateCode();
-        }
+        this->block->generateCode();
+
         machine.HALT();
 
         stringstream ss;

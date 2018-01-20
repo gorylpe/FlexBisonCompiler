@@ -200,6 +200,10 @@ public:
         }
     }
 
+    void calculateVariablesUsage(cl_I numberOfNestedLoops){
+        this->getPidVariable()->addUsage(numberOfNestedLoops);
+    }
+
     void storeFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();

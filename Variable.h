@@ -22,29 +22,31 @@ public:
     string pid;
     cl_I size;
     cl_I memoryPtr;
+
     bool modifiable;
     bool initialized;
-    map<cl_I, bool> numinitialized;
 
-    explicit Variable(const string& pid, const cl_I& memoryPtr, bool modifiable)
+    const cl_I nestetLoopMultiplier = 10;
+    cl_I useNumber;
+
+    explicit Variable(string pid, const cl_I& memoryPtr, bool modifiable)
     :type(Type::PID)
     ,pid(pid)
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
-    ,initialized(false){
+    ,initialized(false)
+    ,useNumber(0){
         cerr << "Declaring variable " << " name " << pid << endl;
-
     }
 
-    explicit Variable(const string& pid, const cl_I& size, const cl_I& memoryPtr, bool modifiable)
+    explicit Variable(string pid, const cl_I& size, const cl_I& memoryPtr, bool modifiable)
     :type(Type::PIDNUM)
-    ,pid(pid)
     ,size(size)
+    ,pid(pid)
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
-    ,initialized(false){
-        cerr << "Declaring array name " << pid << " size " << size << endl;
-    }
+    ,initialized(false)
+    ,useNumber(0) {}
 
     ~Variable(){
         cerr << "Deleting variable " << pid << endl;
@@ -63,5 +65,13 @@ public:
         if(this->type == PID)
             return this->initialized;
         return false;
+    }
+
+    void addUsage(const cl_I& numberOfNestedLoops) {
+        useNumber += expt(nestetLoopMultiplier, numberOfNestedLoops);
+    }
+
+    cl_I getUsage() const {
+        return useNumber;
     }
 };
