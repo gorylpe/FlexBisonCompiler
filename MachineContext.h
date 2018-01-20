@@ -21,6 +21,14 @@ public:
     vector<AssemblyLine*> assemblyCode;
     set<JumpPosition*> jumps;
 
+    void generateCode(stringstream& ss){
+        optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
+        optimizeRedundandStoresInContinuousCodeBlocks();
+        for(auto line : assemblyCode){
+            line->toStringstream(ss);
+        }
+    }
+
     //todo constants propagation in AST - 9-sort test, 5-tab, 1-numbers, program2
 
     //todo CHECK FOR UNUSED VARS (not likely)
@@ -35,7 +43,6 @@ public:
 
     //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS
 
-    //todo code generation, look for STORE LOAD duplications, JUMP to line after
     void optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks() {
         cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION---" << endl;
         size_t linesNum = (size_t)assemblyCode.size();
@@ -71,6 +78,82 @@ public:
             } else if (storeILine == nullptr && putLine == nullptr){
                 //if current line is one with influence on accumulator
                 currMemoryPtrs.clear();
+            }
+        }
+
+        this->removeLines(linesToRemove);
+
+        cerr << "---OPTIMIZATION END---" << endl;
+    }
+
+    /*
+     * for example
+     * a := b + c
+     * a := a + d
+     * storing A after 1st instruction is redundant and it cant be optimized in AST
+     */
+    void optimizeRedundandStoresInContinuousCodeBlocks() {
+        cerr << "---REDUNDANT STORES OPTIMIZATION---" << endl;
+        size_t linesNum = (size_t)assemblyCode.size();
+
+        vector<bool> linesWithJump = this->getLinesWithJump();
+
+        vector<bool> linesToRemove(linesNum);
+        std::fill(linesToRemove.begin(), linesToRemove.end(), false);
+
+        //OPTIMIZE STORE LOADS
+        cl_I lastStorePtr = -1;
+        int lastStoreLineNumber = -1;
+        for (int i = 0; i < linesNum; ++i) {
+            if (linesWithJump[i]) {
+                //reset last store line
+                lastStoreLineNumber = -1;
+                lastStorePtr = -1;
+            }
+            auto storeLine = dynamic_cast<STOREAssemblyLine *>(assemblyCode[i]);
+            auto storeILine = dynamic_cast<STOREIAssemblyLine *>(assemblyCode[i]);
+            auto loadLine = dynamic_cast<LOADAssemblyLine *>(assemblyCode[i]);
+            auto loadILine = dynamic_cast<LOADIAssemblyLine *>(assemblyCode[i]);
+            auto addLine = dynamic_cast<ADDAssemblyLine *>(assemblyCode[i]);
+            auto subLine = dynamic_cast<SUBAssemblyLine *>(assemblyCode[i]);
+
+            if (storeLine != nullptr) {
+                //add new address to current memory pointers
+                if(lastStorePtr == storeLine->getMemoryPtr()){
+                    linesToRemove[lastStoreLineNumber] = true;
+                }
+                lastStoreLineNumber = i;
+                lastStorePtr = storeLine->getMemoryPtr();
+            } else if (loadLine != nullptr) {
+                //check if current line equals last store and reset if it is
+                if(lastStorePtr == loadLine->getMemoryPtr()){
+                    lastStoreLineNumber = -1;
+                    lastStorePtr = -1;
+                }
+            } else if (addLine != nullptr) {
+                //check if current line equals last store and reset if it is
+                if(lastStorePtr == addLine->getMemoryPtr()){
+                    lastStoreLineNumber = -1;
+                    lastStorePtr = -1;
+                }
+            } else if (subLine != nullptr) {
+                //check if current line equals last store and reset if it is
+                if(lastStorePtr == subLine->getMemoryPtr()){
+                    lastStoreLineNumber = -1;
+                    lastStorePtr = -1;
+                }
+            } else if (storeILine != nullptr) {
+                //check if current line equals last store and reset if it is
+                if(lastStorePtr == storeILine->getMemoryPtr()){
+                    lastStoreLineNumber = -1;
+                    lastStorePtr = -1;
+                }
+            } else if (loadILine != nullptr) {
+                //check if current line equals last store and reset if it is
+                if(lastStorePtr == loadILine->getMemoryPtr()){
+                    lastStoreLineNumber = -1;
+                    lastStorePtr = -1;
+                }
             }
         }
 
@@ -117,14 +200,6 @@ public:
                 cerr << "Removing assembly line no. " << i << endl;
                 assemblyCode.erase(assemblyCode.begin() + i);
             }
-        }
-    }
-
-
-    void generateCode(stringstream& ss){
-        optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
-        for(auto line : assemblyCode){
-            line->toStringstream(ss);
         }
     }
 

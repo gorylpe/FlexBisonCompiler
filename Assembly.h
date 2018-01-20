@@ -115,7 +115,6 @@ public:
     }
 };
 
-
 class JZEROAssemblyLine : public JumpAssemblyLine{
 public:
     explicit JZEROAssemblyLine(JumpPosition* position)
@@ -125,7 +124,6 @@ public:
         ss << "JZERO " << position->getPosition() << endl;
     }
 };
-
 
 class JODDAssemblyLine : public JumpAssemblyLine{
 public:
