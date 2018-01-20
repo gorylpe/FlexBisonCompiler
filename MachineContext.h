@@ -46,22 +46,31 @@ public:
         std::fill(linesToRemove.begin(), linesToRemove.end(), false);
 
         //OPTIMIZE STORE LOADS
-        cl_I currentAccumulatorMemoryPtr = -1;
+        vector<cl_I> currMemoryPtrs;
         for (int i = 0; i < linesNum; ++i) {
             if (linesWithJump[i]) {
                 //reset current accumulator memory ptr
-                currentAccumulatorMemoryPtr = -1;
+                currMemoryPtrs.clear();
             }
             auto storeLine = dynamic_cast<STOREAssemblyLine *>(assemblyCode[i]);
+            auto storeILine = dynamic_cast<STOREAssemblyLine *>(assemblyCode[i]);
             auto loadLine = dynamic_cast<LOADAssemblyLine *>(assemblyCode[i]);
+            auto putLine = dynamic_cast<PUTAssemblyLine *>(assemblyCode[i]);
 
             if (storeLine != nullptr) {
-                currentAccumulatorMemoryPtr = storeLine->getMemoryPtr();
+                //add new address to current memory pointers
+                currMemoryPtrs.push_back(storeLine->getMemoryPtr());
             } else if (loadLine != nullptr) {
-                if (loadLine->getMemoryPtr() == currentAccumulatorMemoryPtr && !linesWithJump[i]) {
+                //check if current load line equals current accumulator
+                if (find(currMemoryPtrs.begin(), currMemoryPtrs.end(), loadLine->getMemoryPtr()) != currMemoryPtrs.end()){
                     linesToRemove[i] = true;
+                } else {
+                    currMemoryPtrs.clear();
+                    currMemoryPtrs.push_back(loadLine->getMemoryPtr());
                 }
-                currentAccumulatorMemoryPtr = loadLine->getMemoryPtr();
+            } else if (storeILine == nullptr && putLine == nullptr){
+                //if current line is one with influence on accumulator
+                currMemoryPtrs.clear();
             }
         }
 
@@ -113,7 +122,7 @@ public:
 
 
     void generateCode(stringstream& ss){
-        this->optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
+        optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         for(auto line : assemblyCode){
             line->toStringstream(ss);
         }
