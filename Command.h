@@ -19,7 +19,7 @@ public:
     }
 };
 
-class CommandsBlock {
+class CommandsBlock : public Command {
 public:
     vector<Command*> commands;
 
@@ -27,7 +27,12 @@ public:
         commands.push_back(command);
     }
 
-    bool equals(CommandsBlock* block2){
+
+    bool equals(Command* command) final {
+        auto block2 = dynamic_cast<CommandsBlock*>(command);
+        if(block2 == nullptr)
+            return false;
+
         if(this->commands.size() != block2->commands.size())
             return false;
 
@@ -37,6 +42,12 @@ public:
         }
 
         return true;
+    }
+
+    void generateCode() final {
+        for(auto cmd : this->commands){
+            cmd->generateCode();
+        }
     }
 };
 
@@ -51,7 +62,7 @@ public:
         cerr << "Creating ASSIGNMENT with " << ident->toString() << ", " << expr->toString() << endl;
     }
 
-    virtual void generateCode(){
+    void generateCode() final {
         cerr << "Generating ASSIGNMENT code" << endl;
         this->ident->prepareIfNeeded();
         this->expr->prepareValuesIfNeeded();
@@ -65,7 +76,7 @@ public:
     }
 
 
-    bool equals(Command* command){
+    bool equals(Command* command) final {
         auto assgn2 = dynamic_cast<Assignment*>(command);
         if(assgn2 == nullptr)
             return false;
@@ -89,7 +100,7 @@ public:
         cerr << "Creating READ with " << ident->toString() << endl;
     }
 
-    void generateCode(){
+    void generateCode() final{
         cerr << "Generating READ code" << endl;
         this->ident->prepareIfNeeded();
 
@@ -110,7 +121,7 @@ public:
         cerr << "Creating WRITE with " << val->toString() << endl;
     }
 
-    void generateCode(){
+    void generateCode() final{
         cerr << "Generating WRITE code" << endl;
         if(this->val->type != Value::Type::NUM)
             this->val->prepareIfNeeded();
@@ -135,7 +146,7 @@ public:
         cerr << "Creating IF with " << cond->toString() << endl;
     }
 
-    virtual void generateCode() {
+    void generateCode() final {
         cerr << "Generating IF code" << endl;
         //TODO check if num of commands > 0
         if(!this->cond->constComparision){
@@ -146,9 +157,9 @@ public:
 
             this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse);
             machine.setJumpPosition(jumpIfTrue);
-            for(auto cmd : this->block->commands){
-                cmd->generateCode();
-            }
+
+            block->generateCode();
+
             machine.setJumpPosition(jumpIfFalse);
 
             this->cond->unprepareValuesIfNeeded();
@@ -174,7 +185,7 @@ public:
         cerr << "Creating IF with " << cond->toString() << endl;
     }
 
-    virtual void generateCode() {
+    void generateCode() final {
         //optimization when blocks equals
         if(this->block1->equals(this->block2)){
             cerr << "Optimizing IF ELSE code, same blocks in IF and ELSE" << endl;
@@ -198,34 +209,28 @@ public:
             this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse); //jump to else
 
             machine.setJumpPosition(jumpIfTrue);
-            for(auto cmd : this->block1->commands){
-                cmd->generateCode();
-            }
+
+            block1->generateCode();
 
             machine.JUMP(passElseBlock);
 
             machine.setJumpPosition(jumpIfFalse);
-            for(auto cmd : this->block2->commands){
-                cmd->generateCode();
-            }
+
+            block2->generateCode();
 
             machine.setJumpPosition(passElseBlock);
 
             this->cond->unprepareValuesIfNeeded();
         } else if (this->cond->constComparisionResult){
-            for(auto cmd : this->block1->commands){
-                cmd->generateCode();
-            }
+            block1->generateCode();
         } else {
-            for(auto cmd : this->block2->commands){
-                cmd->generateCode();
-            }
+            block2->generateCode();
         }
         cerr << "End generating IF ELSE code" << endl;
     }
 };
 
-class While : public Command{
+class While : public Command {
 public:
     Condition* cond;
     CommandsBlock* block;
@@ -236,9 +241,8 @@ public:
         cerr << "Creating WHILE with " << cond->toString() << endl;
     }
 
-    virtual void generateCode() {
+    void generateCode() final {
         cerr << "Generating WHILE code" << endl;
-        //TODO check if num of commands > 0
         if(!this->cond->constComparision){
             this->cond->prepareValuesIfNeeded();
 
@@ -251,9 +255,8 @@ public:
             this->cond->generateTestWithTrueFalseJumps(codeStart, loopOutside);
 
             machine.setJumpPosition(codeStart);
-            for(auto cmd : this->block->commands){
-                cmd->generateCode();
-            }
+
+            block->generateCode();
 
             machine.JUMP(loopStart);
 
@@ -264,9 +267,7 @@ public:
             auto loopStart = new JumpPosition();
             machine.setJumpPosition(loopStart);
 
-            for(auto cmd : this->block->commands){
-                cmd->generateCode();
-            }
+            block->generateCode();
 
             machine.JUMP(loopStart);
         }
@@ -274,17 +275,17 @@ public:
     }
 };
 
-class For : public Command{
+class For : public Command {
 public:
 
     Position* pidPos;
-    const string& pid;
+    const string pid;
     Value* from;
     Value* to;
     CommandsBlock* block;
     bool increasing;
 
-    explicit For(Position* pidPos, const string& pid, Value* from, Value* to, CommandsBlock* block, bool increasing)
+    explicit For(Position* pidPos, string pid, Value* from, Value* to, CommandsBlock* block, bool increasing)
     :pid(pid)
     ,pidPos(pidPos)
     ,from(from)
@@ -294,7 +295,7 @@ public:
         cerr << "Creating FOR" << endl;
     }
 
-    virtual void generateCode(){
+    void generateCode() final {
         //only loading to accumulator so no need to prepare
         if(this->from->type != Value::Type::NUM)
             this->from->prepareIfNeeded();
@@ -331,9 +332,7 @@ public:
 
         machine.setJumpPosition(loopStart);
 
-        for(auto cmd : this->block->commands){
-            cmd->generateCode();
-        }
+        block->generateCode();
 
         if(this->increasing){ //0 when iterator >= to
             machine.LOAD(tmpTo->memoryPtr);
