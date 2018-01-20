@@ -18,7 +18,6 @@ public:
 
     MemoryManager mem;
 
-
     vector<AssemblyLine*> assemblyCode;
     set<JumpPosition*> jumps;
 
@@ -37,7 +36,8 @@ public:
     //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS
 
     //todo code generation, look for STORE LOAD duplications, JUMP to line after
-    void optimizeContinuousCodeBlocks() {
+    void optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks() {
+        cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION---" << endl;
         size_t linesNum = (size_t)assemblyCode.size();
 
         vector<bool> linesWithJump = this->getLinesWithJump();
@@ -66,6 +66,8 @@ public:
         }
 
         this->removeLines(linesToRemove);
+
+        cerr << "---OPTIMIZATION END---" << endl;
     }
 
     vector<bool> getLinesWithJump(){
@@ -103,6 +105,7 @@ public:
         //remove unused lines
         for(int i = linesNum - 1; i >= 0; --i){
             if(linesToRemove[i]){
+                cerr << "Removing assembly line no. " << i << endl;
                 assemblyCode.erase(assemblyCode.begin() + i);
             }
         }
@@ -110,6 +113,7 @@ public:
 
 
     void generateCode(stringstream& ss){
+        this->optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         for(auto line : assemblyCode){
             line->toStringstream(ss);
         }
