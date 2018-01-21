@@ -23,6 +23,14 @@ public:
         cerr << "Creating number " << this->toString() << endl;
     }
 
+    Number(const Number& num2)
+    :pos(new Position(*num2.pos))
+    ,num(cl_I(num2.num)){}
+
+    Number* clone(){
+        return new Number(*this);
+    }
+
     bool equals(Number* num2){
         return this->num == num2->num;
     }

@@ -19,11 +19,13 @@ public:
 
     virtual void generateCode() = 0;
 
-    virtual bool equals(Command* command){
+    virtual bool equals(Command *command) {
         return false;
     }
 
-    virtual string toString() {return "";}
+    virtual Command* clone() const = 0;
+
+    virtual string toString() = 0;
 
     virtual void print(int nestedLevel) = 0;
 
@@ -31,23 +33,43 @@ public:
 
     virtual bool propagateConstants() { return false; };
 
-    virtual void getPidVariablesBeingModified(set<Variable *>& variableSet) {}
+    virtual void getPidVariablesBeingModified(set<Variable *> &variableSet) {}
 
     //used to remove not reachable ifs, unroll for's with constants
-    virtual CommandsBlock* blockToReplaceWith() { return nullptr; };
-    virtual void replaceCommands() {}
-};
+    virtual CommandsBlock *blockToReplaceWith() { return nullptr; };
 
-class If;
-class IfElse;
-class While;
+    virtual void replaceCommands() {}
+
+    //for FOR unrolling - replacing iterator with consts
+    virtual void replaceValuesWithConst(string pid, cl_I number) {}
+
+
+    //for creating numbers optimal
+
+};
 
 class CommandsBlock : public Command {
 public:
     vector<Command*> commands;
 
+    CommandsBlock() = default;
+
+    CommandsBlock(const CommandsBlock& block2){
+        for(auto cmd : block2.commands){
+            addCommand(cmd->clone());
+        }
+    }
+
+    CommandsBlock* clone() const final {
+        return new CommandsBlock(*this);
+    }
+
     void addCommand(Command* command){
         commands.push_back(command);
+    }
+
+    void addCommands(vector<Command*>& newCommands){
+        commands.insert(commands.end(), newCommands.begin(), newCommands.end());
     }
 
     void print(int nestedLevel) final {
@@ -55,6 +77,8 @@ public:
             cmd->print(nestedLevel);
         }
     }
+
+    string toString() final {return "";}
 
     bool equals(Command* command) final {
         auto block2 = dynamic_cast<CommandsBlock*>(command);
@@ -111,14 +135,24 @@ public:
         for(int i = 0; i < commands.size(); ++i) {
             CommandsBlock* block = commands[i]->blockToReplaceWith();
 
-            if(block != nullptr){
-                //commands.insert(commands.begin() + i, block->commands.begin(), block->commands.end());
-                commands[i] = block;
+            if (block != nullptr) {
+                block->replaceCommands();
+                commands.erase(commands.begin() + i);
+                commands.insert(commands.begin() + i, block->commands.begin(), block->commands.end());
+                i--;
+                i += block->commands.size();
+            } else {
+                commands[i]->replaceCommands();
             }
-
-            commands[i]->replaceCommands();
         }
-    };
+    }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        for(auto cmd : this->commands){
+            cmd->replaceValuesWithConst(pid, number);
+        }
+    }
+
 };
 
 class Assignment : public Command {
@@ -130,6 +164,14 @@ public:
     :ident(ident)
     ,expr(expr){
         cerr << "Creating ASSIGNMENT " << toString() << endl;
+    }
+
+    Assignment(const Assignment& asg2)
+    :ident(asg2.ident->clone())
+    ,expr(asg2.expr->clone()){}
+
+    Assignment* clone() const final {
+        return new Assignment(*this);
     }
 
     void semanticAnalysis() final {
@@ -205,6 +247,11 @@ public:
         if(var->type == Variable::Type::PID)
             variableSet.insert(var);
     }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        ident->replaceValuesWithConst(pid, number);
+        expr->replaceValuesWithConst(pid, number);
+    }
 };
 
 class Read : public Command {
@@ -214,6 +261,13 @@ public:
     explicit Read(Identifier* ident)
             :ident(ident){
         cerr << "Creating " << toString() << endl;
+    }
+
+    Read(const Read& read2)
+    :ident(read2.ident->clone()){}
+
+    Read* clone() const final {
+        return new Read(*this);
     }
 
     void print(int nestedLevel) final {
@@ -262,6 +316,13 @@ public:
         cerr << "Creating " << toString() << endl;
     }
 
+    Write(const Write& read2)
+    :val(read2.val->clone()){}
+
+    Write* clone() const final {
+        return new Write(*this);
+    }
+
     void print(int nestedLevel) final {
         for(int i = 0; i < nestedLevel; ++i){
             cerr << "  ";
@@ -303,6 +364,10 @@ public:
 
         return hasPropagated;
     }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        val->replaceIdentifierWithConst(pid, number);
+    }
 };
 
 class If : public Command{
@@ -314,6 +379,14 @@ public:
     :cond(cond)
     ,block(block){
         cerr << "Creating " << toString() << endl;
+    }
+
+    If(const If& if2)
+    :cond(if2.cond->clone())
+    ,block(if2.block->clone()){}
+
+    If* clone() const final {
+        return new If(*this);
     }
 
     void print(int nestedLevel) final {
@@ -393,6 +466,11 @@ public:
     void replaceCommands() final {
         this->block->replaceCommands();
     }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        cond->replaceValuesWithConst(pid, number);
+        block->replaceValuesWithConst(pid, number);
+    }
 };
 
 class IfElse : public Command{
@@ -406,6 +484,15 @@ public:
             ,block1(block1)
             ,block2(block2){
         cerr << "Creating " << toString() << endl;
+    }
+
+    IfElse(const IfElse& if2)
+            :cond(if2.cond->clone())
+            ,block1(if2.block1->clone())
+            ,block2(if2.block2->clone()){}
+
+    IfElse* clone() const final {
+        return new IfElse(*this);
     }
 
     void print(int nestedLevel) final {
@@ -508,6 +595,12 @@ public:
         this->block1->replaceCommands();
         this->block2->replaceCommands();
     }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        cond->replaceValuesWithConst(pid, number);
+        block1->replaceValuesWithConst(pid, number);
+        block2->replaceValuesWithConst(pid, number);
+    }
 };
 
 class While : public Command {
@@ -519,6 +612,14 @@ public:
     :cond(cond)
     ,block(block){
         cerr << "Creating " << toString() << endl;
+    }
+
+    While(const While& while2)
+            :cond(while2.cond->clone())
+            ,block(while2.block->clone()){}
+
+    While* clone() const final {
+        return new While(*this);
     }
 
     void print(int nestedLevel) final {
@@ -593,12 +694,26 @@ public:
 
         this->block->getPidVariablesBeingModified(variablesSet);
 
-        for(auto var : variablesSet){
-            var->unsetConstant();
-        }
+        //edge case, check if cond will be const and false at start
+        if(cond->wouldConstantPropagateToConstComparision() && !cond->testConstComparisionIfPropagate()){
+            //propagate constants to condition and remove this block in next optimizer loop
+            cerr << "WHILE first check optimization on " << cond->toString() << endl;
+            if(this->cond->propagateConstants()) {
+                hasPropagated = true;
+            }
+        } else {
+            for(auto var : variablesSet){
+                cerr << "Var used inside while " << var->pid << endl;
+                var->unsetConstant();
+            }
 
-        if(this->block->propagateConstants()){
-            hasPropagated = true;
+            if(this->cond->propagateConstants()) {
+                hasPropagated = true;
+            }
+
+            if(this->block->propagateConstants()){
+                hasPropagated = true;
+            }
         }
 
         return hasPropagated;
@@ -617,6 +732,11 @@ public:
 
     void replaceCommands() final {
         this->block->replaceCommands();
+    }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        cond->replaceValuesWithConst(pid, number);
+        block->replaceValuesWithConst(pid, number);
     }
 };
 
@@ -638,6 +758,18 @@ public:
     ,block(block)
     ,increasing(increasing){
         cerr << "Creating " << toString() << endl;
+    }
+
+    For(const For& for2)
+    :pidPos(new Position(*for2.pidPos))
+    ,pid(string(for2.pid))
+    ,from(for2.from->clone())
+    ,to(for2.to->clone())
+    ,block(for2.block->clone())
+    ,increasing(for2.increasing){}
+
+    For* clone() const final {
+        return new For(*this);
     }
 
     void semanticAnalysis() final {
@@ -781,12 +913,26 @@ public:
             } else if(!increasing && from->num->num < to->num->num){
                 return new CommandsBlock();
             } else {
-                auto block = new CommandsBlock();
+                auto newBlock = new CommandsBlock();
                 if(increasing){
                     for(cl_I i = from->num->num; i <= to->num->num; ++i){
+                        CommandsBlock* currBlock = block->clone();
+                        currBlock->replaceValuesWithConst(pid, i);
 
+                        newBlock->addCommands(currBlock->commands);
+                    }
+                } else {
+                    for(cl_I i = from->num->num; i >= to->num->num; --i){
+                        CommandsBlock* currBlock = block->clone();
+                        currBlock->replaceValuesWithConst(pid, i);
+
+                        newBlock->addCommands(currBlock->commands);
                     }
                 }
+
+                cerr << "UNROLLING FOR TO " << newBlock->commands.size() << " CMDS" << endl;
+
+                return newBlock;
             }
         }
 
@@ -796,5 +942,12 @@ public:
     void replaceCommands() final {
         this->block->replaceCommands();
     }
+
+    virtual void replaceValuesWithConst(string pid, cl_I number) {
+        from->replaceIdentifierWithConst(pid, number);
+        to->replaceIdentifierWithConst(pid, number);
+        block->replaceValuesWithConst(pid, number);
+    }
 };
+
 

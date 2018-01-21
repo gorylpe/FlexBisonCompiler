@@ -7,7 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source $DIR'/../assert.sh'
 
-for file in $DIR/$1/test*.i; do
+for file in $DIR/$1/*.i; do
     TEST_NAME=`basename $file .i`
     OUTPUT=`$COMPILER < $file 2>/dev/null`
     EXPECTED_FILE=${file::(-2)}".o"

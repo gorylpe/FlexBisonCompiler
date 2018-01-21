@@ -26,6 +26,22 @@ public:
         cerr << "Creating value identifier " << toString() << endl;
     }
 
+    Value(const Value& val2)
+    :type(val2.type){
+        switch(val2.type){
+            case NUM:
+                num = val2.num->clone();
+                break;
+            case IDENTIFIER:
+                ident = val2.ident->clone();
+                break;
+        }
+    }
+
+    Value* clone(){
+        return new Value(*this);
+    }
+
     string toString(){
         switch (this->type){
             case NUM:
@@ -83,16 +99,37 @@ public:
                 cerr << "Setting constant value " << ident->getConstant() << " to " << toString() << endl;
                 this->type = NUM;
                 this->num = new Number(ident->pos, ident->getConstant());
+                delete this->ident;
                 hasPropagated = true;
             }
         }
         return hasPropagated;
     }
 
+    //for WHILE edge case
+    bool wouldConstantPropagate() {
+        if (this->type == IDENTIFIER) {
+            if (this->ident->isConstant()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    cl_I getPossibleConstantPropagation(){
+        if (this->type == IDENTIFIER) {
+            return this->ident->getConstant();
+        }
+        return 0;
+    }
+
+
     void replaceIdentifierWithConst(string pid, cl_I number){
         if(this->type == IDENTIFIER){
+            ident->replaceValuesWithConst(pid, number);
             if(this->ident->pid == pid){
-                //todo
+                this->type = NUM;
+                this->num = new Number(ident->pos, number);
+                delete this->ident;
             }
         }
     }

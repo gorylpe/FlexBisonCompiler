@@ -13,6 +13,8 @@ public:
 
     void ASTOptimizations(){
         block->replaceCommands();
+        //block->print(0);
+        block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
         constPropagation();
         RemoveUnusedAssignements();
         OptimizeNumbers();
@@ -26,6 +28,8 @@ public:
             numOfPropagations = 0;
             do{
                 hadPropagation = block->propagateConstants();
+                //block->print(0);
+                block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
                 if(hadPropagation){
                     numOfPropagations++;
                 }
@@ -36,6 +40,8 @@ public:
             if(numOfPropagations > 0){
                 cerr << "Replacing unused commands or optimize using constants" << endl;
                 block->replaceCommands();
+                //block->print(0);
+                block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
             }
         }while(numOfPropagations > 0);
         cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION END---" << endl << endl;
@@ -49,9 +55,6 @@ public:
     void OptimizeNumbers(){
 
     }
-
-    //todo move this to machine context
-    //todo optimizations for high level instructions
 
     string generateCode(){
         block->semanticAnalysis();

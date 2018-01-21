@@ -20,9 +20,6 @@ public:
         PIDNUM
     };
 
-    //TODO PIDPID if array starts at zero no need to prepare and add addresses
-    //move array to start of variables
-
     Position* pos;
     Type type;
     string pid;
@@ -55,6 +52,25 @@ public:
     ,num(num)
     ,isPreparedForPidpid(false){
         cerr << "Creating identifier PIDNUM " << toString() << endl;
+    }
+
+    Identifier(const Identifier& ident2)
+    :pos(new Position(*ident2.pos))
+    ,pid(string(ident2.pid))
+    ,type(ident2.type)
+    ,isPreparedForPidpid(ident2.isPreparedForPidpid){
+        switch(ident2.type){
+            case PIDNUM:
+                num = cl_I(ident2.num);
+                break;
+            case PIDPID:
+                pidpid = string(ident2.pidpid);
+                break;
+        }
+    }
+
+    Identifier* clone(){
+        return new Identifier(*this);
     }
 
     bool equals(Identifier* ident2){
@@ -168,6 +184,16 @@ public:
 
         if (type == PIDPID && !pidpidV->isInitialized()) {
             poserror(pos, "variable " + pidpid + "is not initialized");
+        }
+    }
+
+    void replaceValuesWithConst(string pid, cl_I number){
+        if(this->type == PIDPID){
+            if(pidpid == pid){
+                cerr << "Constant in " << toString() << " propagated" << endl;
+                this->type = PIDNUM;
+                this->num = number;
+            }
         }
     }
 

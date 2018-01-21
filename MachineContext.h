@@ -38,15 +38,13 @@ public:
 
     //todo CHECK FOR UNUSED VARS (not likely)
 
-    //todo optimize STOREs, if there's 2 assignments
-
     //todo optimize INC DEC
 
     //todo if we have assignment -> storing val and next one is loading this val and HAS JUMP TO THIS INSTRUCTION
     //(something else is using this LOAD)
     //then GENERATE JUMP TO NEXT INSTRUCTION -> easier to jump than load
 
-    //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS
+    //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS WITH UNUSED ASSIGNMENTS
 
     void optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks() {
         cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION---" << endl;

@@ -23,6 +23,17 @@ public:
 
     explicit Expression(Type type, Value* val1, Value* val2);
 
+    Expression(const Expression& expr2)
+    :type(expr2.type)
+    ,val1(expr2.val1->clone()){
+        if(expr2.type != VALUE)
+            val2 = expr2.val2->clone();
+    }
+
+    Expression* clone(){
+        return new Expression(*this);
+    }
+
     string toString(){
         string type;
         switch(this->type){
@@ -91,6 +102,18 @@ public:
             default:
                 val1->semanticAnalysis();
                 val2->semanticAnalysis();
+                break;
+        }
+    }
+
+    void replaceValuesWithConst(string pid, cl_I number){
+        switch(type){
+            case VALUE:
+                val1->replaceIdentifierWithConst(pid, number);
+                break;
+            default:
+                val1->replaceIdentifierWithConst(pid, number);
+                val2->replaceIdentifierWithConst(pid, number);
                 break;
         }
     }
