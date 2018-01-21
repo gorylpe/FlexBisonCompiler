@@ -613,6 +613,11 @@ public:
         from->semanticAnalysis();
         to->semanticAnalysis();
         auto iterator = memory.pushTempNamedVariable(pid, false);
+        if(iterator == nullptr){
+            poserror(pidPos, "for loop temp variable redeclaration");
+            return;
+        }
+
         iterator->initialize();
         block->semanticAnalysis();
         memory.popTempVariable(); //iterator
@@ -641,11 +646,6 @@ public:
         cerr << "Generating FOR code" << endl;
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
-
-        if(iterator == nullptr){
-            poserror(pidPos, "for loop temp variable redeclaration");
-            return;
-        }
 
         auto loopStart = new JumpPosition();
         auto loopOutside = new JumpPosition();
