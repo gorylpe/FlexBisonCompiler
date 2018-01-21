@@ -7,6 +7,7 @@
 #include "Identifier.h"
 #include "Expression.h"
 #include "Condition.h"
+#include "NumberValueStats.h"
 
 using namespace std;
 using namespace cln;
@@ -45,7 +46,7 @@ public:
 
 
     //for creating numbers optimal
-
+    virtual void collectNumberValues(map<cl_I, NumberValueStats>& stats) {}
 };
 
 class CommandsBlock : public Command {
@@ -147,12 +148,17 @@ public:
         }
     }
 
-    virtual void replaceValuesWithConst(string pid, cl_I number) {
+    void replaceValuesWithConst(string pid, cl_I number) final {
         for(auto cmd : this->commands){
             cmd->replaceValuesWithConst(pid, number);
         }
     }
 
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        for(auto cmd : this->commands){
+            cmd->collectNumberValues(stats);
+        }
+    }
 };
 
 class Assignment : public Command {
@@ -251,6 +257,10 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         ident->replaceValuesWithConst(pid, number);
         expr->replaceValuesWithConst(pid, number);
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        expr->collectNumberValues(stats);
     }
 };
 
@@ -368,6 +378,15 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         val->replaceIdentifierWithConst(pid, number);
     }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        if(val->type == Value::Type::NUM){
+            if(stats.count(val->num->num) == 0){
+                stats[val->num->num] = NumberValueStats();
+            }
+            stats[val->num->num].addLoad(val, 1);
+        }
+    }
 };
 
 class If : public Command{
@@ -470,6 +489,11 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         cond->replaceValuesWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        cond->collectNumberValues(stats);
+        block->collectNumberValues(stats);
     }
 };
 
@@ -600,6 +624,13 @@ public:
         cond->replaceValuesWithConst(pid, number);
         block1->replaceValuesWithConst(pid, number);
         block2->replaceValuesWithConst(pid, number);
+    }
+
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        cond->collectNumberValues(stats);
+        block1->collectNumberValues(stats);
+        block2->collectNumberValues(stats);
     }
 };
 
@@ -737,6 +768,11 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         cond->replaceValuesWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        cond->collectNumberValues(stats);
+        block->collectNumberValues(stats);
     }
 };
 
@@ -947,6 +983,22 @@ public:
         from->replaceIdentifierWithConst(pid, number);
         to->replaceIdentifierWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
+        if(from->type == Value::Type::NUM){
+            if(stats.count(from->num->num) == 0){
+                stats[from->num->num] = NumberValueStats();
+            }
+            stats[from->num->num].addLoad(from, 1);
+        }
+        if(to->type == Value::Type::NUM){
+            if(stats.count(to->num->num) == 0){
+                stats[to->num->num] = NumberValueStats();
+            }
+            stats[to->num->num].addLoad(to, 1);
+        }
+        block->collectNumberValues(stats);
     }
 };
 

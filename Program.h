@@ -17,7 +17,7 @@ public:
         block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
         constPropagation();
         RemoveUnusedAssignements();
-        OptimizeNumbers();
+        optimizeNumbers();
     }
 
     void constPropagation(){
@@ -52,7 +52,16 @@ public:
     }
 
     //memory manager
-    void OptimizeNumbers(){
+    void optimizeNumbers(){
+        map<cl_I, NumberValueStats> stats;
+
+        block->collectNumberValues(stats);
+
+        for(auto& entry : stats){
+            cerr << "---NUMBER " << entry.first << " ---" << endl;
+            cerr << entry.second.toString() << endl << endl;
+        }
+
 
     }
 

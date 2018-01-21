@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Value.h"
+#include "NumberValueStats.h"
 
 class Condition {
 public:
@@ -364,5 +365,42 @@ public:
         }
 
         return hasPropagated;
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) {
+        if(val1->type == Value::Type::NUM){
+            if(stats.count(val1->num->num) == 0){
+                stats[val1->num->num] = NumberValueStats();
+            }
+            switch(this->type){
+                case EQ:
+                case NEQ:
+                case LT:
+                case GEQ:
+                    stats[val1->num->num].addLoad(val1, 1);
+                    break;
+                case LEQ:
+                case GT:
+                    stats[val1->num->num].addSubtraction(val1, 1);
+                    break;
+            }
+        }
+        if(val2->type == Value::Type::NUM){
+            if(stats.count(val2->num->num) == 0){
+                stats[val2->num->num] = NumberValueStats();
+            }
+            switch(this->type){
+                case EQ:
+                case NEQ:
+                case LT:
+                case GEQ:
+                    stats[val2->num->num].addSubtraction(val2, 1);
+                    break;
+                case LEQ:
+                case GT:
+                    stats[val2->num->num].addLoad(val2, 1);
+                    break;
+            }
+        }
     }
 };

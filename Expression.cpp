@@ -26,6 +26,7 @@ void Expression::optimizeConstants() {
         this->bothConstValuesOptimizations();
         this->oneConstLeftValueOptimizations();
         this->oneConstRightValueOptimizations();
+        this->addingNumberOptimization();
     }
 }
 
@@ -157,6 +158,18 @@ void Expression::oneConstRightValueOptimizations(){
                 break;
             default:
                 break;
+        }
+    }
+}
+
+void Expression::addingNumberOptimization() {
+    if(type == ADDITION){
+        if(val2->type == Value::Type::NUM){
+            if(val2->isLoadBetterThanIncs()){
+                Value* tmp = val1;
+                val1 = val2;
+                val2 = tmp;
+            }
         }
     }
 }
@@ -342,10 +355,7 @@ void loadToAccumulatorDivisionByNumber(Value* val1Ident, Value* val2Num){
         return;
     }
 
-    auto num = val2Num->num->num;
-    auto numMinus1 = num - 1;
-    bool isPowOf2 = (num & numMinus1) == 0;
-    if(isPowOf2){
+    if(Expression::isPowOf2(val2Num->num->num)){
         val1Ident->loadToAccumulator();
 
         int shifts = val2Num->num->getBits().size() - 1;

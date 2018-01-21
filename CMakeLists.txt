@@ -4,4 +4,4 @@ set (CMAKE_CXX_STANDARD 11)
 
 project(compiler C CXX)
 
-add_executable(compiler Command.cpp Command.h Identifier.cpp Identifier.h Variable.cpp Variable.h MemoryManager.cpp MemoryManager.h Expression.cpp Expression.h Condition.cpp Condition.h Value.cpp Value.h Program.cpp Program.h MachineContext.cpp MachineContext.h Utils.h Number.cpp Number.h Assembly.h)
+add_executable(compiler Command.cpp Command.h Identifier.cpp Identifier.h Variable.cpp Variable.h MemoryManager.cpp MemoryManager.h Expression.cpp Expression.h Condition.cpp Condition.h Value.cpp Value.h Program.cpp Program.h MachineContext.cpp MachineContext.h Utils.h Number.cpp Number.h Assembly.h NumberValueStats.h)

@@ -3,6 +3,7 @@
 
 #include "Value.h"
 #include "Assembly.h"
+#include "NumberValueStats.h"
 
 class Expression {
 public:
@@ -123,6 +124,7 @@ public:
     void bothConstValuesOptimizations();
     void oneConstLeftValueOptimizations();
     void oneConstRightValueOptimizations();
+    void addingNumberOptimization();
 
     bool propagateConstants() {
         bool hasPropagated = false;
@@ -221,5 +223,82 @@ public:
                 this->loadToAccumulatorModulo();
                 break;
         }
+    }
+
+    void collectNumberValues(map<cl_I, NumberValueStats>& stats) {
+        switch(this->type){
+            case VALUE:
+                if(val1->type == Value::Type::NUM){
+                    if(stats.count(val1->num->num) == 0){
+                        stats[val1->num->num] = NumberValueStats();
+                    }
+                    stats[val1->num->num].addLoad(val1, 1);
+                }
+                break;
+            case ADDITION:
+                if(val1->type == Value::Type::NUM){
+                    if(stats.count(val1->num->num) == 0){
+                        stats[val1->num->num] = NumberValueStats();
+                    }
+                    stats[val1->num->num].addLoad(val1, 1);
+                }
+                if(val2->type == Value::Type::NUM){
+                    if(stats.count(val2->num->num) == 0){
+                        stats[val2->num->num] = NumberValueStats();
+                    }
+                    stats[val2->num->num].addAddition(val2, 1);
+                }
+                break;
+            case SUBTRACTION:
+                if(val1->type == Value::Type::NUM){
+                    if(stats.count(val1->num->num) == 0){
+                        stats[val1->num->num] = NumberValueStats();
+                    }
+                    stats[val1->num->num].addLoad(val1, 1);
+                }
+                if(val2->type == Value::Type::NUM){
+                    if(stats.count(val2->num->num) == 0){
+                        stats[val2->num->num] = NumberValueStats();
+                    }
+                    stats[val2->num->num].addSubtraction(val2, 1);
+                }
+                break;
+            case DIVISION:
+                if(val1->type == Value::Type::NUM){
+                    if(stats.count(val1->num->num) == 0){
+                        stats[val1->num->num] = NumberValueStats();
+                    }
+                    stats[val1->num->num].addLoad(val1, 1);
+                }
+                if(val2->type == Value::Type::NUM){
+                    if(!isPowOf2(val2->num->num)) {
+                        if (stats.count(val2->num->num) == 0) {
+                            stats[val2->num->num] = NumberValueStats();
+                        }
+                        stats[val2->num->num].addLoad(val2, 1);
+                    }
+                }
+            case MODULO:
+                if(val1->type == Value::Type::NUM){
+                    if(stats.count(val1->num->num) == 0){
+                        stats[val1->num->num] = NumberValueStats();
+                    }
+                    stats[val1->num->num].addLoad(val1, 1);
+                }
+                if(val2->type == Value::Type::NUM){
+                    if(val2->num->num > 2) {
+                        if (stats.count(val2->num->num) == 0) {
+                            stats[val2->num->num] = NumberValueStats();
+                        }
+                        stats[val2->num->num].addSubtraction(val2, 1);
+                    }
+                }
+                break;
+        }
+    }
+
+    static bool isPowOf2(cl_I num){
+        auto numMinus1 = num - 1;
+        return (num & numMinus1) == 0;
     }
 };
