@@ -17,21 +17,21 @@ public:
     explicit Value(Number* num)
     :type(Type::NUM)
     ,num(num){
-        cerr << "Creating " << this->toString() << endl;
+        cerr << "Creating value number " << toString() << endl;
     }
 
     explicit Value(Identifier* ident)
     :type(Type::IDENTIFIER)
     ,ident(ident){
-        cerr << "Creating " << this->toString() << endl;
+        cerr << "Creating value identifier " << toString() << endl;
     }
 
     string toString(){
         switch (this->type){
             case NUM:
-                return "value - \"" + this->num->toString() + "\"";
+                return this->num->toString();
             case IDENTIFIER:
-                return "value - \"" + this->ident->toString() +"\"";
+                return this->ident->toString();
         }
     }
 

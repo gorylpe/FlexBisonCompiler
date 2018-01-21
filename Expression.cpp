@@ -7,7 +7,7 @@
 Expression::Expression(Value *val)
         :type(VALUE)
         ,val1(val){
-    cerr << "Creating " << this->toString() << endl;
+    cerr << "Creating expression " << toString() << endl;
 }
 
 Expression::Expression(Expression::Type type, Value *val1, Value *val2)
@@ -15,10 +15,9 @@ Expression::Expression(Expression::Type type, Value *val1, Value *val2)
         ,val1(val1)
         ,val2(val2){
     //const operation optimisation
-
     this->optimizeConstants();
 
-    cerr << "Creating " << this->toString() << endl;
+    cerr << "Creating expression " << toString() << endl;
 }
 
 void Expression::optimizeConstants() {

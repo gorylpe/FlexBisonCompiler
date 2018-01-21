@@ -27,32 +27,32 @@ public:
     ,constComparisionResult(false){
         //const comparision optimisation
         this->optimizeConstants();
-        cerr << "Creating " << this->toString() << endl;
+        cerr << "Creating condition " << toString() << endl;
     }
 
     string toString(){
         string condType;
         switch (type){
             case EQ:
-                condType = "EQUALS";
+                condType = "=";
                 break;
             case NEQ:
-                condType = "NOT EQUALS";
+                condType = "<>";
                 break;
             case LT:
-                condType = "LESS THAN";
+                condType = "<";
                 break;
             case GT:
-                condType = "GREATER THAN";
+                condType = ">";
                 break;
             case LEQ:
-                condType = "LESS THAN OR EQUALS";
+                condType = "<=";
                 break;
             case GEQ:
-                condType = "GREATER THAN OR EQUALS";
+                condType = ">=";
                 break;
         }
-        return "condition " + condType + " of values: " + val1->toString() + ", " + val2->toString();
+        return val1->toString() + " " + condType + " " + val2->toString();
     }
 
     bool equals(Condition* cond2){

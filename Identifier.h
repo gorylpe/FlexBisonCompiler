@@ -36,7 +36,7 @@ public:
     ,pid(pid)
     ,type(PID)
     ,isPreparedForPidpid(false){
-        cerr << "Creating identifier PID " << pid << endl;
+        cerr << "Creating identifier PID " << toString() << endl;
     }
 
     explicit Identifier(Position* pos, const string& pid, const string& pidpid)
@@ -45,7 +45,7 @@ public:
     ,pidpid(pidpid)
     ,type(PIDPID)
     ,isPreparedForPidpid(false){
-        cerr << "Creating identifier PIDPID " << pid << " [" << pidpid << "]" << endl;
+        cerr << "Creating identifier PIDPID " << toString() << endl;
     }
 
     explicit Identifier(Position* pos, const string& pid, const cl_I& num)
@@ -54,7 +54,7 @@ public:
     ,type(PIDNUM)
     ,num(num)
     ,isPreparedForPidpid(false){
-        cerr << "Creating identifier PIDNUM " << pid << " [" << num << "]" << endl;
+        cerr << "Creating identifier PIDNUM " << toString() << endl;
     }
 
     bool equals(Identifier* ident2){
@@ -73,19 +73,14 @@ public:
     }
 
     string toString(){
-        string type;
-        switch(this->type){
-            case PID:
-                type = "pid";
-                break;
-            case PIDPID:
-                type = "pidpid";
-                break;
-            case PIDNUM:
-                type = "pidnum";
-                break;
+        stringstream ss;
+        ss << this->pid;
+        if(this->type == PIDNUM){
+            ss << "[" << this->num << "]";
+        } else if(this->type == PIDPID){
+            ss << "[" << this->pidpid << "]";
         }
-        return "identifier " + type + " " + this->pid + (this->type == PIDPID ? this->pidpid : "");
+        return ss.str();
     }
 
     Variable* getPidVariable(){

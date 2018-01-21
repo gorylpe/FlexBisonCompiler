@@ -62,37 +62,37 @@ public:
     }
 
     string toString(){
-        string values;
-        switch(this->type){
-            case VALUE:
-                values = val1->toString();
-                break;
-            default:
-                values = val1->toString() + ", " + val2->toString();
-                break;
-        }
         string type;
         switch(this->type){
             case VALUE:
-                type = "VALUE";
+                type = "";
                 break;
             case ADDITION:
-                type = "ADDITION";
+                type = " + ";
                 break;
             case SUBTRACTION:
-                type = "SUBTRACTION";
+                type = " - ";
                 break;
             case MULTIPLICATION:
-                type = "MULTIPLICATION";
+                type = " * ";
                 break;
             case DIVISION:
-                type = "DIVISION";
+                type = " / ";
                 break;
             case MODULO:
-                type = "MODULO";
+                type = " % ";
                 break;
         }
-        return "expression " + type + " with " + values;
+        string expr;
+        switch(this->type){
+            case VALUE:
+                expr = val1->toString();
+                break;
+            default:
+                expr = val1->toString() + type + val2->toString();
+                break;
+        }
+        return expr;
     }
 
     bool equals(Expression* expr2){

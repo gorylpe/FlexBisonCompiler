@@ -21,6 +21,8 @@ public:
         return false;
     }
 
+    virtual void print(int nestedLevel) = 0;
+
     virtual void calculateVariablesUsage(cl_I numberOfNestedLoops) = 0;
 
     virtual bool propagateConstants() { return false; };
@@ -43,6 +45,11 @@ public:
         commands.push_back(command);
     }
 
+    void print(int nestedLevel) final {
+        for(auto cmd : commands){
+            cmd->print(nestedLevel);
+        }
+    }
 
     bool equals(Command* command) final {
         auto block2 = dynamic_cast<CommandsBlock*>(command);
@@ -94,6 +101,7 @@ public:
             CommandsBlock* block = commands[i]->blockToReplaceWith();
 
             if(block != nullptr){
+                //commands.insert(commands.begin() + i, block->commands.begin(), block->commands.end());
                 commands[i] = block;
             }
 
@@ -124,6 +132,14 @@ public:
         this->ident->unprepareIfNeeded();
         this->expr->unprepareValuesIfNeeded();
         cerr << "End generating ASSIGNMENT code" << endl;
+    }
+
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << ident->toString() << " := " << expr->toString() << ";" << endl;
     }
 
 
@@ -182,6 +198,14 @@ public:
         cerr << "Creating READ with " << ident->toString() << endl;
     }
 
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "READ " << ident->toString() << ";" << endl;
+    }
+
     void generateCode() final{
         cerr << "Generating READ code" << endl;
         this->ident->prepareIfNeeded();
@@ -211,6 +235,14 @@ public:
     explicit Write(Value* val)
     :val(val){
         cerr << "Creating WRITE with " << val->toString() << endl;
+    }
+
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "WRITE " << val->toString() << ";" << endl;
     }
 
     void generateCode() final{
@@ -250,6 +282,16 @@ public:
     :cond(cond)
     ,block(block){
         cerr << "Creating IF with " << cond->toString() << endl;
+    }
+
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "IF " << cond->toString() << " THEN" << endl;
+        block->print(nestedLevel + 1);
+        cerr << "ENDIF" << endl;
     }
 
     void generateCode() final {
@@ -319,6 +361,18 @@ public:
             ,block1(block1)
             ,block2(block2){
         cerr << "Creating IF with " << cond->toString() << endl;
+    }
+
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "IF " << cond->toString() << " THEN" << endl;
+        block1->print(nestedLevel + 1);
+        cerr << "ELSE " << endl;
+        block1->print(nestedLevel + 1);
+        cerr << "ENDIF" << endl;
     }
 
     void generateCode() final {
@@ -398,6 +452,16 @@ public:
         cerr << "Creating WHILE with " << cond->toString() << endl;
     }
 
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "WHILE " << cond->toString() << " DO" << endl;
+        block->print(nestedLevel + 1);
+        cerr << "ENDWHILE " << endl;
+    }
+
     void generateCode() final {
         cerr << "Generating WHILE code" << endl;
         if(!this->cond->isComparisionConst()){
@@ -469,6 +533,16 @@ public:
     ,block(block)
     ,increasing(increasing){
         cerr << "Creating FOR" << endl;
+    }
+
+    void print(int nestedLevel) final {
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
+
+        cerr << "FOR " << pid << " FROM " << from->toString() << (increasing ? " TO " : " DOWNTO ") << to->toString() << " DO " << endl;
+        block->print(nestedLevel + 1);
+        cerr << "ENDFOR" << endl;
     }
 
     void generateCode() final {

@@ -53,6 +53,10 @@ public:
     string generateCode(){
         this->ASTOptimizations();
 
+        cerr << "---OPTIMIZED CODE---" << endl;
+        block->print(0);
+        cerr << "---END OPTIMIZED CODE---" << endl;
+
         //after removing unused variables
 
         this->block->calculateVariablesUsage(0);

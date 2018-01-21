@@ -20,7 +20,7 @@ public:
     ,num(num)
     //,isPrepared(false)
     {
-        cerr << "Creating " << this->toString() << endl;
+        cerr << "Creating number " << this->toString() << endl;
     }
 
     bool equals(Number* num2){
@@ -29,7 +29,7 @@ public:
 
     string toString(){
         stringstream ss;
-        ss << "num " << this->num;
+        ss << this->num;
         return ss.str();
     }
 
