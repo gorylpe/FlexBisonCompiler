@@ -27,10 +27,11 @@ public:
 
     virtual bool propagateConstants() { return false; };
 
-    virtual void getPidVariablesBeingModified(set<Variable *> variableSet) {}
+    virtual void getPidVariablesBeingModified(set<Variable *>& variableSet) {}
 
+    //used to remove not reachable ifs, unroll for's with constants
     virtual CommandsBlock* blockToReplaceWith() { return nullptr; };
-    virtual void replaceUnusedCommands() {}
+    virtual void replaceCommands() {}
 };
 
 class If;
@@ -90,13 +91,13 @@ public:
         return hasPropagated;
     }
 
-    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
         for(auto cmd : this->commands){
             cmd->getPidVariablesBeingModified(variableSet);
         }
     }
 
-    void replaceUnusedCommands() final {
+    void replaceCommands() final {
         for(int i = 0; i < commands.size(); ++i) {
             CommandsBlock* block = commands[i]->blockToReplaceWith();
 
@@ -105,7 +106,7 @@ public:
                 commands[i] = block;
             }
 
-            commands[i]->replaceUnusedCommands();
+            commands[i]->replaceCommands();
         }
     };
 };
@@ -182,7 +183,7 @@ public:
         return hasPropagated;
     }
 
-    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
         Variable* var = this->ident->getPidVariable();
         if(var->type == Variable::Type::PID)
             variableSet.insert(var);
@@ -221,7 +222,7 @@ public:
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
         Variable* var = this->ident->getPidVariable();
         if(var->type == Variable::Type::PID)
             variableSet.insert(var);
@@ -291,6 +292,10 @@ public:
 
         cerr << "IF " << cond->toString() << " THEN" << endl;
         block->print(nestedLevel + 1);
+
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
         cerr << "ENDIF" << endl;
     }
 
@@ -329,7 +334,7 @@ public:
         return hasPropagated;
     }
 
-    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
         this->block->getPidVariablesBeingModified(variableSet);
     }
 
@@ -345,8 +350,8 @@ public:
         return nullptr;
     }
 
-    void replaceUnusedCommands() final {
-        this->block->replaceUnusedCommands();
+    void replaceCommands() final {
+        this->block->replaceCommands();
     }
 };
 
@@ -423,6 +428,11 @@ public:
         return hasPropagated;
     }
 
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
+        this->block1->getPidVariablesBeingModified(variableSet);
+        this->block2->getPidVariablesBeingModified(variableSet);
+    }
+
     CommandsBlock* blockToReplaceWith() final{
         if(cond->isComparisionConst()){
             if(cond->getComparisionConstResult()){
@@ -435,9 +445,9 @@ public:
         return nullptr;
     }
 
-    void replaceUnusedCommands() final {
-        this->block1->replaceUnusedCommands();
-        this->block2->replaceUnusedCommands();
+    void replaceCommands() final {
+        this->block1->replaceCommands();
+        this->block2->replaceCommands();
     }
 };
 
@@ -456,9 +466,13 @@ public:
         for(int i = 0; i < nestedLevel; ++i){
             cerr << "  ";
         }
-
         cerr << "WHILE " << cond->toString() << " DO" << endl;
+
         block->print(nestedLevel + 1);
+
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
         cerr << "ENDWHILE " << endl;
     }
 
@@ -500,6 +514,29 @@ public:
         this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
     }
 
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
+        this->block->getPidVariablesBeingModified(variableSet);
+    }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        set<Variable*> variablesSet;
+
+        this->block->getPidVariablesBeingModified(variablesSet);
+
+        for(auto var : variablesSet){
+            var->unsetConstant();
+        }
+
+        if(this->block->propagateConstants()){
+            hasPropagated = true;
+        }
+
+        return hasPropagated;
+    }
+
+
     CommandsBlock* blockToReplaceWith() final{
         if(cond->isComparisionConst()){
             if(!cond->getComparisionConstResult()){
@@ -510,8 +547,8 @@ public:
         return nullptr;
     }
 
-    void replaceUnusedCommands() final {
-        this->block->replaceUnusedCommands();
+    void replaceCommands() final {
+        this->block->replaceCommands();
     }
 };
 
@@ -539,9 +576,13 @@ public:
         for(int i = 0; i < nestedLevel; ++i){
             cerr << "  ";
         }
-
         cerr << "FOR " << pid << " FROM " << from->toString() << (increasing ? " TO " : " DOWNTO ") << to->toString() << " DO " << endl;
+
         block->print(nestedLevel + 1);
+
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
         cerr << "ENDFOR" << endl;
     }
 
@@ -619,24 +660,60 @@ public:
         memory.popTempVariable(); //iterator
     }
 
+    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
+        this->block->getPidVariablesBeingModified(variableSet);
+    }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        if(from->propagateConstant()){
+            hasPropagated = true;
+        }
+
+        if(to->propagateConstant()){
+            hasPropagated = true;
+        }
+
+        set<Variable*> variablesSet;
+
+        auto iterator = memory.pushTempNamedVariable(pid, false);
+        this->block->getPidVariablesBeingModified(variablesSet);
+
+        for(auto var : variablesSet){
+            var->unsetConstant();
+        }
+
+        if(this->block->propagateConstants()){
+            hasPropagated = true;
+        }
+        memory.popTempVariable(); //iterator
+
+        return hasPropagated;
+    }
+
     CommandsBlock* blockToReplaceWith() final{
         if(from->type == Value::Type::NUM && to->type == Value::Type::NUM){
             if(increasing && from->num->num > to->num->num){
                 return new CommandsBlock();
             } else if(!increasing && from->num->num < to->num->num){
                 return new CommandsBlock();
+            } else {
+                auto block = new CommandsBlock();
+                if(increasing){
+                    for(cl_I i = from->num->num; i <= to->num->num; ++i){
+
+                    }
+                }
+
             }
         }
 
         return nullptr;
     }
 
-    void replaceUnusedCommands() final {
-        this->block->replaceUnusedCommands();
-    }
-
-    bool canBeUnrolled(){
-        return this->from->type == Value::Type::NUM && this->to->type == Value::Type::NUM;
+    void replaceCommands() final {
+        this->block->replaceCommands();
     }
 };
 

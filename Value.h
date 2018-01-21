@@ -83,6 +83,14 @@ public:
         return hasPropagated;
     }
 
+    void replaceIdentifierWithConst(string pid, cl_I number){
+        if(this->type == IDENTIFIER){
+            if(this->ident->pid == pid){
+
+            }
+        }
+    }
+
     bool isLoadBetterThanIncs() {
         switch (this->type) {
             case Value::Type::NUM:
