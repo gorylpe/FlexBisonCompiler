@@ -190,6 +190,6 @@ public:
 
         cerr << "AFTER OPTIMIZATION" << endl;
         cerr << memoryToString();
-        cerr << "---OPTIMIZATION END---" << endl;
+        cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION END---" << endl << endl;
     }
 };

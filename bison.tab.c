@@ -1925,8 +1925,9 @@ int main(void) {
     cerr << "Compilation started" << endl;
     cerr.flush();
     try {
+        cerr << "---PARSING---" << endl;
         yyparse();
-        cerr << "Parsed" << endl;
+        cerr << "---PARSING END---" << endl << endl;
         cout << program.generateCode();
     } catch(const std::exception&) {
         return EXIT_FAILURE;

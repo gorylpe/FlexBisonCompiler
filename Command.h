@@ -23,6 +23,8 @@ public:
         return false;
     }
 
+    virtual string toString() {return "";}
+
     virtual void print(int nestedLevel) = 0;
 
     virtual void calculateVariablesUsage(cl_I numberOfNestedLoops) = 0;
@@ -127,7 +129,7 @@ public:
     explicit Assignment(Identifier* ident, Expression* expr)
     :ident(ident)
     ,expr(expr){
-        cerr << "Creating ASSIGNMENT with " << ident->toString() << ", " << expr->toString() << endl;
+        cerr << "Creating ASSIGNMENT " << toString() << endl;
     }
 
     void semanticAnalysis() final {
@@ -136,7 +138,7 @@ public:
     }
 
     void generateCode() final {
-        cerr << "Generating ASSIGNMENT code" << endl;
+        cerr << "Generating ASSIGNMENT " << toString() << endl;
         this->ident->prepareIfNeeded();
         this->expr->prepareValuesIfNeeded();
 
@@ -145,7 +147,6 @@ public:
 
         this->ident->unprepareIfNeeded();
         this->expr->unprepareValuesIfNeeded();
-        cerr << "End generating ASSIGNMENT code" << endl;
     }
 
     void print(int nestedLevel) final {
@@ -153,9 +154,12 @@ public:
             cerr << "  ";
         }
 
-        cerr << ident->toString() << " := " << expr->toString() << ";" << endl;
+        cerr << toString() << endl;
     }
 
+    string toString() final {
+        return ident->toString() + " := " + expr->toString() + ";";
+    }
 
     bool equals(Command* command) final {
         auto assgn2 = dynamic_cast<Assignment*>(command);
@@ -209,7 +213,7 @@ public:
 
     explicit Read(Identifier* ident)
             :ident(ident){
-        cerr << "Creating READ with " << ident->toString() << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void print(int nestedLevel) final {
@@ -217,7 +221,11 @@ public:
             cerr << "  ";
         }
 
-        cerr << "READ " << ident->toString() << ";" << endl;
+        cerr << toString() << endl;
+    }
+
+    string toString() final {
+        return "READ " + ident->toString() + ";";
     }
 
     void semanticAnalysis() final {
@@ -225,14 +233,13 @@ public:
     }
 
     void generateCode() final{
-        cerr << "Generating READ code" << endl;
+        cerr << "Generating " << toString() << endl;
         this->ident->prepareIfNeeded();
 
         machine.GET();
         ident->storeFromAccumulator();
 
         this->ident->unprepareIfNeeded();
-        cerr << "End generating READ code" << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -252,7 +259,7 @@ public:
 
     explicit Write(Value* val)
     :val(val){
-        cerr << "Creating WRITE with " << val->toString() << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void print(int nestedLevel) final {
@@ -260,7 +267,11 @@ public:
             cerr << "  ";
         }
 
-        cerr << "WRITE " << val->toString() << ";" << endl;
+        cerr << toString() << endl;
+    }
+
+    string toString() final {
+        return "WRITE " + val->toString() + ";";
     }
 
     void semanticAnalysis() final {
@@ -268,7 +279,7 @@ public:
     }
 
     void generateCode() final{
-        cerr << "Generating WRITE code" << endl;
+        cerr << "Generating " << toString() << endl;
         if(this->val->type != Value::Type::NUM)
             this->val->prepareIfNeeded();
 
@@ -277,7 +288,6 @@ public:
 
         if(this->val->type != Value::Type::NUM)
             this->val->unprepareIfNeeded();
-        cerr << "End generating WRITE code" << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -303,7 +313,7 @@ public:
     If(Condition* cond, CommandsBlock* block)
     :cond(cond)
     ,block(block){
-        cerr << "Creating IF with " << cond->toString() << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void print(int nestedLevel) final {
@@ -320,13 +330,17 @@ public:
         cerr << "ENDIF" << endl;
     }
 
+    string toString() final {
+        return "IF " + cond->toString();
+    }
+
     void semanticAnalysis() final {
         cond->semanticAnalysis();
         block->semanticAnalysis();
     }
 
     void generateCode() final {
-        cerr << "Generating IF code" << endl;
+        cerr << "Generating " << toString() << endl;
         this->cond->prepareValuesIfNeeded();
 
         auto jumpIfTrue = new JumpPosition();
@@ -340,7 +354,7 @@ public:
         machine.setJumpPosition(jumpIfFalse);
 
         this->cond->unprepareValuesIfNeeded();
-        cerr << "End generating IF code" << endl;
+        cerr << "Generating END " << toString() << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -391,19 +405,32 @@ public:
             :cond(cond)
             ,block1(block1)
             ,block2(block2){
-        cerr << "Creating IF with " << cond->toString() << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void print(int nestedLevel) final {
         for(int i = 0; i < nestedLevel; ++i){
             cerr << "  ";
         }
-
         cerr << "IF " << cond->toString() << " THEN" << endl;
+
         block1->print(nestedLevel + 1);
+
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
         cerr << "ELSE " << endl;
-        block1->print(nestedLevel + 1);
+
+        block2->print(nestedLevel + 1);
+
+        for(int i = 0; i < nestedLevel; ++i){
+            cerr << "  ";
+        }
         cerr << "ENDIF" << endl;
+    }
+
+    string toString() final {
+        return "IF " + cond->toString() + " ELSE";
     }
 
     void semanticAnalysis() final {
@@ -413,7 +440,7 @@ public:
     }
 
     void generateCode() final {
-        cerr << "Generating IF ELSE code" << endl;
+        cerr << "Generating " << toString() << endl;
         this->cond->prepareValuesIfNeeded();
 
         auto jumpIfTrue = new JumpPosition();
@@ -436,7 +463,7 @@ public:
 
         this->cond->unprepareValuesIfNeeded();
 
-        cerr << "End generating IF ELSE code" << endl;
+        cerr << "Generating END " << toString() << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -491,7 +518,7 @@ public:
     While(Condition* cond, CommandsBlock* block)
     :cond(cond)
     ,block(block){
-        cerr << "Creating WHILE with " << cond->toString() << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void print(int nestedLevel) final {
@@ -508,13 +535,17 @@ public:
         cerr << "ENDWHILE " << endl;
     }
 
+    string toString() final {
+        return "WHILE " + cond->toString();
+    }
+
     void semanticAnalysis() final {
         cond->semanticAnalysis();
         block->semanticAnalysis();
     }
 
     void generateCode() final {
-        cerr << "Generating WHILE code" << endl;
+        cerr << "Generating " << toString() << endl;
         if(!this->cond->isComparisionConst()){
             this->cond->prepareValuesIfNeeded();
 
@@ -543,7 +574,7 @@ public:
 
             machine.JUMP(loopStart);
         }
-        cerr << "End generating WHILE code" << endl;
+        cerr << "Generating END " << toString() << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -606,7 +637,7 @@ public:
     ,to(to)
     ,block(block)
     ,increasing(increasing){
-        cerr << "Creating FOR" << endl;
+        cerr << "Creating " << toString() << endl;
     }
 
     void semanticAnalysis() final {
@@ -638,12 +669,16 @@ public:
         cerr << "ENDFOR" << endl;
     }
 
+    string toString() final {
+        return "FOR " + pid + " FROM " + from->toString() + (increasing ? " TO " : " DOWNTO ") + to->toString();
+    }
+
     void generateCode() final {
         //only loading to accumulator so no need to prepare
         this->from->prepareIfNeeded();
         this->to->prepareIfNeeded();
 
-        cerr << "Generating FOR code" << endl;
+        cerr << "Generating " << toString() << endl;
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
 
@@ -698,7 +733,7 @@ public:
         this->from->unprepareIfNeeded();
         this->to->unprepareIfNeeded();
 
-        cerr << "End generating FOR code" << endl;
+        cerr << "Generating END " << toString() << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {

@@ -21,9 +21,14 @@ public:
     vector<AssemblyLine*> assemblyCode;
     set<JumpPosition*> jumps;
 
-    void generateCode(stringstream& ss){
+    void optimize(){
+        cerr << "---OPTIMIZING ASSEMBLY CODE---" << endl;
         optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         optimizeRedundandStoresInContinuousCodeBlocks();
+        cerr << "---OPTIMIZING ASSEMBLY CODE END---" << endl << endl;
+    }
+
+    void generateCode(stringstream& ss){
         for(auto line : assemblyCode){
             line->toStringstream(ss);
         }
@@ -83,7 +88,7 @@ public:
 
         this->removeLines(linesToRemove);
 
-        cerr << "---OPTIMIZATION END---" << endl;
+        cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION END---" << endl << endl;
     }
 
     /*
@@ -159,7 +164,7 @@ public:
 
         this->removeLines(linesToRemove);
 
-        cerr << "---OPTIMIZATION END---" << endl;
+        cerr << "---REDUNDANT STORES OPTIMIZATION END---" << endl << endl;
     }
 
     vector<bool> getLinesWithJump(){

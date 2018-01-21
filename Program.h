@@ -19,6 +19,7 @@ public:
     }
 
     void constPropagation(){
+        cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION---" << endl;
         bool hadPropagation;
         int numOfPropagations;
         do{
@@ -37,7 +38,7 @@ public:
                 block->replaceCommands();
             }
         }while(numOfPropagations > 0);
-
+        cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION END---" << endl << endl;
     }
 
     void RemoveUnusedAssignements(){
@@ -59,7 +60,7 @@ public:
 
         cerr << "---OPTIMIZED CODE---" << endl;
         block->print(0);
-        cerr << "---END OPTIMIZED CODE---" << endl;
+        cerr << "---END OPTIMIZED CODE---" << endl << endl;
 
         //after removing unused variables
 
@@ -67,14 +68,16 @@ public:
 
         memory.optimize();
 
+        cerr << "---GENERATING ASSEMBLY CODE---" << endl;
         this->block->generateCode();
-
         machine.HALT();
+        cerr << "---GENERATING ASSEMBLY CODE END---" << endl << endl;
 
+        machine.optimize();
+
+        cerr << "---SAVING ASSEMBLY CODE---" << endl;
         stringstream ss;
         machine.generateCode(ss);
-
-        cerr << "End generating PROGRAM" << endl;
 
         return ss.str();
     }

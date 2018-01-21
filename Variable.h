@@ -41,7 +41,7 @@ public:
     ,useNumber(0)
     ,constant(false)
     ,constValue(0){
-        cerr << "Declaring variable " << " name " << pid << endl;
+        cerr << "Declaring variable " << pid << endl;
     }
 
     explicit Variable(string pid, const cl_I& size, const cl_I& memoryPtr, bool modifiable)
@@ -53,7 +53,9 @@ public:
     ,initialized(false)
     ,useNumber(0)
     ,constant(false)
-    ,constValue(0){}
+    ,constValue(0){
+        cerr << "Deleting array " << pid << "[" << size << "]" << endl;
+    }
 
     ~Variable(){
         cerr << "Deleting variable " << pid << endl;
