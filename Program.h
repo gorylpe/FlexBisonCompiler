@@ -53,6 +53,8 @@ public:
     //todo optimizations for high level instructions
 
     string generateCode(){
+        block->semanticAnalysis();
+
         this->ASTOptimizations();
 
         cerr << "---OPTIMIZED CODE---" << endl;

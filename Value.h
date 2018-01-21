@@ -35,6 +35,12 @@ public:
         }
     }
 
+    void semanticAnalysis(){
+        if(type == IDENTIFIER){
+            ident->semanticAnalysisGet();
+        }
+    }
+
     bool equals(Value* val2){
         if(this->type != val2->type){
             return false;
@@ -86,7 +92,7 @@ public:
     void replaceIdentifierWithConst(string pid, cl_I number){
         if(this->type == IDENTIFIER){
             if(this->ident->pid == pid){
-
+                //todo
             }
         }
     }

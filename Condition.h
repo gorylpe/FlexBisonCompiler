@@ -119,6 +119,11 @@ public:
         return false;
     }
 
+    void semanticAnalysis(){
+        val1->semanticAnalysis();
+        val2->semanticAnalysis();
+    }
+
     void prepareValuesIfNeeded(){
         this->val1->prepareIfNeeded();
         this->val2->prepareIfNeeded();

@@ -15,6 +15,8 @@ class CommandsBlock;
 
 class Command {
 public:
+    virtual void semanticAnalysis() = 0;
+
     virtual void generateCode() = 0;
 
     virtual bool equals(Command* command){
@@ -66,6 +68,12 @@ public:
         }
 
         return true;
+    }
+
+    void semanticAnalysis() final {
+        for(auto cmd : this->commands){
+            cmd->semanticAnalysis();
+        }
     }
 
     void generateCode() final {
@@ -120,6 +128,11 @@ public:
     :ident(ident)
     ,expr(expr){
         cerr << "Creating ASSIGNMENT with " << ident->toString() << ", " << expr->toString() << endl;
+    }
+
+    void semanticAnalysis() final {
+        ident->semanticAnalysisSet();
+        expr->semanticAnalysis();
     }
 
     void generateCode() final {
@@ -207,6 +220,10 @@ public:
         cerr << "READ " << ident->toString() << ";" << endl;
     }
 
+    void semanticAnalysis() final {
+        ident->semanticAnalysisSet();
+    }
+
     void generateCode() final{
         cerr << "Generating READ code" << endl;
         this->ident->prepareIfNeeded();
@@ -244,6 +261,10 @@ public:
         }
 
         cerr << "WRITE " << val->toString() << ";" << endl;
+    }
+
+    void semanticAnalysis() final {
+        val->semanticAnalysis();
     }
 
     void generateCode() final{
@@ -297,6 +318,11 @@ public:
             cerr << "  ";
         }
         cerr << "ENDIF" << endl;
+    }
+
+    void semanticAnalysis() final {
+        cond->semanticAnalysis();
+        block->semanticAnalysis();
     }
 
     void generateCode() final {
@@ -378,6 +404,12 @@ public:
         cerr << "ELSE " << endl;
         block1->print(nestedLevel + 1);
         cerr << "ENDIF" << endl;
+    }
+
+    void semanticAnalysis() final {
+        cond->semanticAnalysis();
+        block1->semanticAnalysis();
+        block2->semanticAnalysis();
     }
 
     void generateCode() final {
@@ -476,6 +508,11 @@ public:
         cerr << "ENDWHILE " << endl;
     }
 
+    void semanticAnalysis() final {
+        cond->semanticAnalysis();
+        block->semanticAnalysis();
+    }
+
     void generateCode() final {
         cerr << "Generating WHILE code" << endl;
         if(!this->cond->isComparisionConst()){
@@ -570,6 +607,16 @@ public:
     ,block(block)
     ,increasing(increasing){
         cerr << "Creating FOR" << endl;
+    }
+
+    void semanticAnalysis() final {
+        from->semanticAnalysis();
+        to->semanticAnalysis();
+        auto iterator = memory.pushTempNamedVariable(pid, false);
+        iterator->initialize();
+        block->semanticAnalysis();
+        memory.popTempVariable(); //iterator
+
     }
 
     void print(int nestedLevel) final {
@@ -705,7 +752,6 @@ public:
 
                     }
                 }
-
             }
         }
 

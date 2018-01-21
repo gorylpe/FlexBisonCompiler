@@ -64,14 +64,11 @@ public:
     }
 
     void initialize(){
-        if(this->type == PID)
-            this->initialized = true;
+        this->initialized = true;
     }
 
     bool isInitialized(){
-        if(this->type == PID)
-            return this->initialized;
-        return false;
+        return this->initialized;
     }
 
     void addUsage(const cl_I& numberOfNestedLoops) {

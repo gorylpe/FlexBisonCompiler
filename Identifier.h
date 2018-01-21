@@ -31,7 +31,7 @@ public:
     bool isPreparedForPidpid;
     cl_I num;
 
-    explicit Identifier(Position* pos, const string& pid)
+    explicit Identifier(Position* pos, string pid)
     :pos(pos)
     ,pid(pid)
     ,type(PID)
@@ -39,7 +39,7 @@ public:
         cerr << "Creating identifier PID " << toString() << endl;
     }
 
-    explicit Identifier(Position* pos, const string& pid, const string& pidpid)
+    explicit Identifier(Position* pos, string pid, string pidpid)
     :pos(pos)
     ,pid(pid)
     ,pidpid(pidpid)
@@ -48,7 +48,7 @@ public:
         cerr << "Creating identifier PIDPID " << toString() << endl;
     }
 
-    explicit Identifier(Position* pos, const string& pid, const cl_I& num)
+    explicit Identifier(Position* pos, string pid, const cl_I& num)
     :pos(pos)
     ,pid(pid)
     ,type(PIDNUM)
@@ -83,42 +83,46 @@ public:
         return ss.str();
     }
 
-    Variable* getPidVariable(){
-        Variable* pidV = memory.getVariable(this->pid);
-
+    void checkPids(Variable* pidV, Variable* pidpidV){
         switch(this->type){
             case PID:{
                 if (pidV == nullptr){
                     poserror(this->pos, "variable \"" + this->pid + "\" not declared");
-                    return nullptr;
+                    return;
                 }
 
                 if (pidV->type == Variable::Type::PIDNUM){
                     poserror(this->pos, "\"" + this->pid + "\" is array, not variable");
-                    return nullptr;
                 }
             }
-            break;
+                break;
             case PIDPID:{
                 if (pidV == nullptr){
                     poserror(this->pos, "variable \"" + this->pid + "\" not declared");
-                    return nullptr;
+                    return;
                 }
 
                 if (pidV->type == Variable::Type::PID){
                     poserror(this->pos, "\"" + this->pid + "\" is variable, not array");
-                    return nullptr;
+                }
+
+                if (pidpidV == nullptr) {
+                    poserror(this->pos, "variable \"" + this->pidpid + "\" not declared");
+                    return;
+                }
+
+                if (pidpidV->type == Variable::Type::PIDNUM) {
+                    poserror(this->pos, "\"" + this->pidpid + "\" has to be variable, not array");
                 }
             }
-            break;
+                break;
             case PIDNUM:{
                 if (pidV == nullptr){
-                    poserror(this->pos, "variable \"" + this->pid + "\" not declared");
-                    return nullptr;
+                    poserror(this->pos, "variable " + this->pid + " not declared");
+                    return;
                 }
                 if (pidV->type == Variable::Type::PID){
-                    poserror(this->pos, "\"" + this->pid + "\" is variable, not array");
-                    return nullptr;
+                    poserror(this->pos, this->pid + " is variable, not array");
                 }
                 if (num < 0 || num >= pidV->size){
                     stringstream ss;
@@ -129,29 +133,52 @@ public:
                         ss << num << " >= " << pidV->size;
                     }
                     poserror(this->pos, ss.str());
-                    return nullptr;
                 }
             }
+            break;
         }
+    }
+
+    void semanticAnalysisGet() {
+        Variable *pidV = memory.getVariable(pid);
+        Variable *pidpidV = memory.getVariable(pidpid);
+
+        checkPids(pidV, pidpidV);
+
+        if (!pidV->isInitialized()) {
+            poserror(pos, "variable " + pid + " is not initialized");
+        }
+
+        if (type == PIDPID && !pidpidV->isInitialized()) {
+            poserror(pos, "variable " + pidpid + " is not initialized");
+        }
+    }
+
+    void semanticAnalysisSet(){
+        Variable* pidV = memory.getVariable(pid);
+        Variable* pidpidV = memory.getVariable(pidpid);
+
+        checkPids(pidV, pidpidV);
+
+        pidV->initialize();
+
+        if (!pidV->isModifiable()) {
+            poserror(pos, "assignment to non-modifiable variable");
+        }
+
+        if (type == PIDPID && !pidpidV->isInitialized()) {
+            poserror(pos, "variable " + pidpid + "is not initialized");
+        }
+    }
+
+    Variable* getPidVariable(){
+        Variable* pidV = memory.getVariable(pid);
 
         return pidV;
     }
 
     Variable* getPidPidVariable(){
-        Variable* pidpidV = nullptr;
-
-        if(this->type == PIDPID){
-            pidpidV = memory.getVariable(this->pidpid);
-            if (pidpidV == nullptr) {
-                poserror(this->pos, "variable \"" + this->pidpid + "\" not declared");
-                return nullptr;
-            }
-
-            if (pidpidV->type == Variable::Type::PIDNUM) {
-                poserror(this->pos, "\"" + this->pidpid + "\" is variable, not array");
-                return nullptr;
-            }
-        }
+        Variable* pidpidV = memory.getVariable(pidpid);
 
         return pidpidV;
     }
@@ -202,7 +229,7 @@ public:
     bool propagateConstantsInPidpid() {
         Variable* pidpidV = this->getPidPidVariable();
 
-        if(pidpidV != nullptr){
+        if(this->type == PIDPID){
             if(pidpidV->isConstant()){
                 this->type = PIDNUM;
                 this->num = pidpidV->getConstantValue();
@@ -248,26 +275,16 @@ public:
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();
 
-        if(!pidV->isModifiable()){
-            poserror(this->pos, "assignment to non-modifiable variable");
-        }
-
         switch (this->type) {
             case Identifier::Type::PID:
-                pidV->initialize();
                 machine.STORE(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
-                pidV->initialize();
                 cl_I arrayIndexMemoryPtr = pidV->memoryPtr + this->num;
                 machine.STORE(arrayIndexMemoryPtr);
                 break;
             }
             case Identifier::Type::PIDPID:
-                pidV->initialize();
-                if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable is not initialized");
-                }
                 if(isPreparedForPidpid){
                     machine.STOREI(preparedAddressForPidpid->memoryPtr);
                 } else {
@@ -285,9 +302,6 @@ public:
 
         switch (this->type){
             case Identifier::Type::PID:
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 machine.LOAD(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
@@ -296,9 +310,6 @@ public:
                 break;
             }
             case Identifier::Type::PIDPID:
-                if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 if(isPreparedForPidpid){
                     machine.LOADI(this->preparedAddressForPidpid->memoryPtr);
                 } else {
@@ -316,9 +327,6 @@ public:
 
         switch (this->type){
             case Identifier::Type::PID:
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 machine.ADD(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
@@ -327,9 +335,6 @@ public:
                 break;
             }
             case Identifier::Type::PIDPID:
-                if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 if(isPreparedForPidpid){
                     machine.ADDI(this->preparedAddressForPidpid->memoryPtr);
                 } else {
@@ -347,9 +352,6 @@ public:
 
         switch (this->type){
             case Identifier::Type::PID:
-                if(!pidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 machine.SUB(pidV->memoryPtr);
                 break;
             case Identifier::Type::PIDNUM: {
@@ -358,9 +360,6 @@ public:
                 break;
             }
             case Identifier::Type::PIDPID:
-                if(!pidpidV->isInitialized()){
-                    poserror(this->pos, "variable " + this->pid + " is not initialized");
-                }
                 if(isPreparedForPidpid){
                     machine.SUBI(this->preparedAddressForPidpid->memoryPtr);
                 } else {
