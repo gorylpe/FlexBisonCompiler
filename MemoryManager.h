@@ -19,6 +19,8 @@ public:
     map<string, Variable*> variables;
     vector<Variable*> stack;
 
+    cl_I numbersCounter = 0;
+
     void addVariable(Position *pos, const string &pid){
         if (this->variables.count(pid) == 1){
             poserror(pos, "variable redeclaration");
@@ -42,6 +44,20 @@ public:
         auto vdec = new Variable(pid, size, this->memoryPtr, true);
         this->variables[pid] = vdec;
         this->memoryPtr += size;
+    }
+
+    string addNumberVariable(){
+        stringstream ss;
+        ss << "num" << numbersCounter;
+        numbersCounter++;
+
+        string pid = ss.str();
+
+        auto vdec = new Variable(pid, this->memoryPtr, true);
+        this->variables[pid] = vdec;
+        this->memoryPtr++;
+
+        return pid;
     }
 
     Variable* getVariable(const string &pid){

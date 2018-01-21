@@ -51,17 +51,74 @@ public:
 
     }
 
-    //memory manager
     void optimizeNumbers(){
         map<cl_I, NumberValueStats> stats;
 
         block->collectNumberValues(stats);
 
         for(auto& entry : stats){
-            cerr << "---NUMBER " << entry.first << " ---" << endl;
-            cerr << entry.second.toString() << endl << endl;
+            const cl_I& num = entry.first;
+            const auto& stat = entry.second;
+
+            cerr << "---NUMBER " << num << " ---" << endl;
+            cerr << stat.toString() << endl;
         }
 
+        for(auto& entry : stats){
+            const cl_I& num = entry.first;
+            const auto& stat = entry.second;
+
+            //if loading saved number is not profitable
+            if(num <= LOAD_OPS){
+                continue;
+            }
+
+            cerr << "Optimizing " << num << endl;
+
+            const cl_I opsToLoadSingle = Number::getLoadToAccumulatorOperations(num);
+
+            const cl_I& opsToAddSub = num * (stat.numberOfAdditions + stat.numberOfSubtractions);
+            const cl_I& opsToAddSubStored = opsToLoadSingle + STORE_OPS + LOAD_OPS * (stat.numberOfAdditions + stat.numberOfSubtractions);
+
+            cerr << "Load ops              " << opsToLoadSingle << endl;
+
+            cerr << "Ops to add+sub stored " << opsToAddSubStored << endl;
+            cerr << "Ops to add+sub        " << opsToAddSub << endl;
+
+            bool profitable = false;
+
+            //can do both at once cause same ops to inc/dec (1)
+            if(opsToAddSubStored < opsToAddSub){
+                profitable = true;
+            }
+
+            if(profitable){
+                cerr << "Optimizing subtractions and additions" << endl;
+                string pid = memory.addNumberVariable();
+
+                auto number = new Number(nullptr, num);
+                number->loadToAccumulator();
+                delete number;
+
+                Identifier ident(new Position(0,0,0,0), pid);
+                ident.storeFromAccumulator();
+
+                for(auto valSub : stat.valsSubtracted){
+                    valSub->setIdentifier(new Identifier(ident));
+                }
+
+                for(auto valAdd : stat.valsAdded){
+                    valAdd->setIdentifier(new Identifier(ident));
+                }
+
+                if(LOAD_OPS < opsToLoadSingle){
+                    cerr << "Optimizing loads" << endl;
+                    for(auto valLoad : stat.valsLoaded){
+                        valLoad->setIdentifier(new Identifier(ident));
+                    }
+                }
+            }
+        }
 
     }
 

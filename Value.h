@@ -143,14 +143,6 @@ public:
         }
     }
 
-    bool isLoadStoreInTempBetterThanDecs() {
-        switch (this->type) {
-            case Value::Type::NUM:
-                return this->num->isLoadStoreInTempBetterThanDecs();
-        }
-        return false;
-    }
-
     void loadToAccumulator(){
         switch (this->type){
             case Value::Type::NUM:
@@ -182,6 +174,11 @@ public:
                 this->ident->subFromAccumulator();
                 break;
         }
+    }
+
+    void setIdentifier(Identifier* ident){
+        this->type = IDENTIFIER;
+        this->ident = ident;
     }
 };
 

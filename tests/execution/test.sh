@@ -21,5 +21,5 @@ for file in $DIR/$1/*.i; do
     test "$TEST_NAME" "$OUTPUT" "$EXPECTED"
     LAST_TIME=`cat ${file::(-2)}".t"`
     echo "Last time: $LAST_TIME"
-    echo "New time: $TIME"
+    echo "New time:  $TIME"
 done

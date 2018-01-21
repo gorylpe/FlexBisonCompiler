@@ -3,6 +3,11 @@
 #include "Utils.h"
 #include "MachineContext.h"
 
+const int LOAD_OPS = 10;
+const int STORE_OPS = 10;
+const int INC_OPS = 1;
+const int DEC_OPS = 1;
+
 class AssemblyLine{
 public:
     virtual void toStringstream(stringstream& ss) = 0;

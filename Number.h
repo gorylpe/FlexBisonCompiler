@@ -41,27 +41,26 @@ public:
         return ss.str();
     }
 
-    stack<int> getBits(){
-        cl_I tmpnum(this->num);
+    static stack<int> getBits(cl_I num){
         const cl_I two = 2;
 
         stack<int> bits;
 
-        while(tmpnum > 0){
-            cl_I modulo = mod(tmpnum, two);
+        while(num > 0){
+            cl_I modulo = mod(num, two);
             if(modulo == 1){
                 bits.push(1);
             } else {
                 bits.push(0);
             }
-            tmpnum = floor1(tmpnum / two);
+            num = floor1(num / two);
         }
 
         return bits;
     }
 
-    int getLoadToAccumulatorOperations(){
-        stack<int> bits = this->getBits();
+    static int getLoadToAccumulatorOperations(cl_I num){
+        stack<int> bits = getBits(num);
 
         int numOfOps = 0;
         numOfOps++; //ZERO
@@ -83,7 +82,7 @@ public:
     }
 
     void loadToAccumulator(){
-        stack<int> bits = this->getBits();
+        stack<int> bits = getBits(this->num);
 
         machine.ZERO();
 
@@ -103,7 +102,7 @@ public:
 
     //checks if better use INCs or LOAD current accumulator
     bool isLoadBetterThanIncs(){
-        return this->getLoadToAccumulatorOperations() < this->num;
+        return this->getLoadToAccumulatorOperations(this->num) < this->num;
     }
 
     void addToAccumulator(){
@@ -114,7 +113,7 @@ public:
 
     //checks if better use DECs or LOAD current accumulator
     bool isLoadStoreInTempBetterThanDecs(){
-        return this->getLoadToAccumulatorOperations() + 10 < this->num; //loadToAcc + STORE
+        return this->getLoadToAccumulatorOperations(this->num) + 10 < this->num; //loadToAcc + STORE
     }
 
     void subFromAccumulator(){

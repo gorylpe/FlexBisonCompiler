@@ -188,13 +188,8 @@ void Expression::loadToAccumulatorAddition() {
 
     //addition is commutative and its cheaper to load number first
     //cause adding number to accumulator needs to hold accumulator in temporary variable (LOAD and STORE faster)
-    if(this->val2->isLoadBetterThanIncs()){
-        this->val2->loadToAccumulator();
-        this->val1->addToAccumulator();
-    } else {
-        this->val1->loadToAccumulator();
-        this->val2->addToAccumulator();
-    }
+    this->val1->loadToAccumulator();
+    this->val2->addToAccumulator();
 }
 
 void Expression::loadToAccumulatorSubtraction() {
@@ -204,20 +199,8 @@ void Expression::loadToAccumulatorSubtraction() {
         return;
     }
 
-    //returns true only for number if create number and store is better than DECing, then do this in most optimized way
-    if(this->val2->isLoadStoreInTempBetterThanDecs()){
-        Variable* tmpVal2 = memory.pushTempVariable();
-
-        this->val2->loadToAccumulator();
-        machine.STORE(tmpVal2->memoryPtr);
-        this->val1->loadToAccumulator();
-        machine.SUB(tmpVal2->memoryPtr);
-
-        memory.popTempVariable();
-    } else {
-        this->val1->loadToAccumulator();
-        this->val2->subFromAccumulator();
-    }
+    this->val1->loadToAccumulator();
+    this->val2->subFromAccumulator();
 }
 
 void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2);
@@ -311,7 +294,7 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
 }
 
 void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
-    stack<int> bits = valNum->num->getBits();
+    stack<int> bits = Number::getBits(valNum->num->num);
 
     //first bit always 1
     bits.pop();
@@ -358,7 +341,7 @@ void loadToAccumulatorDivisionByNumber(Value* val1Ident, Value* val2Num){
     if(Expression::isPowOf2(val2Num->num->num)){
         val1Ident->loadToAccumulator();
 
-        int shifts = val2Num->num->getBits().size() - 1;
+        int shifts = Number::getBits(val2Num->num->num).size() - 1;
         for(int i = 0; i < shifts; ++i){
             machine.SHR();
         }

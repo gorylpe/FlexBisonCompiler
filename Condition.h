@@ -375,12 +375,12 @@ public:
             switch(this->type){
                 case EQ:
                 case NEQ:
-                case LT:
-                case GEQ:
-                    stats[val1->num->num].addLoad(val1, 1);
-                    break;
                 case LEQ:
                 case GT:
+                    stats[val1->num->num].addLoad(val1, 1);
+                    break;
+                case LT:
+                case GEQ:
                     stats[val1->num->num].addSubtraction(val1, 1);
                     break;
             }
@@ -392,12 +392,12 @@ public:
             switch(this->type){
                 case EQ:
                 case NEQ:
-                case LT:
-                case GEQ:
-                    stats[val2->num->num].addSubtraction(val2, 1);
-                    break;
                 case LEQ:
                 case GT:
+                    stats[val2->num->num].addSubtraction(val2, 1);
+                    break;
+                case LT:
+                case GEQ:
                     stats[val2->num->num].addLoad(val2, 1);
                     break;
             }
