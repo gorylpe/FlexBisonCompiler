@@ -204,6 +204,51 @@ public:
         this->getPidVariable()->addUsage(numberOfNestedLoops);
     }
 
+    bool propagateConstantsInPidpid() {
+        Variable* pidpidV = this->getPidPidVariable();
+
+        if(pidpidV != nullptr){
+            if(pidpidV->isConstant()){
+                this->type = PIDNUM;
+                this->num = pidpidV->getConstantValue();
+                cerr << "Constant in " << toString() << " propagated" << endl;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool isConstant(){
+        if(this->type == PID){
+            Variable* pidV = this->getPidVariable();
+            return pidV->isConstant();
+        }
+        return false;
+    }
+
+    cl_I getConstant(){
+        if(this->type == PID){
+            Variable* pidV = this->getPidVariable();
+            cl_I constantValue = pidV->getConstantValue();
+            return pidV->getConstantValue();
+        }
+        return 0;
+    }
+
+    void setConstant(cl_I constantValue){
+        if(this->type == PID){
+            Variable* pidV = this->getPidVariable();
+            pidV->setConstant(constantValue);
+        }
+    }
+
+    void unsetConstant(){
+        if(this->type == PID){
+            Variable* pidV = this->getPidVariable();
+            pidV->unsetConstant();
+        }
+    }
+
     void storeFromAccumulator(){
         Variable* pidV = this->getPidVariable();
         Variable* pidpidV = this->getPidPidVariable();

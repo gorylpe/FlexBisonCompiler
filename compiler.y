@@ -134,7 +134,11 @@ command: identifier T_ASSIGN expression                                     { $$
     | T_IF condition T_THEN commands T_ENDIF                                { $$ = new If($2, blockStack.top()); blockStack.pop(); }
     | T_IF condition T_THEN commands T_ELSE commands T_ENDIF                { auto block1 = blockStack.top(); blockStack.pop();
                                                                               auto block2 = blockStack.top(); blockStack.pop();
-                                                                              $$ = new IfElse($2, block2, block1); }
+                                                                              if(block1->equals(block2)){
+                                                                                $$ = block1;
+                                                                              } else {
+                                                                                $$ = new IfElse($2, block2, block1);
+                                                                              }}
     | T_FOR T_PIDIDENTIFIER T_FROM value T_TO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), true); blockStack.pop(); }
     | T_FOR T_PIDIDENTIFIER T_FROM value T_DOWNTO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), false); blockStack.pop(); }
     | T_WHILE condition T_DO commands T_ENDWHILE                            { $$ = new While($2, blockStack.top()); blockStack.pop(); }

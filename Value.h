@@ -67,6 +67,22 @@ public:
         }
     }
 
+    bool propagateConstant(){
+        bool hasPropagated = false;
+
+        if(this->type == IDENTIFIER){
+            if(this->ident->propagateConstantsInPidpid())
+                hasPropagated = true;
+            if(this->ident->isConstant()){
+                cerr << "Setting constant value " << ident->getConstant() << " to " << toString() << endl;
+                this->type = NUM;
+                this->num = new Number(ident->pos, ident->getConstant());
+                hasPropagated = true;
+            }
+        }
+        return hasPropagated;
+    }
+
     bool isLoadBetterThanIncs() {
         switch (this->type) {
             case Value::Type::NUM:

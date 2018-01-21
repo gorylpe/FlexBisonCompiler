@@ -536,9 +536,9 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint8 yyrline[] =
 {
        0,   114,   114,   120,   121,   124,   129,   130,   133,   134,
-     135,   138,   139,   140,   141,   142,   145,   146,   147,   148,
-     149,   150,   153,   154,   155,   156,   157,   158,   161,   164,
-     169,   174,   177,   180
+     135,   142,   143,   144,   145,   146,   149,   150,   151,   152,
+     153,   154,   157,   158,   159,   160,   161,   162,   165,   168,
+     173,   178,   181,   184
 };
 #endif
 
@@ -1509,162 +1509,166 @@ yyreduce:
 #line 135 "compiler.y" /* yacc.c:1646  */
     { auto block1 = blockStack.top(); blockStack.pop();
                                                                               auto block2 = blockStack.top(); blockStack.pop();
-                                                                              (yyval.cmd) = new IfElse((yyvsp[-5].cond), block2, block1); }
-#line 1514 "bison.tab.c" /* yacc.c:1646  */
+                                                                              if(block1->equals(block2)){
+                                                                                (yyval.cmd) = block1;
+                                                                              } else {
+                                                                                (yyval.cmd) = new IfElse((yyvsp[-5].cond), block2, block1);
+                                                                              }}
+#line 1518 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 138 "compiler.y" /* yacc.c:1646  */
+#line 142 "compiler.y" /* yacc.c:1646  */
     { (yyval.cmd) = new For(createPos((yylsp[-7])), *(yyvsp[-7].str), (yyvsp[-5].value), (yyvsp[-3].value), blockStack.top(), true); blockStack.pop(); }
-#line 1520 "bison.tab.c" /* yacc.c:1646  */
+#line 1524 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 139 "compiler.y" /* yacc.c:1646  */
+#line 143 "compiler.y" /* yacc.c:1646  */
     { (yyval.cmd) = new For(createPos((yylsp[-7])), *(yyvsp[-7].str), (yyvsp[-5].value), (yyvsp[-3].value), blockStack.top(), false); blockStack.pop(); }
-#line 1526 "bison.tab.c" /* yacc.c:1646  */
+#line 1530 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 140 "compiler.y" /* yacc.c:1646  */
+#line 144 "compiler.y" /* yacc.c:1646  */
     { (yyval.cmd) = new While((yyvsp[-3].cond), blockStack.top()); blockStack.pop(); }
-#line 1532 "bison.tab.c" /* yacc.c:1646  */
+#line 1536 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 141 "compiler.y" /* yacc.c:1646  */
+#line 145 "compiler.y" /* yacc.c:1646  */
     { (yyval.cmd) = new Read((yyvsp[0].ident)); }
-#line 1538 "bison.tab.c" /* yacc.c:1646  */
+#line 1542 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 142 "compiler.y" /* yacc.c:1646  */
+#line 146 "compiler.y" /* yacc.c:1646  */
     { (yyval.cmd) = new Write((yyvsp[0].value)); }
-#line 1544 "bison.tab.c" /* yacc.c:1646  */
+#line 1548 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 145 "compiler.y" /* yacc.c:1646  */
+#line 149 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression((yyvsp[0].value)); }
-#line 1550 "bison.tab.c" /* yacc.c:1646  */
+#line 1554 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 146 "compiler.y" /* yacc.c:1646  */
+#line 150 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression(Expression::Type::ADDITION, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1556 "bison.tab.c" /* yacc.c:1646  */
+#line 1560 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 147 "compiler.y" /* yacc.c:1646  */
+#line 151 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression(Expression::Type::SUBTRACTION, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1562 "bison.tab.c" /* yacc.c:1646  */
+#line 1566 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 148 "compiler.y" /* yacc.c:1646  */
+#line 152 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression(Expression::Type::MULTIPLICATION, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1568 "bison.tab.c" /* yacc.c:1646  */
+#line 1572 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 149 "compiler.y" /* yacc.c:1646  */
+#line 153 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression(Expression::Type::DIVISION, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1574 "bison.tab.c" /* yacc.c:1646  */
+#line 1578 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 150 "compiler.y" /* yacc.c:1646  */
+#line 154 "compiler.y" /* yacc.c:1646  */
     { (yyval.expr) = new Expression(Expression::Type::MODULO, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1580 "bison.tab.c" /* yacc.c:1646  */
+#line 1584 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 153 "compiler.y" /* yacc.c:1646  */
+#line 157 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::EQ, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1586 "bison.tab.c" /* yacc.c:1646  */
+#line 1590 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 154 "compiler.y" /* yacc.c:1646  */
+#line 158 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::NEQ, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1592 "bison.tab.c" /* yacc.c:1646  */
+#line 1596 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 155 "compiler.y" /* yacc.c:1646  */
+#line 159 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::LT, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1598 "bison.tab.c" /* yacc.c:1646  */
+#line 1602 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 156 "compiler.y" /* yacc.c:1646  */
+#line 160 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::GT, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1604 "bison.tab.c" /* yacc.c:1646  */
+#line 1608 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 157 "compiler.y" /* yacc.c:1646  */
+#line 161 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::LEQ, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1610 "bison.tab.c" /* yacc.c:1646  */
+#line 1614 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 158 "compiler.y" /* yacc.c:1646  */
+#line 162 "compiler.y" /* yacc.c:1646  */
     { (yyval.cond) = new Condition(Condition::Type::GEQ, (yyvsp[-2].value), (yyvsp[0].value)); }
-#line 1616 "bison.tab.c" /* yacc.c:1646  */
+#line 1620 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 161 "compiler.y" /* yacc.c:1646  */
+#line 165 "compiler.y" /* yacc.c:1646  */
     {
         (yyval.value) = new Value((yyvsp[0].number));
     }
-#line 1624 "bison.tab.c" /* yacc.c:1646  */
+#line 1628 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 164 "compiler.y" /* yacc.c:1646  */
+#line 168 "compiler.y" /* yacc.c:1646  */
     {
         (yyval.value) = new Value((yyvsp[0].ident));
     }
-#line 1632 "bison.tab.c" /* yacc.c:1646  */
+#line 1636 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 169 "compiler.y" /* yacc.c:1646  */
+#line 173 "compiler.y" /* yacc.c:1646  */
     {
         (yyval.number) = new Number(createPos((yylsp[0])), *(yyvsp[0].num));
     }
-#line 1640 "bison.tab.c" /* yacc.c:1646  */
+#line 1644 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 174 "compiler.y" /* yacc.c:1646  */
+#line 178 "compiler.y" /* yacc.c:1646  */
     {
         (yyval.ident) = new Identifier(createPos((yylsp[0])), *(yyvsp[0].str));
     }
-#line 1648 "bison.tab.c" /* yacc.c:1646  */
+#line 1652 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 177 "compiler.y" /* yacc.c:1646  */
+#line 181 "compiler.y" /* yacc.c:1646  */
     {
         (yyval.ident) = new Identifier(createPos((yylsp[-3])), *(yyvsp[-3].str), *(yyvsp[-1].str));
     }
-#line 1656 "bison.tab.c" /* yacc.c:1646  */
+#line 1660 "bison.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 180 "compiler.y" /* yacc.c:1646  */
+#line 184 "compiler.y" /* yacc.c:1646  */
     { 
         (yyval.ident) = new Identifier(createPos((yylsp[-3])), *(yyvsp[-3].str), *(yyvsp[-1].num));
     }
-#line 1664 "bison.tab.c" /* yacc.c:1646  */
+#line 1668 "bison.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1668 "bison.tab.c" /* yacc.c:1646  */
+#line 1672 "bison.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1899,7 +1903,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 185 "compiler.y" /* yacc.c:1906  */
+#line 189 "compiler.y" /* yacc.c:1906  */
 
 Position* createPos(YYLTYPE yylpos){
         return new Position(yylpos.first_line, yylpos.first_column, yylpos.last_line, yylpos.last_column);

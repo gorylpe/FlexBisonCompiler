@@ -12,12 +12,22 @@ public:
     }
 
     void ASTOptimizations(){
-
+        block->replaceUnusedCommands();
+        //ConstPropagation();
+        //block->replaceUnusedCommands();
+        FORUnrolling();
+        RemovingIfsWithConstComparisions();
+        //ConstPropagation();
+        //block->replaceUnusedCommands();
+        RemoveUnusedAssignements();
+        OptimizeNumbers();
     }
 
-
     void ConstPropagation(){
-
+        bool hasPropagationInLastIteration;
+        do{
+            hasPropagationInLastIteration = block->propagateConstants();
+        }while(hasPropagationInLastIteration);
     }
 
     void RemoveUnusedAssignements(){
@@ -25,6 +35,10 @@ public:
     }
 
     void FORUnrolling(){
+
+    }
+
+    void RemovingIfsWithConstComparisions(){
 
     }
 

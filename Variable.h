@@ -26,8 +26,11 @@ public:
     bool modifiable;
     bool initialized;
 
-    const cl_I nestetLoopMultiplier = 10;
+    const cl_I nestedLoopMultiplier = 10;
     cl_I useNumber;
+
+    bool constant;
+    cl_I constValue;
 
     explicit Variable(string pid, const cl_I& memoryPtr, bool modifiable)
     :type(Type::PID)
@@ -35,7 +38,9 @@ public:
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
     ,initialized(false)
-    ,useNumber(0){
+    ,useNumber(0)
+    ,constant(false)
+    ,constValue(0){
         cerr << "Declaring variable " << " name " << pid << endl;
     }
 
@@ -46,7 +51,9 @@ public:
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
     ,initialized(false)
-    ,useNumber(0) {}
+    ,useNumber(0)
+    ,constant(false)
+    ,constValue(0){}
 
     ~Variable(){
         cerr << "Deleting variable " << pid << endl;
@@ -68,10 +75,28 @@ public:
     }
 
     void addUsage(const cl_I& numberOfNestedLoops) {
-        useNumber += expt(nestetLoopMultiplier, numberOfNestedLoops);
+        useNumber += expt(nestedLoopMultiplier, numberOfNestedLoops);
     }
 
     cl_I getUsage() const {
         return useNumber;
     }
+
+    void setConstant(cl_I constValue){
+        constant = true;
+        this->constValue = constValue;
+    }
+
+    void unsetConstant(){
+        constant = false;
+    }
+
+    bool isConstant(){
+        return constant;
+    }
+
+    cl_I getConstantValue(){
+        return constValue;
+    }
+
 };

@@ -3,12 +3,15 @@
 #include <cln/cln.h>
 #include <vector>
 #include <sstream>
+#include <typeinfo>
 #include "Identifier.h"
 #include "Expression.h"
 #include "Condition.h"
 
 using namespace std;
 using namespace cln;
+
+class CommandsBlock;
 
 class Command {
 public:
@@ -19,7 +22,18 @@ public:
     }
 
     virtual void calculateVariablesUsage(cl_I numberOfNestedLoops) = 0;
+
+    virtual bool propagateConstants() { return false; };
+
+    virtual void getPidVariablesBeingModified(set<Variable *> variableSet) {}
+
+    virtual CommandsBlock* blockToReplaceWith() { return nullptr; };
+    virtual void replaceUnusedCommands() {}
 };
+
+class If;
+class IfElse;
+class While;
 
 class CommandsBlock : public Command {
 public:
@@ -57,6 +71,35 @@ public:
             cmd->calculateVariablesUsage(numberOfNestedLoops);
         }
     }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        for(auto cmd : this->commands){
+            if(cmd->propagateConstants())
+                hasPropagated = true;
+        }
+
+        return hasPropagated;
+    }
+
+    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+        for(auto cmd : this->commands){
+            cmd->getPidVariablesBeingModified(variableSet);
+        }
+    }
+
+    void replaceUnusedCommands() final {
+        for(int i = 0; i < commands.size(); ++i) {
+            CommandsBlock* block = commands[i]->blockToReplaceWith();
+
+            if(block != nullptr){
+                commands[i] = block;
+            }
+
+            commands[i]->replaceUnusedCommands();
+        }
+    };
 };
 
 class Assignment : public Command {
@@ -99,10 +142,34 @@ public:
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
-        cerr << "Calculating Variables usage in ASSIGNMENT" << endl;
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
         this->expr->calculateVariablesUsage(numberOfNestedLoops);
-        cerr << "End alculating Variables usage in ASSIGNMENT" << endl;
+    }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        if(ident->propagateConstantsInPidpid()){
+            hasPropagated = true;
+        }
+
+        if(expr->propagateConstants()){
+            hasPropagated = true;
+        }
+
+        if(expr->isResultConst()){
+            ident->setConstant(expr->getConstValue());
+        } else {
+            ident->unsetConstant();
+        }
+
+        return hasPropagated;
+    }
+
+    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+        Variable* var = this->ident->getPidVariable();
+        if(var->type == Variable::Type::PID)
+            variableSet.insert(var);
     }
 };
 
@@ -128,6 +195,12 @@ public:
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
+    }
+
+    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+        Variable* var = this->ident->getPidVariable();
+        if(var->type == Variable::Type::PID)
+            variableSet.insert(var);
     }
 };
 
@@ -156,6 +229,16 @@ public:
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
         this->val->calculateVariablesUsage(numberOfNestedLoops);
     }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        if(val->propagateConstant()){
+            hasPropagated = true;
+        }
+
+        return hasPropagated;
+    }
 };
 
 class If : public Command{
@@ -171,32 +254,57 @@ public:
 
     void generateCode() final {
         cerr << "Generating IF code" << endl;
-        //TODO check if num of commands > 0
-        if(!this->cond->constComparision){
-            this->cond->prepareValuesIfNeeded();
+        this->cond->prepareValuesIfNeeded();
 
-            auto jumpIfTrue = new JumpPosition();
-            auto jumpIfFalse = new JumpPosition();
+        auto jumpIfTrue = new JumpPosition();
+        auto jumpIfFalse = new JumpPosition();
 
-            this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse);
-            machine.setJumpPosition(jumpIfTrue);
+        this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse);
+        machine.setJumpPosition(jumpIfTrue);
 
-            block->generateCode();
+        block->generateCode();
 
-            machine.setJumpPosition(jumpIfFalse);
+        machine.setJumpPosition(jumpIfFalse);
 
-            this->cond->unprepareValuesIfNeeded();
-        } else if (this->cond->constComparisionResult){
-            for(auto cmd : this->block->commands){
-                cmd->generateCode();
-            }
-        }
+        this->cond->unprepareValuesIfNeeded();
         cerr << "End generating IF code" << endl;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
         this->cond->calculateVariablesUsage(numberOfNestedLoops);
         this->block->calculateVariablesUsage(numberOfNestedLoops);
+    }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        if(cond->propagateConstants())
+            hasPropagated = true;
+
+        if(block->propagateConstants())
+            hasPropagated = true;
+
+        return hasPropagated;
+    }
+
+    void getPidVariablesBeingModified(set<Variable *> variableSet) final {
+        this->block->getPidVariablesBeingModified(variableSet);
+    }
+
+    CommandsBlock* blockToReplaceWith() final{
+        if(cond->isComparisionConst()){
+            if(cond->getComparisionConstResult()){
+                return block;
+            } else {
+                return new CommandsBlock();
+            }
+        }
+
+        return nullptr;
+    }
+
+    void replaceUnusedCommands() final {
+        this->block->replaceUnusedCommands();
     }
 };
 
@@ -214,46 +322,29 @@ public:
     }
 
     void generateCode() final {
-        //optimization when blocks equals
-        if(this->block1->equals(this->block2)){
-            cerr << "Optimizing IF ELSE code, same blocks in IF and ELSE" << endl;
-
-            for(auto cmd : this->block1->commands){
-                cmd->generateCode();
-            }
-
-            cerr << "End optimizing IF ELSE code" << endl;
-            return;
-        }
-
         cerr << "Generating IF ELSE code" << endl;
-        if(!this->cond->constComparision){
-            this->cond->prepareValuesIfNeeded();
+        this->cond->prepareValuesIfNeeded();
 
-            auto jumpIfTrue = new JumpPosition();
-            auto jumpIfFalse = new JumpPosition();
-            auto passElseBlock = new JumpPosition();
+        auto jumpIfTrue = new JumpPosition();
+        auto jumpIfFalse = new JumpPosition();
+        auto passElseBlock = new JumpPosition();
 
-            this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse); //jump to else
+        this->cond->generateTestWithTrueFalseJumps(jumpIfTrue, jumpIfFalse); //jump to else
 
-            machine.setJumpPosition(jumpIfTrue);
+        machine.setJumpPosition(jumpIfTrue);
 
-            block1->generateCode();
+        block1->generateCode();
 
-            machine.JUMP(passElseBlock);
+        machine.JUMP(passElseBlock);
 
-            machine.setJumpPosition(jumpIfFalse);
+        machine.setJumpPosition(jumpIfFalse);
 
-            block2->generateCode();
+        block2->generateCode();
 
-            machine.setJumpPosition(passElseBlock);
+        machine.setJumpPosition(passElseBlock);
 
-            this->cond->unprepareValuesIfNeeded();
-        } else if (this->cond->constComparisionResult){
-            block1->generateCode();
-        } else {
-            block2->generateCode();
-        }
+        this->cond->unprepareValuesIfNeeded();
+
         cerr << "End generating IF ELSE code" << endl;
     }
 
@@ -261,6 +352,38 @@ public:
         this->cond->calculateVariablesUsage(numberOfNestedLoops);
         this->block1->calculateVariablesUsage(numberOfNestedLoops);
         this->block2->calculateVariablesUsage(numberOfNestedLoops);
+    }
+
+    bool propagateConstants() final {
+        bool hasPropagated = false;
+
+        if(cond->propagateConstants())
+            hasPropagated = true;
+
+        if(block1->propagateConstants())
+            hasPropagated = true;
+
+        if(block2->propagateConstants())
+            hasPropagated = true;
+
+        return hasPropagated;
+    }
+
+    CommandsBlock* blockToReplaceWith() final{
+        if(cond->isComparisionConst()){
+            if(cond->getComparisionConstResult()){
+                return block1;
+            } else {
+                return block2;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void replaceUnusedCommands() final {
+        this->block1->replaceUnusedCommands();
+        this->block2->replaceUnusedCommands();
     }
 };
 
@@ -277,7 +400,7 @@ public:
 
     void generateCode() final {
         cerr << "Generating WHILE code" << endl;
-        if(!this->cond->constComparision){
+        if(!this->cond->isComparisionConst()){
             this->cond->prepareValuesIfNeeded();
 
             auto loopStart = new JumpPosition();
@@ -297,7 +420,7 @@ public:
             machine.setJumpPosition(loopOutside);
 
             this->cond->unprepareValuesIfNeeded();
-        } else if (this->cond->constComparisionResult) {
+        } else if (this->cond->getComparisionConstResult()) {
             auto loopStart = new JumpPosition();
             machine.setJumpPosition(loopStart);
 
@@ -311,6 +434,20 @@ public:
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
         this->cond->calculateVariablesUsage(numberOfNestedLoops + 1);
         this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
+    }
+
+    CommandsBlock* blockToReplaceWith() final{
+        if(cond->isComparisionConst()){
+            if(!cond->getComparisionConstResult()){
+                return new CommandsBlock();
+            }
+        }
+
+        return nullptr;
+    }
+
+    void replaceUnusedCommands() final {
+        this->block->replaceUnusedCommands();
     }
 };
 
@@ -336,22 +473,20 @@ public:
 
     void generateCode() final {
         //only loading to accumulator so no need to prepare
-        if(this->from->type != Value::Type::NUM)
-            this->from->prepareIfNeeded();
-        if(this->to->type != Value::Type::NUM)
-            this->to->prepareIfNeeded();
+        this->from->prepareIfNeeded();
+        this->to->prepareIfNeeded();
 
         cerr << "Generating FOR code" << endl;
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
 
-        auto loopStart = new JumpPosition();
-        auto loopOutside = new JumpPosition();
-
         if(iterator == nullptr){
             poserror(pidPos, "for loop temp variable redeclaration");
             return;
         }
+
+        auto loopStart = new JumpPosition();
+        auto loopOutside = new JumpPosition();
 
         this->from->loadToAccumulator();
         machine.STORE(iterator->memoryPtr);
@@ -398,10 +533,8 @@ public:
         memory.popTempVariable(); //iterator
         memory.popTempVariable(); //tmpTo
 
-        if(this->from->type != Value::Type::NUM)
-            this->from->unprepareIfNeeded();
-        if(this->to->type != Value::Type::NUM)
-            this->to->unprepareIfNeeded();
+        this->from->unprepareIfNeeded();
+        this->to->unprepareIfNeeded();
 
         cerr << "End generating FOR code" << endl;
     }
@@ -410,6 +543,26 @@ public:
         auto iterator = memory.pushTempNamedVariable(pid, false);
         this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
         memory.popTempVariable(); //iterator
+    }
+
+    CommandsBlock* blockToReplaceWith() final{
+        if(from->type == Value::Type::NUM && to->type == Value::Type::NUM){
+            if(increasing && from->num->num > to->num->num){
+                return new CommandsBlock();
+            } else if(!increasing && from->num->num < to->num->num){
+                return new CommandsBlock();
+            }
+        }
+
+        return nullptr;
+    }
+
+    void replaceUnusedCommands() final {
+        this->block->replaceUnusedCommands();
+    }
+
+    bool canBeUnrolled(){
+        return this->from->type == Value::Type::NUM && this->to->type == Value::Type::NUM;
     }
 };
 

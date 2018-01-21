@@ -15,144 +15,150 @@ Expression::Expression(Expression::Type type, Value *val1, Value *val2)
         ,val1(val1)
         ,val2(val2){
     //const operation optimisation
-    if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM) {
 
-        this->bothConstValuesOptimizations();
-    } else if (val1->type == Value::Type::NUM) {
-
-        this->oneConstLeftValueOptimizations();
-    } else if (val2->type == Value::Type::NUM) {
-
-        this->oneConstRightValueOptimizations();
-    }
+    this->optimizeConstants();
 
     cerr << "Creating " << this->toString() << endl;
 }
 
+void Expression::optimizeConstants() {
+    //2 values
+    if(this->type != VALUE){
+        this->bothConstValuesOptimizations();
+        this->oneConstLeftValueOptimizations();
+        this->oneConstRightValueOptimizations();
+    }
+}
 
 void Expression::bothConstValuesOptimizations() {
-    switch(this->type){
-        case ADDITION:
-            val1->num->num += val2->num->num;
-            break;
-        case SUBTRACTION:
-            val1->num->num = max(val1->num->num - val2->num->num, 0);
-            break;
-        case MULTIPLICATION:
-            val1->num->num *= val2->num->num;
-            break;
-        case DIVISION:
-            if(val2->num->num == 0){
-                val1->num->num = 0;
-            } else {
-                val1->num->num = floor1(val1->num->num / val2->num->num);
-            }
-            break;
-        case MODULO:
-            if(val2->num->num == 0){
-                val1->num->num = 0;
-            } else {
-                val1->num->num -= floor1(val1->num->num / val2->num->num) * val2->num->num;
-            }
-            break;
-        default:
-            break;
+    if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM) {
+        switch (this->type) {
+            case ADDITION:
+                val1->num->num += val2->num->num;
+                break;
+            case SUBTRACTION:
+                val1->num->num = max(val1->num->num - val2->num->num, 0);
+                break;
+            case MULTIPLICATION:
+                val1->num->num *= val2->num->num;
+                break;
+            case DIVISION:
+                if (val2->num->num == 0) {
+                    val1->num->num = 0;
+                } else {
+                    val1->num->num = floor1(val1->num->num / val2->num->num);
+                }
+                break;
+            case MODULO:
+                if (val2->num->num == 0) {
+                    val1->num->num = 0;
+                } else {
+                    val1->num->num -= floor1(val1->num->num / val2->num->num) * val2->num->num;
+                }
+                break;
+            default:
+                break;
+        }
+        //leave single val1
+        this->type = VALUE;
     }
-    //leave single val1
-    this->type = VALUE;
 }
 
 void Expression::oneConstLeftValueOptimizations(){
     //some operations optimisations
-    switch(this->type) {
-        case ADDITION:
-            if (this->val1->num->num == 0) {
-                //adding zero gives second value
-                this->type = VALUE;
-                this->val1 = this->val2;
-            }
-            break;
-        case SUBTRACTION:
-            if (this->val1->num->num == 0) {
-                //subtracting from zero so output is always zero
-                this->type = VALUE;
-            }
-            break;
-        case MULTIPLICATION:
-            if (this->val1->num->num == 0) {
-                //multiplication by zero leaves zero
-                this->type = VALUE;
-            } else if (this->val1->num->num == 1) {
-                //multiplication by one leaves only second value
-                this->type = VALUE;
-                this->val1 = this->val2;
-            }
-            break;
-        case DIVISION:
-            if (this->val1->num->num == 0) {
-                //division zero by something leaves zero
-                this->type = VALUE;
-            }
-            break;
-        case MODULO:
-            if (this->val1->num->num == 0) {
-                //modulo zero by something leaves zero
-                this->type = VALUE;
-            } else if (this->val1->num->num == 1) {
-                //modulo one by something leaves zero
-                this->type = VALUE;
-                this->val1->num->num = 0;
-            }
-            break;
-        default:
-            break;
+    if (val1->type == Value::Type::NUM && val2->type == Value::Type::IDENTIFIER) {
+        switch (this->type) {
+            case ADDITION:
+                if (this->val1->num->num == 0) {
+                    //adding zero gives second value
+                    this->type = VALUE;
+                    this->val1 = this->val2;
+                }
+                break;
+            case SUBTRACTION:
+                if (this->val1->num->num == 0) {
+                    //subtracting from zero so output is always zero
+                    this->type = VALUE;
+                }
+                break;
+            case MULTIPLICATION:
+                if (this->val1->num->num == 0) {
+                    //multiplication by zero leaves zero
+                    this->type = VALUE;
+                } else if (this->val1->num->num == 1) {
+                    //multiplication by one leaves only second value
+                    this->type = VALUE;
+                    this->val1 = this->val2;
+                }
+                break;
+            case DIVISION:
+                if (this->val1->num->num == 0) {
+                    //division zero by something leaves zero
+                    this->type = VALUE;
+                }
+                break;
+            case MODULO:
+                if (this->val1->num->num == 0) {
+                    //modulo zero by something leaves zero
+                    this->type = VALUE;
+                } else if (this->val1->num->num == 1) {
+                    //modulo one by something leaves zero
+                    this->type = VALUE;
+                    this->val1->num->num = 0;
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
 
 void Expression::oneConstRightValueOptimizations(){
     //some operations optimisations
-    switch(this->type) {
-        case ADDITION:
-        case SUBTRACTION:
-            if (this->val2->num->num == 0) {
-                //subtracting and adding zero leaves value1
-                this->type = VALUE;
-            }
-            break;
-        case MULTIPLICATION:
-            if (this->val2->num->num == 0) {
-                //multiplication by 0 leaves always zero
-                this->type = VALUE;
-                this->val1 = this->val2; //val2 is number 0 already
-            } else if (this->val2->num->num == 1) {
-                //multiplication by 1 leaves value1
-                this->type = VALUE;
-            }
-            break;
-        case DIVISION:
-            if (this->val2->num->num == 0) {
-                //division by 0 leaves always zero
-                this->type = VALUE;
-                this->val1 = this->val2; //val2 is number 0 already
-            } else if (this->val2->num->num == 1) {
-                //division by 1 leaves value1
-                this->type = VALUE;
-            }
-            break;
-        case MODULO:
-            if (this->val2->num->num == 0) {
-                //modulo by 0 leaves always zero
-                this->type = VALUE;
-                this->val1 = this->val2; //val2 is number 0 already
-            } else if (this->val2->num->num == 1) {
-                //modulo by 1 leaves always zero
-                this->type = VALUE;
-                this->val2->num->num = 0; //val2 is number, set to 0
-                this->val1 = this->val2; //use val2 as main val
-            }
-            break;
-        default:
-            break;
+    if (val2->type == Value::Type::NUM && val1->type == Value::Type::IDENTIFIER) {
+        switch (this->type) {
+            case ADDITION:
+            case SUBTRACTION:
+                if (this->val2->num->num == 0) {
+                    //subtracting and adding zero leaves value1
+                    this->type = VALUE;
+                }
+                break;
+            case MULTIPLICATION:
+                if (this->val2->num->num == 0) {
+                    //multiplication by 0 leaves always zero
+                    this->type = VALUE;
+                    this->val1 = this->val2; //val2 is number 0 already
+                } else if (this->val2->num->num == 1) {
+                    //multiplication by 1 leaves value1
+                    this->type = VALUE;
+                }
+                break;
+            case DIVISION:
+                if (this->val2->num->num == 0) {
+                    //division by 0 leaves always zero
+                    this->type = VALUE;
+                    this->val1 = this->val2; //val2 is number 0 already
+                } else if (this->val2->num->num == 1) {
+                    //division by 1 leaves value1
+                    this->type = VALUE;
+                }
+                break;
+            case MODULO:
+                if (this->val2->num->num == 0) {
+                    //modulo by 0 leaves always zero
+                    this->type = VALUE;
+                    this->val1 = this->val2; //val2 is number 0 already
+                } else if (this->val2->num->num == 1) {
+                    //modulo by 1 leaves always zero
+                    this->type = VALUE;
+                    this->val2->num->num = 0; //val2 is number, set to 0
+                    this->val1 = this->val2; //use val2 as main val
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
 

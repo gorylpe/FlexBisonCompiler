@@ -22,11 +22,11 @@ public:
     Condition(Type type, Value* val1, Value* val2)
     :type(type)
     ,val1(val1)
-    ,val2(val2){
+    ,val2(val2)
+    ,constComparision(false)
+    ,constComparisionResult(false){
         //const comparision optimisation
-        if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM){
-            this->constComparisionOptimization();
-        }
+        this->optimizeConstants();
         cerr << "Creating " << this->toString() << endl;
     }
 
@@ -53,6 +53,70 @@ public:
                 break;
         }
         return "condition " + condType + " of values: " + val1->toString() + ", " + val2->toString();
+    }
+
+    bool equals(Condition* cond2){
+        if(this->isComparisionConst() && cond2->isComparisionConst()){
+            return this->getComparisionConstResult() == cond2->getComparisionConstResult();
+        } else if(!this->isComparisionConst() && !cond2->isComparisionConst()) {
+            bool isEqual = false;
+            switch (type){
+                case EQ:
+                    if(cond2->type == EQ) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+                case NEQ:
+                    if(cond2->type == NEQ) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+                case LT:
+                    if(cond2->type == LT) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                    } else if(cond2->type == GT){
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+                case GT:
+                    if(cond2->type == GT) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                    } else if(cond2->type == LT){
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+                case LEQ:
+                    if(cond2->type == LEQ) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                    } else if(cond2->type == GEQ){
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+                case GEQ:
+                    if(cond2->type == GEQ) {
+                        if(this->val1->equals(cond2->val1) && this->val2->equals(cond2->val2))
+                            isEqual = true;
+                    } else if(cond2->type == LEQ){
+                        if(this->val2->equals(cond2->val1) && this->val1->equals(cond2->val2))
+                            isEqual = true;
+                    }
+                    break;
+            }
+            return isEqual;
+        }
+        return false;
     }
 
     void prepareValuesIfNeeded(){
@@ -179,32 +243,55 @@ public:
         machine.JUMP(jumpIfFalse); // a > b; pass next condition instructions and jump after cond
     }
 
-    void constComparisionOptimization(){
-        this->constComparision = true;
-        switch(this->type){
-            case EQ:
-                this->constComparisionResult = val1->num->num == val2->num->num;
-                break;
-            case NEQ:
-                this->constComparisionResult = val1->num->num != val2->num->num;
-                break;
-            case LT:
-                this->constComparisionResult = val1->num->num < val2->num->num;
-                break;
-            case GT:
-                this->constComparisionResult = val1->num->num > val2->num->num;
-                break;
-            case LEQ:
-                this->constComparisionResult = val1->num->num <= val2->num->num;
-                break;
-            case GEQ:
-                this->constComparisionResult = val1->num->num >= val2->num->num;
-                break;
+    void optimizeConstants(){
+        if(val1->type == Value::Type::NUM && val2->type == Value::Type::NUM) {
+            this->constComparision = true;
+            switch (this->type) {
+                case EQ:
+                    this->constComparisionResult = val1->num->num == val2->num->num;
+                    break;
+                case NEQ:
+                    this->constComparisionResult = val1->num->num != val2->num->num;
+                    break;
+                case LT:
+                    this->constComparisionResult = val1->num->num < val2->num->num;
+                    break;
+                case GT:
+                    this->constComparisionResult = val1->num->num > val2->num->num;
+                    break;
+                case LEQ:
+                    this->constComparisionResult = val1->num->num <= val2->num->num;
+                    break;
+                case GEQ:
+                    this->constComparisionResult = val1->num->num >= val2->num->num;
+                    break;
+            }
         }
+    }
+
+    bool isComparisionConst(){
+        return this->constComparision;
+    }
+
+    bool getComparisionConstResult(){
+        return this->constComparisionResult;
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) {
         this->val1->calculateVariablesUsage(numberOfNestedLoops);
         this->val2->calculateVariablesUsage(numberOfNestedLoops);
+    }
+
+    bool propagateConstants(){
+        bool hasPropagated = false;
+        if(val1->propagateConstant())
+            hasPropagated = true;
+        if(val2->propagateConstant())
+            hasPropagated = true;
+
+        if(hasPropagated)
+            cerr << "Constant in " << toString() << " propagated" << endl;
+
+        return hasPropagated;
     }
 };

@@ -23,9 +23,43 @@ public:
 
     explicit Expression(Type type, Value* val1, Value* val2);
 
+    void optimizeConstants();
+
     void bothConstValuesOptimizations();
     void oneConstLeftValueOptimizations();
     void oneConstRightValueOptimizations();
+
+    bool propagateConstants() {
+        bool hasPropagated = false;
+        switch(this->type){
+            case VALUE:
+                if(val1->propagateConstant())
+                    hasPropagated = true;
+                break;
+            default:
+                if(val1->propagateConstant())
+                    hasPropagated = true;
+                if(val2->propagateConstant())
+                    hasPropagated = true;
+                break;
+        }
+        optimizeConstants();
+        if(hasPropagated)
+            cerr << "Constant in " << toString() << " propagated" << endl;
+        return hasPropagated;
+    }
+
+    bool isResultConst(){
+        switch(this->type){
+            case VALUE:
+                return val1->type == Value::Type::NUM;
+        }
+        return false;
+    }
+
+    cl_I getConstValue(){
+        return val1->num->num;
+    }
 
     string toString(){
         string values;
