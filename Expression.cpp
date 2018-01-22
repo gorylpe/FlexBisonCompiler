@@ -294,6 +294,12 @@ void loadToAccumulatorMultiplicationDefault(Value* val1, Value* val2){
 }
 
 void loadToAccumulatorMultiplicationByNumber(Value* valNotNum, Value* valNum){
+    //when multiplying by 0 result is 0
+    if(valNum->num->num == 0){
+        machine.ZERO();
+        return;
+    }
+
     stack<int> bits = Number::getBits(valNum->num->num);
 
     //first bit always 1
