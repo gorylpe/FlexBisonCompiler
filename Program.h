@@ -16,10 +16,11 @@ public:
         //block->print(0);
         block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
         constPropagation();
-        RemoveUnusedAssignements();
+        removeUnusedAssignements();
         optimizeNumbers();
     }
 
+    //TODO DO THIS IN SMALL ARRAYS
     void constPropagation(){
         cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION---" << endl;
         bool hadPropagation;
@@ -47,7 +48,7 @@ public:
         cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION END---" << endl << endl;
     }
 
-    void RemoveUnusedAssignements(){
+    void removeUnusedAssignements(){
 
     }
 

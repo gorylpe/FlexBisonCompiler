@@ -69,6 +69,13 @@ public:
         }
     }
 
+    bool equals(Identifier* ident2){
+        if(this->type == IDENTIFIER){
+            return this->ident->equals(ident2);
+        }
+        return false;
+    }
+
     void prepareIfNeeded(){
         //prepare for PIDPID type
         if (this->type == IDENTIFIER){

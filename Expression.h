@@ -95,6 +95,16 @@ public:
         return false;
     }
 
+    bool equals(Identifier* ident2){
+        if(this->type == VALUE){
+            if(this->val1->type == Value::Type::IDENTIFIER){
+                return this->val1->equals(ident2);
+            }
+        }
+
+        return false;
+    }
+
     void semanticAnalysis(){
         switch(type){
             case VALUE:

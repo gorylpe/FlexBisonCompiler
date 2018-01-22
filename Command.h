@@ -45,6 +45,9 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {}
 
 
+
+
+
     //for creating numbers optimal
     virtual void collectNumberValues(map<cl_I, NumberValueStats>& stats) {}
 };
@@ -249,12 +252,21 @@ public:
     }
 
     void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        Variable* var = this->ident->getPidVariable();
+        Variable* var = ident->getPidVariable();
         if(var->type == Variable::Type::PID)
             variableSet.insert(var);
     }
 
-    virtual void replaceValuesWithConst(string pid, cl_I number) {
+    CommandsBlock* blockToReplaceWith() final {
+        if(expr->equals(ident)){
+            cerr << "ASSIGN EQ " << toString() << endl;
+            return new CommandsBlock();
+        }
+
+        return nullptr;
+    }
+
+    void replaceValuesWithConst(string pid, cl_I number) final {
         ident->replaceValuesWithConst(pid, number);
         expr->replaceValuesWithConst(pid, number);
     }
