@@ -1,7 +1,6 @@
 #pragma once
 
-
-#include "../Command.h"
+#include "CommandsBlock.h"
 
 class IfElse : public Command{
 public:

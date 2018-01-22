@@ -76,6 +76,13 @@ public:
         return false;
     }
 
+    Identifier* getIdentifier(){
+        if(type == IDENTIFIER){
+            return ident;
+        }
+        return nullptr;
+    }
+
     void prepareIfNeeded(){
         //prepare for PIDPID type
         if (this->type == IDENTIFIER){

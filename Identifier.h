@@ -28,7 +28,7 @@ public:
     bool isPreparedForPidpid;
     cl_I num;
 
-    int ssaNumber = -1;
+    int ssaNum = -1;
 
     explicit Identifier(Position* pos, string pid)
     :pos(pos)
@@ -99,6 +99,14 @@ public:
             ss << "[" << this->pidpid << "]";
         }
         return ss.str();
+    }
+
+    void setSSACounter(int newSsaNum) {
+        ssaNum = newSsaNum;
+    }
+
+    int getSSANum() {
+        return ssaNum;
     }
 
     void checkPids(Variable* pidV, Variable* pidpidV){

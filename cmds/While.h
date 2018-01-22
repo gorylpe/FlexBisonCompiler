@@ -1,7 +1,6 @@
 #pragma once
 
-
-#include "../Command.h"
+#include "CommandsBlock.h"
 
 class While : public Command {
 public:

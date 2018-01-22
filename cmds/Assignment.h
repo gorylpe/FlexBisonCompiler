@@ -2,7 +2,7 @@
 
 #include <set>
 #include "../Variable.h"
-#include "../Command.h"
+#include "CommandsBlock.h"
 
 class Assignment : public Command {
 public:
@@ -112,5 +112,78 @@ public:
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
         expr->collectNumberValues(stats);
+    }
+};
+
+
+class IdentifierStats{
+public:
+    string pid;
+    int counter;
+    vector<Assignment*> assignments;
+    vector<int> uses;
+
+    explicit IdentifierStats(string pid)
+    :pid(pid)
+    ,counter(0){}
+
+    void addAssignment(Assignment* assignment) {
+        Identifier* ident = assignment->ident;
+
+        ident->setSSACounter(counter);
+
+        assignments.push_back(assignment);
+        uses.push_back(0);
+
+        counter++;
+    }
+
+    void setIdentUse(Identifier *ident){
+        int lastCounter = counter - 1;
+        ident->setSSACounter(lastCounter);
+        uses[lastCounter]++;
+    }
+
+    string toString() const {
+        stringstream ss;
+        for(int i = 0; i < counter; ++i){
+            ss << pid << i << "   " << uses[i] << "   " << assignments[i]->toString() << endl;
+        }
+        return ss.str();
+    }
+};
+
+class AssignmentsStats{
+public:
+    map<string, IdentifierStats> stats;
+
+    IdentifierStats getStats(string pid){
+        if(stats.find(pid) == stats.end()){
+            stats.insert(make_pair(pid, IdentifierStats(pid)));
+        }
+        return stats.at(pid);
+    }
+
+    void addAssignment(Assignment* assignment) {
+        Identifier* ident = assignment->ident;
+        Expression* expr = assignment->expr;
+
+        if(ident->type == Identifier::Type::PID){
+            //set last counters
+            const vector<Identifier*>& idents = expr->getIdentifiers();
+            for(auto id : idents){
+                getStats(id->pid).setIdentUse(id);
+            }
+            getStats(ident->pid).addAssignment(assignment);
+        }
+    };
+
+    string toString() const{
+        stringstream ss;
+        for(auto& entry : stats){
+            const IdentifierStats& identStats = entry.second;
+            ss << identStats.toString();
+        }
+        return ss.str();
     }
 };

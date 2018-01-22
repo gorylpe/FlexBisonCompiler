@@ -168,6 +168,25 @@ public:
         return val1->num->num;
     }
 
+    vector<Identifier*> getIdentifiers(){
+        auto idents = vector<Identifier*>();
+        switch(type){
+            default: {
+                auto ident2 = val2->getIdentifier();
+                if (ident2 != nullptr) {
+                    idents.push_back(ident2);
+                }
+            }
+            case VALUE:{
+                auto ident1 = val1->getIdentifier();
+                if(ident1 != nullptr){
+                    idents.push_back(ident1);
+                }
+                break;
+            }
+        }
+    }
+
     void prepareValuesIfNeeded(){
         switch(this->type){
             case VALUE:

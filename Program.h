@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sstream>
-#include "Command.h"
+#include "cmds/CommandsBlock.h"
 
 class Program {
 public:

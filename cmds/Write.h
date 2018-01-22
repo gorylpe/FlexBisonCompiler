@@ -61,6 +61,10 @@ public:
         return hasPropagated;
     }
 
+    CommandsBlock* blockToReplaceWith(){
+        return nullptr;
+    }
+
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         val->replaceIdentifierWithConst(pid, number);
     }

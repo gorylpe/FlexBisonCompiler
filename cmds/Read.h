@@ -44,6 +44,10 @@ public:
         this->ident->unprepareIfNeeded();
     }
 
+    CommandsBlock* blockToReplaceWith(){
+        return nullptr;
+    }
+
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
