@@ -5,6 +5,13 @@
     #include "Value.h"
     #include "Command.h"
     #include "Condition.h"
+    #include "cmds/Assignment.h"
+    #include "cmds/For.h"
+    #include "cmds/If.h"
+    #include "cmds/IfElse.h"
+    #include "cmds/Read.h"
+    #include "cmds/While.h"
+    #include "cmds/Write.h"
 }
 %{
 extern "C"
@@ -20,13 +27,20 @@ extern "C"
 #include <string>
 #include <stack>
 #include "Program.h"
+#include "Position.h"
 #include "Number.h"
 #include "Identifier.h"    
 #include "Expression.h"    
 #include "Value.h"
-#include "Command.h"
 #include "Condition.h"
-#include "Position.h"
+#include "Command.h"
+#include "cmds/Assignment.h"
+#include "cmds/For.h"
+#include "cmds/If.h"
+#include "cmds/IfElse.h"
+#include "cmds/Read.h"
+#include "cmds/While.h"
+#include "cmds/Write.h"
 
 #include <stdio.h>
 #include <execinfo.h>

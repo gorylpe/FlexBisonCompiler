@@ -20,6 +20,8 @@ public:
         optimizeNumbers();
     }
 
+    //TODO REMOVING EMPTY CODE BLOCKS, IFS LOOPS WITH NOTHING INSIDE
+
     //TODO DO THIS IN SMALL ARRAYS
     void constPropagation(){
         cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION---" << endl;

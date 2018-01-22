@@ -28,6 +28,8 @@ public:
     bool isPreparedForPidpid;
     cl_I num;
 
+    int ssaNumber = -1;
+
     explicit Identifier(Position* pos, string pid)
     :pos(pos)
     ,pid(pid)
