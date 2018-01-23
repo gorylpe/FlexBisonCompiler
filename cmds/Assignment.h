@@ -1,8 +1,7 @@
 #pragma once
 
-#include "../Variable.h"
 #include "../Command.h"
-#include "AssignmentsStats.h"
+#include "../Expression.h"
 
 class Assignment : public Command {
 public:
@@ -15,7 +14,9 @@ public:
     :ident(ident)
     ,expr(expr)
     ,unused(false){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating ASSIGNMENT " << toString() << endl;
+    #endif
     }
 
     Assignment(const Assignment& asg2)
@@ -58,6 +59,7 @@ public:
 
     bool equals(Command* command) final {
         auto assgn2 = dynamic_cast<Assignment*>(command);
+
         if(assgn2 == nullptr)
             return false;
 
@@ -66,6 +68,7 @@ public:
 
         if(!this->expr->equals(assgn2->expr))
             return false;
+        cerr << " asg" << endl;
 
         return true;
     }
@@ -75,22 +78,101 @@ public:
         this->expr->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        expr->simplifyExpression();
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
-        if(ident->propagateConstantsInPidpid()){
-            hasPropagated = true;
+        /*if(!ident->isTypePID())
+            return false;
+
+        cerr << "ASSIGNMENT PROPAGATE VALUE" << endl;
+        if(ident->isUniquelyDefinied()){
+            const string& pid = ident->pid;
+            const int SSANum = ident->getUniqueSSANum();
+
+            int SSAUses = stats.getUse(pid)->getUsageForSSANum(SSANum);
+            if(SSAUses == 0){
+                setUnused();
+                hasPropagated = true;
+            }
         }
 
-        if(expr->propagateConstants()){
-            hasPropagated = true;
-        }
+        if(expr->isTypeVALUE()){
+            if(expr->val1->isTypeIDENTIFIER()){
+                Identifier* previousIdent = expr->val1->getIdentifier();
 
-        if(expr->isResultConst()){
-            ident->setConstant(expr->getConstValue());
+                if(!previousIdent->isTypePID())
+                    return false;
+
+                if(previousIdent->isUniquelyDefinied()){
+                    const string& prevPid = previousIdent->pid;
+                    const int prevSSANum = previousIdent->getUniqueSSANum();
+
+                    int prevSSAUses = stats.getUse(prevPid)->getUsageForSSANum(prevSSANum);
+                    if(prevSSAUses == 1){
+                        if(stats.getAssignments(prevPid)->hasAssignmentForSSANum(prevSSANum)){
+                            Assignment* prevAssignment = stats.getAssignments(prevPid)->getAssignmentForSSANum(prevSSANum);
+                            Expression* prevExpr = prevAssignment->expr;
+
+                            cerr << "OLD EXPR" << endl;
+                            cerr << toString() << endl;
+                            expr->type = prevExpr->type;
+                            expr->val1 = prevExpr->val1;
+                            expr->val2 = prevExpr->val2;
+
+                            cerr << "NEW EXPR" << endl;
+                            cerr << toString() << endl;
+
+                            stats.getUse(prevPid)->removeUsageForSSANum(prevSSANum);
+
+                            hasPropagated = true;
+                        }
+                    }
+                }
+            }
         } else {
-            ident->unsetConstant();
-        }
+            propagateValue(expr->val1, stats);
+            propagateValue(expr->val2, stats);
+        }*/
+
+        return hasPropagated;
+    }
+
+    static bool propagateValue(Value* val, IdentifiersSSA &stats) {
+        bool hasPropagated = false;
+
+        /*if(val->isTypeIDENTIFIER()){
+            const string& pid = val->ident->pid;
+
+            if(!val->ident->isTypePID()){
+                return false;
+            }
+
+            if(val->ident->isUniquelyDefinied()){
+                int valSSANum = val->ident->getUniqueSSANum();
+                if(stats.getAssignments(pid)->hasAssignmentForSSANum(valSSANum)){
+                    Assignment* assign = stats.getAssignments(pid)->getAssignmentForSSANum(valSSANum);
+
+                    int ssaUses = stats.getUse(pid)->getUsageForSSANum(valSSANum);
+                    if(ssaUses > 0){
+                        if(assign->expr->isTypeVALUE()){
+                            val->type = assign->expr->val1->type;
+                            val->ident = assign->expr->val1->ident;
+                            val->num = assign->expr->val1->num;
+                            cerr << "PROPAGATING VALUE" << endl;
+                            cerr << pid << " <- " << assign->toString() << endl;
+
+                            stats.getUse(pid)->removeUsageForSSANum(valSSANum);
+
+                            hasPropagated = true;
+                        }
+                    }
+                }
+            }
+        }*/
 
         return hasPropagated;
     }
@@ -118,18 +200,9 @@ public:
         expr->replaceValuesWithConst(pid, number);
     }
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
-        auto identifiers = this->expr->getIdentifiers();
-        for(auto ident : identifiers){
-            pidsSet.insert(ident->pid);
-            if(ident->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident->pidpid);
-            }
-        }
-    }
-
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addAssignment(this, ident, expr);
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+        prevStats.addUsages(expr->getIdentifiers());
+        prevStats.addStore(ident);
     }
 
     void setUnused(){

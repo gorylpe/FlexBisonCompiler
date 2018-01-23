@@ -5,15 +5,14 @@
 #include <sstream>
 #include <typeinfo>
 #include "Identifier.h"
-#include "Expression.h"
 #include "Condition.h"
 #include "NumberValueStats.h"
-#include "cmds/AssignmentsStats.h"
 
 using namespace std;
 using namespace cln;
 
 class CommandsBlock;
+class IdentifiersSSA;
 
 class Command {
 public:
@@ -33,7 +32,9 @@ public:
 
     virtual void calculateVariablesUsage(cl_I numberOfNestedLoops) = 0;
 
-    virtual bool propagateConstants() { return false; };
+    virtual void simplifyExpressions() = 0;
+
+    virtual bool propagateValues(IdentifiersSSA &stats) = 0;
 
     virtual void getPidVariablesBeingModified(set<Variable *> &variableSet) {}
 
@@ -45,11 +46,7 @@ public:
     //for FOR unrolling - replacing iterator with consts
     virtual void replaceValuesWithConst(string pid, cl_I number) {}
 
-
-    //for collecting assignments stats in loops
-    virtual void getPidsBeingUsed(set<string> &pidsSet) = 0;
-
-    virtual void collectAssignmentsStats(AssignmentsStats &stats) = 0;
+    virtual void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) = 0;
 
     //for creating numbers optimal
     virtual void collectNumberValues(map<cl_I, NumberValueStats>& stats) {}
@@ -89,6 +86,7 @@ public:
 
     bool equals(Command* command) final {
         auto block2 = dynamic_cast<CommandsBlock*>(command);
+
         if(block2 == nullptr)
             return false;
 
@@ -105,6 +103,7 @@ public:
 
     void semanticAnalysis() final {
         for(auto cmd : this->commands){
+            //cerr << "Semantic analysis for " << typeid(*cmd).name() << endl;
             cmd->semanticAnalysis();
         }
     }
@@ -121,12 +120,21 @@ public:
         }
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        for(auto cmd : this->commands){
+            cmd->simplifyExpressions();
+        }
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
         for(auto cmd : this->commands){
-            if(cmd->propagateConstants())
+            //cerr << "PROPAGATING VALUES FOR " << typeid(*cmd).name() << endl;
+            if(cmd->propagateValues(stats)){
+                //cerr << "YES" << endl;
                 hasPropagated = true;
+            }
         }
 
         return hasPropagated;
@@ -164,15 +172,10 @@ public:
         }
     }
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
         for(auto cmd : this->commands){
-            cmd->getPidsBeingUsed(pidsSet);
-        }
-    }
-
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        for(auto cmd : this->commands){
-            cmd->collectAssignmentsStats(prevStats);
+            //cerr << "STATS FOR " << typeid(*cmd).name() << endl;
+            cmd->calculateSSANumbersInIdentifiers(prevStats);
         }
     };
 

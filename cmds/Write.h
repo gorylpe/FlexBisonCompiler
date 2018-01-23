@@ -2,6 +2,7 @@
 
 
 #include "../Command.h"
+#include "Assignment.h"
 
 class Write : public Command {
 public:
@@ -9,7 +10,9 @@ public:
 
     explicit Write(Value* val)
             :val(val){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     Write(const Write& read2)
@@ -51,10 +54,12 @@ public:
         this->val->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {}
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
-        if(val->propagateConstant()){
+        if(Assignment::propagateValue(val, stats)){
             hasPropagated = true;
         }
 
@@ -69,20 +74,10 @@ public:
         val->replaceIdentifierWithConst(pid, number);
     }
 
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) final {
         auto ident = val->getIdentifier();
         if(ident != nullptr){
-            prevStats.addUsage(ident);
-        }
-    }
-
-    void getPidsBeingUsed(set<string> &pidsSet) final {
-        auto ident = val->getIdentifier();
-        if(ident != nullptr){
-            pidsSet.insert(ident->pid);
-            if(ident->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident->pidpid);
-            }
+            stats.addUsage(ident);
         }
     }
 

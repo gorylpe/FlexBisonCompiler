@@ -1,7 +1,8 @@
 #pragma once
 
-#include "AssignmentsStats.h"
+#include "../IdentifiersSSA.h"
 #include "../Command.h"
+#include "Assignment.h"
 
 class If : public Command{
 public:
@@ -11,7 +12,9 @@ public:
     If(Condition* cond, CommandsBlock* block)
             :cond(cond)
             ,block(block){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     If(const If& if2)
@@ -68,13 +71,22 @@ public:
         this->block->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        block->simplifyExpressions();
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
-        if(cond->propagateConstants())
+        if(Assignment::propagateValue(cond->val1, stats)) {
             hasPropagated = true;
+        }
 
-        if(block->propagateConstants())
+        if(Assignment::propagateValue(cond->val2, stats)) {
+            hasPropagated = true;
+        }
+
+        if(block->propagateValues(stats))
             hasPropagated = true;
 
         return hasPropagated;
@@ -105,20 +117,13 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
-        auto identifiers = this->cond->getIdentifiers();
-        for(auto ident : identifiers){
-            pidsSet.insert(ident->pid);
-            if(ident->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident->pidpid);
-            }
-        }
-        this->block->getPidsBeingUsed(pidsSet);
-    }
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+        auto oldSSAs = prevStats.getSSAsCopy();
 
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addCondition(cond);
-        block->collectAssignmentsStats(prevStats);
+        prevStats.addUsages(cond->getIdentifiers());
+        block->calculateSSANumbersInIdentifiers(prevStats);
+
+        prevStats.mergeWithSSAs(oldSSAs);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

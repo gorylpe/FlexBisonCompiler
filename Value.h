@@ -2,6 +2,7 @@
 
 #include "Number.h"
 #include "Identifier.h"
+#include "IdentifiersSSA.h"
 
 class Value {
 public:
@@ -17,13 +18,17 @@ public:
     explicit Value(Number* num)
     :type(Type::NUM)
     ,num(num){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating value number " << toString() << endl;
+    #endif
     }
 
     explicit Value(Identifier* ident)
     :type(Type::IDENTIFIER)
     ,ident(ident){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating value identifier " << toString() << endl;
+    #endif
     }
 
     Value(const Value& val2)
@@ -76,6 +81,14 @@ public:
         return false;
     }
 
+    bool isTypeIDENTIFIER(){
+        return type == IDENTIFIER;
+    }
+
+    bool isTypeNUM(){
+        return type == NUM;
+    }
+
     Identifier* getIdentifier(){
         if(type == IDENTIFIER){
             return ident;
@@ -109,40 +122,6 @@ public:
             this->ident->calculateVariablesUsage(numberOfNestedLoops);
         }
     }
-
-    bool propagateConstant(){
-        bool hasPropagated = false;
-
-        if(this->type == IDENTIFIER){
-            if(this->ident->propagateConstantsInPidpid())
-                hasPropagated = true;
-            if(this->ident->isConstant()){
-                cerr << "Setting constant value " << ident->getConstant() << " to " << toString() << endl;
-                this->type = NUM;
-                this->num = new Number(ident->pos, ident->getConstant());
-                delete this->ident;
-                hasPropagated = true;
-            }
-        }
-        return hasPropagated;
-    }
-
-    //for WHILE edge case
-    bool wouldConstantPropagate() {
-        if (this->type == IDENTIFIER) {
-            if (this->ident->isConstant()) {
-                return true;
-            }
-        }
-        return false;
-    }
-    cl_I getPossibleConstantPropagation(){
-        if (this->type == IDENTIFIER) {
-            return this->ident->getConstant();
-        }
-        return 0;
-    }
-
 
     void replaceIdentifierWithConst(string pid, cl_I number){
         if(this->type == IDENTIFIER){

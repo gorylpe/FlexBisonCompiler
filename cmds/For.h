@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AssignmentsStats.h"
+#include "../IdentifiersSSA.h"
 #include "../Command.h"
 
 class For : public Command {
@@ -20,7 +20,9 @@ public:
             ,to(to)
             ,block(block)
             ,increasing(increasing){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     For(const For& for2)
@@ -94,6 +96,11 @@ public:
             machine.INC();
             machine.SUB(tmpTo->memoryPtr);
             machine.JZERO(loopOutside);
+        } else {
+            machine.LOAD(tmpTo->memoryPtr);
+            machine.INC();
+            machine.SUB(iterator->memoryPtr);
+            machine.JZERO(loopOutside);
         }
 
         machine.setJumpPosition(loopStart);
@@ -141,29 +148,19 @@ public:
         this->block->getPidVariablesBeingModified(variableSet);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        block->simplifyExpressions();
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
-
-        if(from->propagateConstant()){
-            hasPropagated = true;
-        }
-
-        if(to->propagateConstant()){
-            hasPropagated = true;
-        }
 
         set<Variable*> variablesSet;
 
         auto iterator = memory.pushTempNamedVariable(pid, false);
-        this->block->getPidVariablesBeingModified(variablesSet);
 
-        for(auto var : variablesSet){
-            var->unsetConstant();
-        }
+        //TODO
 
-        if(this->block->propagateConstants()){
-            hasPropagated = true;
-        }
         memory.popTempVariable(); //iterator
 
         return hasPropagated;
@@ -212,41 +209,45 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) final {
+        auto beforeForSSAs = stats.getSSAsCopy();
+
+        IdentifiersSSA & tmpStats = *stats.clone();
+
         auto ident1 = from->getIdentifier();
         if(ident1 != nullptr){
-            pidsSet.insert(ident1->pid);
-            if(ident1->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident1->pidpid);
-            }
+            tmpStats.addUsage(ident1);
         }
         auto ident2 = to->getIdentifier();
         if(ident2 != nullptr){
-            pidsSet.insert(ident2->pid);
-            if(ident2->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident2->pidpid);
-            }
+            tmpStats.addUsage(ident2);
         }
+        block->calculateSSANumbersInIdentifiers(tmpStats);
 
-        this->block->getPidsBeingUsed(pidsSet);
-    }
+        auto prewhileSSAs = tmpStats.getSSAsCopy();
+        /*cerr << "PRE FOR" << endl;
+        cerr << tmpStats.toString() << endl;*/
 
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        auto ident1 = from->getIdentifier();
+        stats.mergeWithSSAs(prewhileSSAs);
+
+        /*cerr << "FOR MERGED" << endl;
+        cerr << stats.toString() << endl;*/
+
         if(ident1 != nullptr){
-            prevStats.addUsage(ident1);
+            stats.addUsage(ident1);
         }
-        auto ident2 = to->getIdentifier();
         if(ident2 != nullptr){
-            prevStats.addUsage(ident2);
+            stats.addUsage(ident2);
         }
 
-        block->collectAssignmentsStats(prevStats);
+        block->calculateSSANumbersInIdentifiers(stats);
+       /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;
+        cerr << IdentifiersSSA::SSAsToString(beforeForSSAs) << endl;*/
 
-        auto pidsUsedInLoop = set<string>();
-        getPidsBeingUsed(pidsUsedInLoop);
+        stats.mergeWithSSAs(beforeForSSAs);
 
-        prevStats.addPidsUsedInLoops(pidsUsedInLoop);
+        /*cerr << "AFTER FOR" << endl;
+        cerr << stats.toString() << endl;*/
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Command.h"
-#include "AssignmentsStats.h"
+#include "../IdentifiersSSA.h"
 
 class Read : public Command {
 public:
@@ -9,7 +9,9 @@ public:
 
     explicit Read(Identifier* ident)
             :ident(ident){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     Read(const Read& read2)
@@ -45,6 +47,10 @@ public:
         this->ident->unprepareIfNeeded();
     }
 
+    void simplifyExpressions() final {}
+
+    bool propagateValues(IdentifiersSSA &stats) final { return false; }
+
     CommandsBlock* blockToReplaceWith() final {
         return nullptr;
     }
@@ -53,10 +59,8 @@ public:
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {}
-
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addRead(ident);
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+        prevStats.addStore(ident);
     }
 
     void getPidVariablesBeingModified(set<Variable *>& variableSet) final {

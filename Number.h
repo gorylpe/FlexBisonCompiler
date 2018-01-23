@@ -20,7 +20,9 @@ public:
     ,num(num)
     //,isPrepared(false)
     {
+#ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating number " << this->toString() << endl;
+#endif
     }
 
     Number(const Number& num2)

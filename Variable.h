@@ -29,19 +29,16 @@ public:
     const cl_I nestedLoopMultiplier = 10;
     cl_I useNumber;
 
-    bool constant;
-    cl_I constValue;
-
     explicit Variable(string pid, const cl_I& memoryPtr, bool modifiable)
     :type(Type::PID)
     ,pid(pid)
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
     ,initialized(false)
-    ,useNumber(0)
-    ,constant(false)
-    ,constValue(0){
+    ,useNumber(0){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Declaring variable " << pid << endl;
+    #endif
     }
 
     explicit Variable(string pid, const cl_I& size, const cl_I& memoryPtr, bool modifiable)
@@ -51,14 +48,16 @@ public:
     ,memoryPtr(memoryPtr)
     ,modifiable(modifiable)
     ,initialized(false)
-    ,useNumber(0)
-    ,constant(false)
-    ,constValue(0){
+    ,useNumber(0){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Deleting array " << pid << "[" << size << "]" << endl;
+    #endif
     }
 
     ~Variable(){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Deleting variable " << pid << endl;
+    #endif
     }
 
     bool isModifiable(){
@@ -80,22 +79,4 @@ public:
     cl_I getUsage() const {
         return useNumber;
     }
-
-    void setConstant(cl_I constValue){
-        constant = true;
-        this->constValue = constValue;
-    }
-
-    void unsetConstant(){
-        constant = false;
-    }
-
-    bool isConstant(){
-        return constant;
-    }
-
-    cl_I getConstantValue(){
-        return constValue;
-    }
-
 };

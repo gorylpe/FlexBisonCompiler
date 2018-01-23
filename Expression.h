@@ -77,6 +77,7 @@ public:
             case VALUE:
                 if(this->val1->equals(expr2->val1))
                     return true;
+                break;
             case ADDITION:
             case MULTIPLICATION:
                 if(this->val1->equals(expr2->val1) && this->val2->equals(expr2->val2))
@@ -93,6 +94,25 @@ public:
         }
 
         return false;
+    }
+
+    bool isTypeVALUE() {
+        return type == VALUE;
+    }
+    bool isTypeADDITION(){
+        return type == ADDITION;
+    }
+    bool isTypeSUBTRACTION(){
+        return type == SUBTRACTION;
+    }
+    bool isTypeMULTIPLICATION(){
+        return type == MULTIPLICATION;
+    }
+    bool isTypeDIVISION(){
+        return type == DIVISION;
+    }
+    bool isTypeMODULO(){
+        return type == MODULO;
     }
 
     bool equals(Identifier* ident2){
@@ -129,44 +149,12 @@ public:
         }
     }
 
-    void optimizeConstants();
+    void simplifyExpression();
 
     void bothConstValuesOptimizations();
     void oneConstLeftValueOptimizations();
     void oneConstRightValueOptimizations();
     void addingNumberOptimization();
-
-    bool propagateConstants() {
-        bool hasPropagated = false;
-        switch(this->type){
-            case VALUE:
-                if(val1->propagateConstant())
-                    hasPropagated = true;
-                break;
-            default:
-                if(val1->propagateConstant())
-                    hasPropagated = true;
-                if(val2->propagateConstant())
-                    hasPropagated = true;
-                break;
-        }
-        optimizeConstants();
-        if(hasPropagated)
-            cerr << "Constant in " << toString() << " propagated" << endl;
-        return hasPropagated;
-    }
-
-    bool isResultConst(){
-        switch(this->type){
-            case VALUE:
-                return val1->type == Value::Type::NUM;
-        }
-        return false;
-    }
-
-    cl_I getConstValue(){
-        return val1->num->num;
-    }
 
     vector<Identifier*> getIdentifiers(){
         auto idents = vector<Identifier*>();

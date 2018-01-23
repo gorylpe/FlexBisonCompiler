@@ -1,7 +1,8 @@
 #pragma once
 
-#include "AssignmentsStats.h"
+#include "../IdentifiersSSA.h"
 #include "../Command.h"
+#include "Assignment.h"
 
 class While : public Command {
 public:
@@ -11,7 +12,9 @@ public:
     While(Condition* cond, CommandsBlock* block)
             :cond(cond)
             ,block(block){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     While(const While& while2)
@@ -87,33 +90,28 @@ public:
         this->block->getPidVariablesBeingModified(variableSet);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        block->simplifyExpressions();
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
-        set<Variable*> variablesSet;
+        //TODO do this edge case, check if cond will be const and false at start
 
-        this->block->getPidVariablesBeingModified(variablesSet);
+        cerr << "WHILE PROPAGATING COND VAL1" << endl;
+        if(Assignment::propagateValue(cond->val1, stats)) {
+            hasPropagated = true;
+        }
 
-        //edge case, check if cond will be const and false at start
-        if(cond->wouldConstantPropagateToConstComparision() && !cond->testConstComparisionIfPropagate()){
-            //propagate constants to condition and remove this block in next optimizer loop
-            cerr << "WHILE first check optimization on " << cond->toString() << endl;
-            if(this->cond->propagateConstants()) {
-                hasPropagated = true;
-            }
-        } else {
-            for(auto var : variablesSet){
-                cerr << "Var used inside while " << var->pid << endl;
-                var->unsetConstant();
-            }
+        cerr << "WHILE PROPAGATING COND VAL2" << endl;
+        if(Assignment::propagateValue(cond->val2, stats)) {
+            hasPropagated = true;
+        }
 
-            if(this->cond->propagateConstants()) {
-                hasPropagated = true;
-            }
-
-            if(this->block->propagateConstants()){
-                hasPropagated = true;
-            }
+        cerr << "WHILE PROPAGATING BLOCK" << endl;
+        if(this->block->propagateValues(stats)){
+            hasPropagated = true;
         }
 
         return hasPropagated;
@@ -139,26 +137,30 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+        auto beforeWhileSSAs = prevStats.getSSAsCopy();
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
-        auto identifiers = this->cond->getIdentifiers();
-        for(auto ident : identifiers){
-            pidsSet.insert(ident->pid);
-            if(ident->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident->pidpid);
-            }
-        }
-        this->block->getPidsBeingUsed(pidsSet);
-    }
+        IdentifiersSSA & tmpStats = *prevStats.clone();
 
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addCondition(cond);
-        block->collectAssignmentsStats(prevStats);
+        tmpStats.addUsages(cond->getIdentifiers());
+        block->calculateSSANumbersInIdentifiers(tmpStats);
 
-        auto pidsUsedInLoop = set<string>();
-        getPidsBeingUsed(pidsUsedInLoop);
+        auto prewhileSSAs = tmpStats.getSSAsCopy();
+        cerr << "PRE WHILE" << endl;
+        cerr << tmpStats.toString() << endl;
 
-        prevStats.addPidsUsedInLoops(pidsUsedInLoop);
+        prevStats.mergeWithSSAs(prewhileSSAs);
+
+        cerr << "MERGED WHILE WITH PREWHILE" << endl;
+        cerr << prevStats.toString() << endl;
+
+        prevStats.addUsages(cond->getIdentifiers());
+        block->calculateSSANumbersInIdentifiers(prevStats);
+
+        prevStats.mergeWithSSAs(beforeWhileSSAs);
+
+        cerr << "AFTER WHILE" << endl;
+        cerr << prevStats.toString() << endl;
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

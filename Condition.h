@@ -2,6 +2,7 @@
 
 #include "Value.h"
 #include "NumberValueStats.h"
+#include "IdentifiersSSA.h"
 
 class Condition {
 public:
@@ -28,7 +29,9 @@ public:
     ,constComparisionResult(false){
         //const comparision optimisation
         this->optimizeConstants();
+#ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating condition " << toString() << endl;
+#endif
     }
 
     Condition(const Condition& cond2)
@@ -303,68 +306,6 @@ public:
     void calculateVariablesUsage(cl_I numberOfNestedLoops) {
         this->val1->calculateVariablesUsage(numberOfNestedLoops);
         this->val2->calculateVariablesUsage(numberOfNestedLoops);
-    }
-
-    bool wouldConstantPropagateToConstComparision() {
-        int numberPropagated = 0;
-        if(val1->wouldConstantPropagate()){
-            ++numberPropagated;
-            if(val2->type == Value::Type::NUM)
-                return true;
-        }
-        if(val2->wouldConstantPropagate()){
-            ++numberPropagated;
-            if(val1->type == Value::Type::NUM)
-                return true;
-        }
-
-        return numberPropagated == 2;
-    }
-
-    //for WHILE edge case
-    bool testConstComparisionIfPropagate(){
-        Value* val1old = val1;
-        Value* val2old = val2;
-
-        if(val1->wouldConstantPropagate()){
-            val1 = new Value(new Number(nullptr, val1->getPossibleConstantPropagation()));
-        }
-        if(val2->wouldConstantPropagate()){
-            val2 = new Value(new Number(nullptr, val2->getPossibleConstantPropagation()));
-        }
-
-        optimizeConstants();
-
-        bool constComparisionResult = getComparisionConstResult();
-
-        if(val1 != val1old){
-            delete val1;
-            val1 = val1old;
-        }
-        if(val2 != val2old){
-            delete val2;
-            val2 = val2old;
-        }
-
-        //restore const comparision flags
-        optimizeConstants();
-
-        return constComparisionResult;
-    }
-
-    bool propagateConstants(){
-        bool hasPropagated = false;
-        if(val1->propagateConstant())
-            hasPropagated = true;
-        if(val2->propagateConstant())
-            hasPropagated = true;
-
-        if(hasPropagated) {
-            cerr << "Constant in " << toString() << " propagated" << endl;
-            optimizeConstants();
-        }
-
-        return hasPropagated;
     }
 
     vector<Identifier*> getIdentifiers(){

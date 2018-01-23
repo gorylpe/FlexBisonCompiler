@@ -1,7 +1,8 @@
 #pragma once
 
-#include "AssignmentsStats.h"
+#include "../IdentifiersSSA.h"
 #include "../Command.h"
+#include "Assignment.h"
 
 class IfElse : public Command{
 public:
@@ -13,7 +14,9 @@ public:
             :cond(cond)
             ,block1(block1)
             ,block2(block2){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating " << toString() << endl;
+    #endif
     }
 
     IfElse(const IfElse& if2)
@@ -89,16 +92,26 @@ public:
         this->block2->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    bool propagateConstants() final {
+    void simplifyExpressions() final {
+        block1->simplifyExpressions();
+        block2->simplifyExpressions();
+    }
+
+    bool propagateValues(IdentifiersSSA &stats) final {
         bool hasPropagated = false;
 
-        if(cond->propagateConstants())
+        if(Assignment::propagateValue(cond->val1, stats)) {
+            hasPropagated = true;
+        }
+
+        if(Assignment::propagateValue(cond->val2, stats)) {
+            hasPropagated = true;
+        }
+
+        if(block1->propagateValues(stats))
             hasPropagated = true;
 
-        if(block1->propagateConstants())
-            hasPropagated = true;
-
-        if(block2->propagateConstants())
+        if(block2->propagateValues(stats))
             hasPropagated = true;
 
         return hasPropagated;
@@ -132,23 +145,14 @@ public:
         block2->replaceValuesWithConst(pid, number);
     }
 
+    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+        auto oldSSAs = prevStats.getSSAsCopy();
 
-    void getPidsBeingUsed(set<string> &pidsSet) final {
-        auto identifiers = this->cond->getIdentifiers();
-        for(auto ident : identifiers){
-            pidsSet.insert(ident->pid);
-            if(ident->type == Identifier::Type::PIDPID){
-                pidsSet.insert(ident->pidpid);
-            }
-        }
-        this->block1->getPidsBeingUsed(pidsSet);
-        this->block2->getPidsBeingUsed(pidsSet);
-    }
+        prevStats.addUsages(cond->getIdentifiers());
+        block1->calculateSSANumbersInIdentifiers(prevStats);
+        block2->calculateSSANumbersInIdentifiers(prevStats);
 
-    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addCondition(cond);
-        block1->collectAssignmentsStats(prevStats);
-        block1->collectAssignmentsStats(prevStats);
+        prevStats.mergeWithSSAs(oldSSAs);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

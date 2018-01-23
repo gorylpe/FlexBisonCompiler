@@ -28,14 +28,16 @@ public:
     bool isPreparedForPidpid;
     cl_I num;
 
-    int ssaNum = -1;
+    set<int> ssaNums;
 
     explicit Identifier(Position* pos, string pid)
     :pos(pos)
     ,pid(pid)
     ,type(PID)
     ,isPreparedForPidpid(false){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating identifier PID " << toString() << endl;
+    #endif
     }
 
     explicit Identifier(Position* pos, string pid, string pidpid)
@@ -44,7 +46,9 @@ public:
     ,pidpid(pidpid)
     ,type(PIDPID)
     ,isPreparedForPidpid(false){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating identifier PIDPID " << toString() << endl;
+    #endif
     }
 
     explicit Identifier(Position* pos, string pid, const cl_I& num)
@@ -53,7 +57,9 @@ public:
     ,type(PIDNUM)
     ,num(num)
     ,isPreparedForPidpid(false){
+    #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating identifier PIDNUM " << toString() << endl;
+    #endif
     }
 
     Identifier(const Identifier& ident2)
@@ -111,15 +117,39 @@ public:
         } else if(this->type == PIDPID){
             ss << "[" << this->pidpid << "]";
         }
+
+        ss << "\033[1;32m";
+        if(isUniquelyDefinied()){
+            ss << getUniqueSSANum();
+        } else if (ssaNums.size() > 1) {
+            ss << "(";
+            bool first = true;
+            for(const auto& ssa : ssaNums){
+                if(!first)
+                    ss << ", ";
+                first = false;
+                ss << ssa;
+            }
+            ss << ")";
+        }
+        ss << "\033[0m";
         return ss.str();
     }
 
-    void setSSACounter(int newSsaNum) {
-        ssaNum = newSsaNum;
+    void setSSANums(set<int> newSsaNums) {
+        ssaNums = move(newSsaNums);
     }
 
-    int getSSANum() {
-        return ssaNum;
+    set<int> getSSANums() {
+        return ssaNums;
+    }
+
+    bool isUniquelyDefinied(){
+        return ssaNums.size() == 1;
+    }
+
+    int getUniqueSSANum() {
+        return *ssaNums.begin();
     }
 
     void checkPids(Variable* pidV, Variable* pidpidV){
@@ -273,51 +303,6 @@ public:
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops){
         this->getPidVariable()->addUsage(numberOfNestedLoops);
-    }
-
-    bool propagateConstantsInPidpid() {
-        Variable* pidpidV = this->getPidPidVariable();
-
-        if(this->type == PIDPID){
-            if(pidpidV->isConstant()){
-                this->type = PIDNUM;
-                this->num = pidpidV->getConstantValue();
-                cerr << "Constant in " << toString() << " propagated" << endl;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool isConstant(){
-        if(this->type == PID){
-            Variable* pidV = this->getPidVariable();
-            return pidV->isConstant();
-        }
-        return false;
-    }
-
-    cl_I getConstant(){
-        if(this->type == PID){
-            Variable* pidV = this->getPidVariable();
-            cl_I constantValue = pidV->getConstantValue();
-            return pidV->getConstantValue();
-        }
-        return 0;
-    }
-
-    void setConstant(cl_I constantValue){
-        if(this->type == PID){
-            Variable* pidV = this->getPidVariable();
-            pidV->setConstant(constantValue);
-        }
-    }
-
-    void unsetConstant(){
-        if(this->type == PID){
-            Variable* pidV = this->getPidVariable();
-            pidV->unsetConstant();
-        }
     }
 
     void storeFromAccumulator(){

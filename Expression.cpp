@@ -7,7 +7,9 @@
 Expression::Expression(Value *val)
         :type(VALUE)
         ,val1(val){
+#ifdef DEBUG_LOG_CONSTRUCTORS
     cerr << "Creating expression " << toString() << endl;
+#endif
 }
 
 Expression::Expression(Expression::Type type, Value *val1, Value *val2)
@@ -15,12 +17,13 @@ Expression::Expression(Expression::Type type, Value *val1, Value *val2)
         ,val1(val1)
         ,val2(val2){
     //const operation optimisation
-    this->optimizeConstants();
-
+    this->simplifyExpression();
+#ifdef DEBUG_LOG_CONSTRUCTORS
     cerr << "Creating expression " << toString() << endl;
+#endif
 }
 
-void Expression::optimizeConstants() {
+void Expression::simplifyExpression() {
     //2 values
     if(this->type != VALUE){
         this->bothConstValuesOptimizations();

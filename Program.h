@@ -13,64 +13,53 @@ public:
     }
 
     void ASTOptimizations(){
-        block->replaceCommands();
+        //block->replaceCommands();
+        //valuesPropagation();
         //block->print(0);
-        block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
-        constPropagation();
+        //removeUnusedAssignments();
         block->print(0);
-        removeUnusedAssignments();
-        block->print(0);
-        //TODO do in loop with const propagation
-        removeUnusedAssignments();
-        //additional const propagation will run Expressions optimization too if remove unused assignements left them in not optimized form
-        constPropagation();
-        optimizeNumbers();
+        //optimizeNumbers();
     }
 
-    //TODO DO THIS IN SMALL ARRAYS
-    void constPropagation(){
-        cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION---" << endl;
-        bool hadPropagation;
-        int numOfPropagations;
+    void valuesPropagation(){
+        bool propagated;
+
         do{
-            numOfPropagations = 0;
-            do{
-                hadPropagation = block->propagateConstants();
-                //block->print(0);
-                block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
-                if(hadPropagation){
-                    numOfPropagations++;
-                }
-            }while(hadPropagation);
+            IdentifiersSSA stats;
+            cerr << "!!!STATS!!!" << endl;
+            block->calculateSSANumbersInIdentifiers(stats);
+            cerr << stats.toString() << endl;
 
-            cerr << "Done " << numOfPropagations << " constants propagation loops" << endl;
+            block->print(0);
 
-            if(numOfPropagations > 0){
-                cerr << "Replacing unused commands or optimize using constants" << endl;
-                block->replaceCommands();
-                //block->print(0);
-                block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
-            }
-        }while(numOfPropagations > 0);
-        cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION END---" << endl << endl;
+            propagated = block->propagateValues(stats);
+            if(propagated)
+                cerr << "VALUES PROPAGATED" << endl;
+
+            block->simplifyExpressions();
+            cerr << "EXPRESSIONS SIMPLIFIED" << endl;
+
+            //block->replaceCommands();
+            cerr << "REPLACED COMMANDS" << endl;
+
+            block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
+            cerr << "SEMANTIC ANALYSIS DONE" << endl;
+            return;
+        } while(propagated);
     }
 
     void removeUnusedAssignments(){
-        AssignmentsStats stats = AssignmentsStats();
-        cerr << "!!!STATS!!!" << endl;
-        block->collectAssignmentsStats(stats);
-        cerr << stats.toString() << endl;
 
-        for(auto& entry : stats.stats){
+        /*for(auto& entry : stats.ssa){
             const string& pid = entry.first;
             removeUnusedAssignmentsForPid(pid, stats);
         }
 
-        block->replaceCommands();
+        block->replaceCommands();*/
     }
 
-    void removeUnusedAssignmentsForPid(const string &pid, AssignmentsStats &stats){
-        IdentifierStats* pidStats = stats.getStats(pid);
+    /*void removeUnusedAssignmentsForPid(const string &pid, IdentifiersSSA &stats){
+        IdentifierSSA* pidStats = stats.getStats(pid);
 
         cerr << "Removing unused assignments for " << pid << endl;
         int removedNum = 0;
@@ -103,7 +92,7 @@ public:
         cerr << "Removed " << removedNum << " assignments" << endl;
     }
 
-    bool tryToRemoveUnusedAssignment(IdentifierStats* pidStats, int SSANum){
+    bool tryToRemoveUnusedAssignment(IdentifierSSA* pidStats, int SSANum){
         Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
 
         if(pidStats->getUsesForSSANum(assign->ident->getSSANum()) == 0){
@@ -111,7 +100,7 @@ public:
         }
     }
 
-    bool tryToMergeNumberOperationsInWithPreviousAssignment(AssignmentsStats& stats, IdentifierStats *pidStats, int SSANum){
+    bool tryToMergeNumberOperationsInWithPreviousAssignment(IdentifiersSSA& stats, IdentifierSSA *pidStats, int SSANum){
         Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
         Expression* expr = assign->expr;
 
@@ -120,17 +109,17 @@ public:
             return tryToMergeAdditionWithPreviousAssignment(stats, expr);
         } else if(expr->type == Expression::Type::VALUE) {
             //TODO
-            /* optimize this
+            *//* optimize this
              *  a := e;
                 e := a;
                 a := e;
-             */
+             *//*
         }
         //CANT DO FOR SUBTRACTION, CAUSE IT CAN LEAD TO CUT NUMBER BECAUSE THEY CANT BE NEGATIVE
         return false;
     }
 
-    bool tryToMergeAdditionWithPreviousAssignment(AssignmentsStats& stats, Expression *expr) {
+    bool tryToMergeAdditionWithPreviousAssignment(IdentifiersSSA& stats, Expression *expr) {
         //addition is commutative
         bool reversed = false;
 
@@ -145,7 +134,7 @@ public:
         if(exprIdent == nullptr)
             return false;
 
-        IdentifierStats* previousPidStats = stats.getStats(exprIdent->pid);
+        IdentifierSSA* previousPidStats = stats.getStats(exprIdent->pid);
         int previousPidSSANUM = exprIdent->getSSANum();
 
         //if previous identifier has only only usage - in current assignment
@@ -209,7 +198,7 @@ public:
         return false;
     }
 
-    bool tryToMergeValueWithPreviousAssignment(AssignmentsStats& stats, Expression *expr){
+    bool tryToMergeValueWithPreviousAssignment(IdentifiersSSA& stats, Expression *expr){
         //addition is commutative
         bool reversed = false;
 
@@ -224,7 +213,7 @@ public:
         if(exprIdent == nullptr)
             return false;
 
-        IdentifierStats* previousPidStats = stats.getStats(exprIdent->pid);
+        IdentifierSSA* previousPidStats = stats.getStats(exprIdent->pid);
         int previousPidSSANUM = exprIdent->getSSANum();
 
         //if previous identifier has only only usage - in current assignment
@@ -277,7 +266,7 @@ public:
             }
         }
         return false;
-    }
+    }*/
 
 
     void optimizeNumbers(){
@@ -352,7 +341,7 @@ public:
     }
 
     string generateCode(){
-        block->semanticAnalysis();
+        //block->semanticAnalysis();
 
         this->ASTOptimizations();
 
