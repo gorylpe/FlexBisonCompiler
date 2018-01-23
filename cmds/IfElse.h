@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CommandsBlock.h"
+#include "AssignmentsStats.h"
+#include "../Command.h"
 
 class IfElse : public Command{
 public:
@@ -131,6 +132,24 @@ public:
         block2->replaceValuesWithConst(pid, number);
     }
 
+
+    void getPidsBeingUsed(set<string> &pidsSet) final {
+        auto identifiers = this->cond->getIdentifiers();
+        for(auto ident : identifiers){
+            pidsSet.insert(ident->pid);
+            if(ident->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident->pidpid);
+            }
+        }
+        this->block1->getPidsBeingUsed(pidsSet);
+        this->block2->getPidsBeingUsed(pidsSet);
+    }
+
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        prevStats.addCondition(cond);
+        block1->collectAssignmentsStats(prevStats);
+        block1->collectAssignmentsStats(prevStats);
+    }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
         cond->collectNumberValues(stats);

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <sstream>
-#include "cmds/CommandsBlock.h"
+#include "Command.h"
+#include "cmds/Assignment.h"
+
+#define DEBUG
 
 class Program {
 public:
@@ -16,6 +19,7 @@ public:
         //block->print(0);
         block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
         constPropagation();
+        //block->print(0);
         removeUnusedAssignements();
         optimizeNumbers();
     }
@@ -51,7 +55,40 @@ public:
     }
 
     void removeUnusedAssignements(){
+        AssignmentsStats stats = AssignmentsStats();
+        cerr << "!!!STATS!!!" << endl;
+        block->collectAssignmentsStats(stats);
+        cerr << stats.toString() << endl;
 
+        for(auto& entry : stats.stats){
+
+            const string& pid = entry.first;
+            const IdentifierStats* identifierStats = entry.second;
+
+            cerr << "Removing unused assignments for " << pid << endl;
+            int removed = 0;
+
+            int assignmentsSize = identifierStats->assignments.size();
+
+            //check for not removing arrays cause they need checks for indexes
+            if(assignmentsSize > 0 && identifierStats->assignments[0]->ident->type == Identifier::Type::PID){
+
+                for(int i = 0; i < assignmentsSize; ++i){
+
+                    Identifier* ident = identifierStats->assignments[i]->ident;
+
+
+                    if(identifierStats->uses[ident->getSSANum()] == 0){
+                        identifierStats->assignments[i]->setUnused();
+                        ++removed;
+                    }
+                }
+            }
+
+            cerr << "Removed " << removed << " assignments" << endl;
+        }
+
+        block->replaceCommands();
     }
 
     void optimizeNumbers(){

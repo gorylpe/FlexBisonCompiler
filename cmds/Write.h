@@ -69,6 +69,23 @@ public:
         val->replaceIdentifierWithConst(pid, number);
     }
 
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        auto ident = val->getIdentifier();
+        if(ident != nullptr){
+            prevStats.addUsage(ident);
+        }
+    }
+
+    void getPidsBeingUsed(set<string> &pidsSet) final {
+        auto ident = val->getIdentifier();
+        if(ident != nullptr){
+            pidsSet.insert(ident->pid);
+            if(ident->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident->pidpid);
+            }
+        }
+    }
+
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
         if(val->type == Value::Type::NUM){
             if(stats.count(val->num->num) == 0){

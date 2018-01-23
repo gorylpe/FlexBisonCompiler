@@ -367,6 +367,19 @@ public:
         return hasPropagated;
     }
 
+    vector<Identifier*> getIdentifiers(){
+        auto idents = vector<Identifier*>();
+        auto ident2 = val2->getIdentifier();
+        if (ident2 != nullptr) {
+            idents.push_back(ident2);
+        }
+        auto ident1 = val1->getIdentifier();
+        if(ident1 != nullptr) {
+            idents.push_back(ident1);
+        }
+        return idents;
+    }
+
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) {
         if(val1->type == Value::Type::NUM){
             if(stats.count(val1->num->num) == 0){

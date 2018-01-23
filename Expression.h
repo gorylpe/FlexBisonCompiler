@@ -185,6 +185,7 @@ public:
                 break;
             }
         }
+        return idents;
     }
 
     void prepareValuesIfNeeded(){

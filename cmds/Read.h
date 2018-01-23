@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Command.h"
+#include "AssignmentsStats.h"
 
 class Read : public Command {
 public:
@@ -44,7 +45,7 @@ public:
         this->ident->unprepareIfNeeded();
     }
 
-    CommandsBlock* blockToReplaceWith(){
+    CommandsBlock* blockToReplaceWith() final {
         return nullptr;
     }
 
@@ -52,9 +53,15 @@ public:
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 
+    void getPidsBeingUsed(set<string> &pidsSet) final {}
+
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        prevStats.addStore(ident);
+    }
+
     void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        Variable* var = this->ident->getPidVariable();
-        if(var->type == Variable::Type::PID)
-            variableSet.insert(var);
+    Variable* var = this->ident->getPidVariable();
+    if(var->type == Variable::Type::PID)
+        variableSet.insert(var);
     }
 };

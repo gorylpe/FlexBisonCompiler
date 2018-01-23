@@ -1,23 +1,27 @@
 #pragma once
 
-#include <set>
 #include "../Variable.h"
-#include "CommandsBlock.h"
+#include "../Command.h"
+#include "AssignmentsStats.h"
 
 class Assignment : public Command {
 public:
     Identifier* ident;
     Expression* expr;
 
+    bool unused;
+
     explicit Assignment(Identifier* ident, Expression* expr)
-            :ident(ident)
-            ,expr(expr){
+    :ident(ident)
+    ,expr(expr)
+    ,unused(false){
         cerr << "Creating ASSIGNMENT " << toString() << endl;
     }
 
     Assignment(const Assignment& asg2)
-            :ident(asg2.ident->clone())
-            ,expr(asg2.expr->clone()){}
+    :ident(asg2.ident->clone())
+    ,expr(asg2.expr->clone())
+    ,unused(false){}
 
     Assignment* clone() const final {
         return new Assignment(*this);
@@ -102,6 +106,10 @@ public:
             return new CommandsBlock();
         }
 
+        if(unused){
+            return new CommandsBlock();
+        }
+
         return nullptr;
     }
 
@@ -110,80 +118,25 @@ public:
         expr->replaceValuesWithConst(pid, number);
     }
 
+    void getPidsBeingUsed(set<string> &pidsSet) final {
+        auto identifiers = this->expr->getIdentifiers();
+        for(auto ident : identifiers){
+            pidsSet.insert(ident->pid);
+            if(ident->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident->pidpid);
+            }
+        }
+    }
+
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        prevStats.addAssignment(this, ident, expr);
+    }
+
+    void setUnused(){
+        unused = true;
+    }
+
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
         expr->collectNumberValues(stats);
-    }
-};
-
-
-class IdentifierStats{
-public:
-    string pid;
-    int counter;
-    vector<Assignment*> assignments;
-    vector<int> uses;
-
-    explicit IdentifierStats(string pid)
-    :pid(pid)
-    ,counter(0){}
-
-    void addAssignment(Assignment* assignment) {
-        Identifier* ident = assignment->ident;
-
-        ident->setSSACounter(counter);
-
-        assignments.push_back(assignment);
-        uses.push_back(0);
-
-        counter++;
-    }
-
-    void setIdentUse(Identifier *ident){
-        int lastCounter = counter - 1;
-        ident->setSSACounter(lastCounter);
-        uses[lastCounter]++;
-    }
-
-    string toString() const {
-        stringstream ss;
-        for(int i = 0; i < counter; ++i){
-            ss << pid << i << "   " << uses[i] << "   " << assignments[i]->toString() << endl;
-        }
-        return ss.str();
-    }
-};
-
-class AssignmentsStats{
-public:
-    map<string, IdentifierStats> stats;
-
-    IdentifierStats getStats(string pid){
-        if(stats.find(pid) == stats.end()){
-            stats.insert(make_pair(pid, IdentifierStats(pid)));
-        }
-        return stats.at(pid);
-    }
-
-    void addAssignment(Assignment* assignment) {
-        Identifier* ident = assignment->ident;
-        Expression* expr = assignment->expr;
-
-        if(ident->type == Identifier::Type::PID){
-            //set last counters
-            const vector<Identifier*>& idents = expr->getIdentifiers();
-            for(auto id : idents){
-                getStats(id->pid).setIdentUse(id);
-            }
-            getStats(ident->pid).addAssignment(assignment);
-        }
-    };
-
-    string toString() const{
-        stringstream ss;
-        for(auto& entry : stats){
-            const IdentifierStats& identStats = entry.second;
-            ss << identStats.toString();
-        }
-        return ss.str();
     }
 };

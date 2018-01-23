@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CommandsBlock.h"
+#include "AssignmentsStats.h"
+#include "../Command.h"
 
 class For : public Command {
 public:
@@ -209,6 +210,43 @@ public:
         from->replaceIdentifierWithConst(pid, number);
         to->replaceIdentifierWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
+    }
+
+    void getPidsBeingUsed(set<string> &pidsSet) final {
+        auto ident1 = from->getIdentifier();
+        if(ident1 != nullptr){
+            pidsSet.insert(ident1->pid);
+            if(ident1->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident1->pidpid);
+            }
+        }
+        auto ident2 = to->getIdentifier();
+        if(ident2 != nullptr){
+            pidsSet.insert(ident2->pid);
+            if(ident2->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident2->pidpid);
+            }
+        }
+
+        this->block->getPidsBeingUsed(pidsSet);
+    }
+
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        auto ident1 = from->getIdentifier();
+        if(ident1 != nullptr){
+            prevStats.addUsage(ident1);
+        }
+        auto ident2 = to->getIdentifier();
+        if(ident2 != nullptr){
+            prevStats.addUsage(ident2);
+        }
+
+        block->collectAssignmentsStats(prevStats);
+
+        auto pidsUsedInLoop = set<string>();
+        getPidsBeingUsed(pidsUsedInLoop);
+
+        prevStats.addPidsUsedInLoops(pidsUsedInLoop);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

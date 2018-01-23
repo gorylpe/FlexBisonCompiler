@@ -1,6 +1,7 @@
 #pragma once
 
-#include "CommandsBlock.h"
+#include "AssignmentsStats.h"
+#include "../Command.h"
 
 class While : public Command {
 public:
@@ -136,6 +137,28 @@ public:
     virtual void replaceValuesWithConst(string pid, cl_I number) {
         cond->replaceValuesWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
+    }
+
+
+    void getPidsBeingUsed(set<string> &pidsSet) final {
+        auto identifiers = this->cond->getIdentifiers();
+        for(auto ident : identifiers){
+            pidsSet.insert(ident->pid);
+            if(ident->type == Identifier::Type::PIDPID){
+                pidsSet.insert(ident->pidpid);
+            }
+        }
+        this->block->getPidsBeingUsed(pidsSet);
+    }
+
+    void collectAssignmentsStats(AssignmentsStats &prevStats) final {
+        prevStats.addCondition(cond);
+        block->collectAssignmentsStats(prevStats);
+
+        auto pidsUsedInLoop = set<string>();
+        getPidsBeingUsed(pidsUsedInLoop);
+
+        prevStats.addPidsUsedInLoops(pidsUsedInLoop);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
