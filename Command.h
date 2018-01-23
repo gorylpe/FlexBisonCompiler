@@ -166,14 +166,12 @@ public:
 
     void getPidsBeingUsed(set<string> &pidsSet) final {
         for(auto cmd : this->commands){
-            cerr << "GET PIDS BEING USED " << typeid(*cmd).name() << endl;
             cmd->getPidsBeingUsed(pidsSet);
         }
     }
 
     void collectAssignmentsStats(AssignmentsStats &prevStats) final {
         for(auto cmd : this->commands){
-            cerr << "STATS FOR " << typeid(*cmd).name() << endl;
             cmd->collectAssignmentsStats(prevStats);
         }
     };

@@ -56,7 +56,7 @@ public:
     void getPidsBeingUsed(set<string> &pidsSet) final {}
 
     void collectAssignmentsStats(AssignmentsStats &prevStats) final {
-        prevStats.addStore(ident);
+        prevStats.addRead(ident);
     }
 
     void getPidVariablesBeingModified(set<Variable *>& variableSet) final {

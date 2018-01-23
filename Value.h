@@ -83,6 +83,13 @@ public:
         return nullptr;
     }
 
+    Number* getNumber(){
+        if(type == NUM){
+            return num;
+        }
+        return nullptr;
+    }
+
     void prepareIfNeeded(){
         //prepare for PIDPID type
         if (this->type == IDENTIFIER){

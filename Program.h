@@ -4,8 +4,6 @@
 #include "Command.h"
 #include "cmds/Assignment.h"
 
-#define DEBUG
-
 class Program {
 public:
     CommandsBlock* block;
@@ -19,12 +17,15 @@ public:
         //block->print(0);
         block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
         constPropagation();
-        //block->print(0);
-        removeUnusedAssignements();
+        block->print(0);
+        removeUnusedAssignments();
+        block->print(0);
+        //TODO do in loop with const propagation
+        removeUnusedAssignments();
+        //additional const propagation will run Expressions optimization too if remove unused assignements left them in not optimized form
+        constPropagation();
         optimizeNumbers();
     }
-
-    //TODO REMOVING EMPTY CODE BLOCKS, IFS LOOPS WITH NOTHING INSIDE
 
     //TODO DO THIS IN SMALL ARRAYS
     void constPropagation(){
@@ -54,42 +55,230 @@ public:
         cerr << "---CONST PROPAGATION AND REPLACING COMMANDS OPTIMIZATION END---" << endl << endl;
     }
 
-    void removeUnusedAssignements(){
+    void removeUnusedAssignments(){
         AssignmentsStats stats = AssignmentsStats();
         cerr << "!!!STATS!!!" << endl;
         block->collectAssignmentsStats(stats);
         cerr << stats.toString() << endl;
 
         for(auto& entry : stats.stats){
-
             const string& pid = entry.first;
-            const IdentifierStats* identifierStats = entry.second;
-
-            cerr << "Removing unused assignments for " << pid << endl;
-            int removed = 0;
-
-            int assignmentsSize = identifierStats->assignments.size();
-
-            //check for not removing arrays cause they need checks for indexes
-            if(assignmentsSize > 0 && identifierStats->assignments[0]->ident->type == Identifier::Type::PID){
-
-                for(int i = 0; i < assignmentsSize; ++i){
-
-                    Identifier* ident = identifierStats->assignments[i]->ident;
-
-
-                    if(identifierStats->uses[ident->getSSANum()] == 0){
-                        identifierStats->assignments[i]->setUnused();
-                        ++removed;
-                    }
-                }
-            }
-
-            cerr << "Removed " << removed << " assignments" << endl;
+            removeUnusedAssignmentsForPid(pid, stats);
         }
 
         block->replaceCommands();
     }
+
+    void removeUnusedAssignmentsForPid(const string &pid, AssignmentsStats &stats){
+        IdentifierStats* pidStats = stats.getStats(pid);
+
+        cerr << "Removing unused assignments for " << pid << endl;
+        int removedNum = 0;
+
+        for(int SSANum = 0; SSANum <= pidStats->getLastSSANum(); ++SSANum){
+            //no assignement == READ to identifier
+            if(!pidStats->hasAssignementToSSANum(SSANum)){
+                continue;
+            }
+
+            Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
+            Identifier* ident = assign->ident;
+
+            //dont remove arrays
+            if(!ident->isTypePID())
+                break;
+
+            bool removed;
+            removed = tryToRemoveUnusedAssignment(pidStats, SSANum);
+
+            if(!removed){
+                tryToMergeNumberOperationsInWithPreviousAssignment(stats, pidStats, SSANum);
+            }
+
+            if(removed){
+                ++removedNum;
+            }
+        }
+
+        cerr << "Removed " << removedNum << " assignments" << endl;
+    }
+
+    bool tryToRemoveUnusedAssignment(IdentifierStats* pidStats, int SSANum){
+        Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
+
+        if(pidStats->getUsesForSSANum(assign->ident->getSSANum()) == 0){
+            assign->setUnused();
+        }
+    }
+
+    bool tryToMergeNumberOperationsInWithPreviousAssignment(AssignmentsStats& stats, IdentifierStats *pidStats, int SSANum){
+        Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
+        Expression* expr = assign->expr;
+
+        //todo can do for 2 times multiplying
+        if(expr->type == Expression::Type::ADDITION){
+            return tryToMergeAdditionWithPreviousAssignment(stats, expr);
+        } else if(expr->type == Expression::Type::VALUE) {
+            //TODO
+            /* optimize this
+             *  a := e;
+                e := a;
+                a := e;
+             */
+        }
+        //CANT DO FOR SUBTRACTION, CAUSE IT CAN LEAD TO CUT NUMBER BECAUSE THEY CANT BE NEGATIVE
+        return false;
+    }
+
+    bool tryToMergeAdditionWithPreviousAssignment(AssignmentsStats& stats, Expression *expr) {
+        //addition is commutative
+        bool reversed = false;
+
+        Identifier* exprIdent = expr->val1->getIdentifier();
+        Number* exprNum = expr->val2->getNumber();
+
+        if(exprIdent == nullptr || exprNum == nullptr){
+            exprIdent = expr->val2->getIdentifier();
+            exprNum = expr->val1->getNumber();
+            reversed = true;
+        }
+        if(exprIdent == nullptr)
+            return false;
+
+        IdentifierStats* previousPidStats = stats.getStats(exprIdent->pid);
+        int previousPidSSANUM = exprIdent->getSSANum();
+
+        //if previous identifier has only only usage - in current assignment
+        if(previousPidStats->getUsesForSSANum(previousPidSSANUM) == 1) {
+            if (stats.getStats(exprIdent->pid)->hasAssignementToSSANum(exprIdent->getSSANum())) {
+
+                Assignment *previousAssignment = stats.getStats(exprIdent->pid)->getAssignementForSSANum(exprIdent->getSSANum());
+                Expression *previousExpr = previousAssignment->expr;
+
+                //CANT DO FOR SUBTRACTION, CAUSE IT CAN LEAD TO CUT NUMBER BECAUSE THEY CANT BE NEGATIVE
+                if (previousExpr->type == Expression::Type::ADDITION) {
+                    //cant do addition with ident and no number
+                    if(exprNum == nullptr){
+                        return false;
+                    }
+                    //addition is commutative
+                    bool previousReversed = false;
+
+                    Identifier *previousIdent = previousExpr->val1->getIdentifier();
+                    Number *previousNum = previousExpr->val2->getNumber();
+
+                    if(previousIdent == nullptr || previousNum == nullptr){
+                        previousIdent = previousExpr->val2->getIdentifier();
+                        previousNum = previousExpr->val1->getNumber();
+                        previousReversed = true;
+                    }
+                    if(previousIdent == nullptr || previousNum == nullptr)
+                        return false;
+
+                    cerr << "MERGING " << expr->toString() << " : " << exprIdent->toString() << " -> " << previousExpr->toString() << endl;
+
+                    (reversed ? expr->val2 : expr->val1) = previousReversed ? previousExpr->val2 : previousExpr->val1;
+                    exprNum->num += previousNum->num;
+
+                    cerr << "MERGED " << expr->toString() << endl << endl;
+
+                    previousAssignment->setUnused();
+
+                    return true;
+                } else if (previousExpr->type == Expression::Type::VALUE) {
+                    Identifier *previousIdent = previousExpr->val1->getIdentifier();
+
+                    //TODO CAN DO HERE CONST PROPAGATION
+                    if (previousIdent == nullptr) {
+                        return false;
+                    }
+
+                    cerr << "MERGING " << expr->toString() << " : " << exprIdent->toString() << " -> " << previousExpr->toString() << endl;
+
+                    (reversed ? expr->val2 : expr->val1) = previousExpr->val1;
+                    cerr << expr->toString() << endl;
+
+                    cerr << "MERGED " << expr->toString() << endl << endl;
+
+                    previousAssignment->setUnused();
+
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool tryToMergeValueWithPreviousAssignment(AssignmentsStats& stats, Expression *expr){
+        //addition is commutative
+        bool reversed = false;
+
+        Identifier* exprIdent = expr->val1->getIdentifier();
+        Number* exprNum = expr->val2->getNumber();
+
+        if(exprIdent == nullptr || exprNum == nullptr){
+            exprIdent = expr->val2->getIdentifier();
+            exprNum = expr->val1->getNumber();
+            reversed = true;
+        }
+        if(exprIdent == nullptr)
+            return false;
+
+        IdentifierStats* previousPidStats = stats.getStats(exprIdent->pid);
+        int previousPidSSANUM = exprIdent->getSSANum();
+
+        //if previous identifier has only only usage - in current assignment
+        if(previousPidStats->getUsesForSSANum(previousPidSSANUM) == 1) {
+            if (stats.getStats(exprIdent->pid)->hasAssignementToSSANum(exprIdent->getSSANum())) {
+
+                Assignment *previousAssignment = stats.getStats(exprIdent->pid)->getAssignementForSSANum(exprIdent->getSSANum());
+                Expression *previousExpr = previousAssignment->expr;
+
+                //CANT DO FOR SUBTRACTION, CAUSE IT CAN LEAD TO CUT NUMBER BECAUSE THEY CANT BE NEGATIVE
+                if (previousExpr->type == Expression::Type::ADDITION) {
+                    //cant do addition with ident and no number
+                    if(exprNum == nullptr){
+                        return false;
+                    }
+                    //addition is commutative
+                    bool previousReversed = false;
+
+                    Identifier *previousIdent = previousExpr->val1->getIdentifier();
+                    Number *previousNum = previousExpr->val2->getNumber();
+
+                    if(previousIdent == nullptr || previousNum == nullptr){
+                        previousIdent = previousExpr->val2->getIdentifier();
+                        previousNum = previousExpr->val1->getNumber();
+                        previousReversed = true;
+                    }
+                    if(previousIdent == nullptr || previousNum == nullptr)
+                        return false;
+
+                    reversed ? expr->val2 : expr->val1 = previousReversed ? previousExpr->val2 : previousExpr->val1;
+                    exprNum->num += previousNum->num;
+                    previousAssignment->setUnused();
+
+                    return true;
+                } else if (previousExpr->type == Expression::Type::VALUE) {
+                    Identifier *previousIdent = previousExpr->val1->getIdentifier();
+
+                    //TODO CAN DO HERE CONST PROPAGATION
+                    if (previousIdent == nullptr) {
+                        return false;
+                    }
+
+                    (reversed ? expr->val2 : expr->val1) = previousExpr->val1;
+                    cerr << expr->toString() << endl;
+
+                    previousAssignment->setUnused();
+
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     void optimizeNumbers(){
         map<cl_I, NumberValueStats> stats;

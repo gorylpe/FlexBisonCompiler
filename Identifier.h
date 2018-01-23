@@ -75,6 +75,19 @@ public:
         return new Identifier(*this);
     }
 
+    //todo DO REFRATOR WITH THIS GETTERS
+    bool isTypePID() {
+        return type == PID;
+    }
+
+    bool isTypePIDNUM() {
+        return type == PID;
+    }
+
+    bool isTypePIDPID() {
+        return type == PID;
+    }
+
     bool equals(Identifier* ident2){
         if(this->type != ident2->type){
             return false;

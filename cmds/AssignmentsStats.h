@@ -15,36 +15,52 @@ class Write;
 class IdentifierStats{
 public:
     string pid;
-    int counter;
+    int SSANum;
     vector<Assignment*> assignments;
     vector<int> uses;
 
     explicit IdentifierStats(string pid)
             :pid(pid)
-            ,counter(0){}
+            ,SSANum(0){}
 
-    void addStore(Identifier *ident){
-        ident->setSSACounter(counter);
+    void addStore(Assignment* assignment, Identifier *ident){
+        ident->setSSACounter(SSANum);
+
+        assignments.push_back(assignment);
         uses.push_back(0);
-        counter++;
+
+        SSANum++;
     }
 
-    void addAssignment(Assignment* assignment) {
-        assignments.push_back(assignment);
+    bool hasAssignementToSSANum(int num) const{
+        return assignments[num] != nullptr;
+    }
+
+    Assignment* getAssignementForSSANum(int num) const{
+        return assignments[num];
+    }
+
+    int getUsesForSSANum(int num) const{
+        return uses[num];
+    }
+
+    int getLastSSANum() const{
+        return SSANum - 1;
     }
 
     void addUsage(Identifier *ident){
-        int lastCounter = counter - 1;
-        //iterators has no assignments so lastCounter will be -1 always
-        if(lastCounter >= 0){
-            ident->setSSACounter(lastCounter);
-            uses[lastCounter]++;
+        int lastSSANum = getLastSSANum();
+
+        //iterators has no assignments so lastSSANum will be -1 always
+        if(lastSSANum >= 0){
+            ident->setSSACounter(lastSSANum);
+            uses[lastSSANum]++;
         }
     }
 
     //for pidpid, they arent identifiers and add additional usage to pids in loops
     void addUsage(){
-        int lastCounter = counter - 1;
+        int lastCounter = SSANum - 1;
         //iterators has no assignments so lastCounter will be -1 always
         if(lastCounter >= 0){
             uses[lastCounter]++;
@@ -53,8 +69,8 @@ public:
 
     string toString() const {
         stringstream ss;
-        cerr << pid << "  counter: " << counter << endl;
-        for(int i = 0; i < counter; ++i){
+        cerr << pid << "  SSANum: " << SSANum << endl;
+        for(int i = 0; i < SSANum; ++i){
             ss << pid << i << "   " << uses[i] << endl;
         }
         return ss.str();
@@ -72,8 +88,8 @@ public:
         return stats.at(pid);
     }
 
-    void addStore(Identifier *ident) {
-        getStats(ident->pid)->addStore(ident);
+    void addRead(Identifier *ident) {
+        getStats(ident->pid)->addStore(nullptr, ident);
     }
 
     void addUsage(Identifier *ident) {
@@ -101,8 +117,7 @@ public:
     void addAssignment(Assignment* assignment, Identifier* ident, Expression* expr) {
         addExpression(expr);
 
-        getStats(ident->pid)->addStore(ident);
-        getStats(ident->pid)->addAssignment(assignment);
+        getStats(ident->pid)->addStore(assignment, ident);
 
         if(ident->type == Identifier::Type::PIDPID){
             getStats(ident->pidpid)->addUsage();
