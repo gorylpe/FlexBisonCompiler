@@ -41,8 +41,6 @@ public:
             if(pflags.verbose())
                 cerr << " -Found " << unusedFound << " unused assignments-" << endl;
 
-            block->simplifyExpressions();
-
             block->replaceCommands();
 
             block->simplifyExpressions();
