@@ -8,7 +8,7 @@ class ProgramFlags{
     ,optimizingSimilarNumbers(true)
     ,propagatingValues(true)
     ,memoryOptimization(true)
-    ,verboseOutput(true){};
+    ,verboseOutput(false){};
 
     int whileUnrollsNumber;
     bool forsUnrolling;

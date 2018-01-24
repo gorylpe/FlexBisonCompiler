@@ -231,9 +231,61 @@ void poserror(Position* pos, const string& s){
     yyerror(s.c_str());
 }
 
+void showHelp(){
+    string help =
+    "Usage ./compiler [-h|v|nf|nm|nn|np] [-w n] < input > output 2> log\n"
+    "\n"
+    "Available params\n"
+    "   -h --help             - shows this help\n"
+    "   -v --verbose          - prints full log - default(false)\n"
+    "   -w --while n          - unroll while loops n times - default(50)\n"
+    "   -nf --no-for          - don't unroll for loops - default(false)\n"
+    "   -nm --no-mem          - don't optimize variable declarations in memory - default(false)\n"
+    "   -nn --no-num          - don't store similar numbers in new identifier if it's profitable - default(false)\n"
+    "   -np --no-propagation  - don't propagate values - default(false)\n";
+
+    cerr << help << endl;
+}
+
 int main(int argc, char* argv[]) {
-    cerr << "Compilation started" << endl;
-    cerr.flush();
+
+    for(int i = 1; i < argc; ++i){
+        string arg = argv[i];
+        if(arg == "-h" || arg == "--help"){
+            showHelp();
+            return EXIT_SUCCESS;
+        } else if(arg == "-v" || arg == "--verbose"){
+            pflags.setVerbose(true);
+        } else if(arg == "-w" || arg == "--while"){
+            if(i + 1 < argc){
+                try{
+                    i++;
+                    string numStr = argv[i];
+                    int num = stoi(numStr);
+                    pflags.setWhileUnrollsNumber(num);
+
+                } catch(const std::exception&) {
+                    cerr << "Wrong unrolls number" << endl;
+                    return EXIT_FAILURE;
+                }
+            } else {
+                cerr << "Needs a while unrolls number" << endl;
+                return EXIT_FAILURE;
+            }
+        } else if(arg == "-nf" || arg == "--no-for"){
+            pflags.setUnrollFors(false);
+        } else if(arg == "-nm" || arg == "--no-mem"){
+            pflags.setMemoryOptimization(false);
+        } else if(arg == "-nn" || arg == "--no-num"){
+            pflags.setOptimizeSimilarNumbers(false);
+        } else if(arg == "-np" || arg == "--no-propagation"){
+            pflags.setPropagateValues(false);
+        } else {
+            cerr << "Wrong param" << endl;
+            return EXIT_FAILURE;
+        }
+    }
+
     try {
         if(pflags.verbose())
             cerr << "---PARSING---" << endl;
