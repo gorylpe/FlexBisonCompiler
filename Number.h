@@ -9,9 +9,6 @@ using namespace cln;
 
 class Number {
 public:
-    //TODO UTWORZENIE TABLICY STALYCH NA POCZATKU PROGRAMU W SPOSOB EFEKTYWNY, POTEM ODWOLYWANIE SIE
-    //ALE TYLKO TAKICH KTORYCH UTWORZENIE ZAPISANIE I ODCZYTANIE ZAJMIE DLUZEJ NIZ WIELOKROTNE UTWORZENIE (ZLICZANIE UTWORZEN) 
-    //PLUS PROPAGACJA STALYCH
     Position* pos;
     cl_I num;
 
@@ -20,9 +17,9 @@ public:
     ,num(num)
     //,isPrepared(false)
     {
-#ifdef DEBUG_LOG_CONSTRUCTORS
+        #ifdef DEBUG_LOG_CONSTRUCTORS
         cerr << "Creating number " << this->toString() << endl;
-#endif
+        #endif
     }
 
     Number(const Number& num2)
