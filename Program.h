@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include "cmds/Command.h"
+#include "cmds/CommandsBlock.h"
 #include "cmds/Assignment.h"
 
 class Program {
