@@ -6,13 +6,13 @@ VAR
 	a b c
 BEGIN
 	READ a;
-	READ b;
-	c := a / a;
-	WRITE c;
-	c := a / b;
-	WRITE c;
-	c := a % a;
-	WRITE c;
-	c := a % b;
-	WRITE c;
+	IF a = 3 THEN
+		WRITE a;
+	ENDIF;
+	IF a = 4 THEN
+		WRITE a;
+	ENDIF;
+	IF a = 5 THEN
+		WRITE a;
+	ENDIF;
 END

@@ -28,6 +28,7 @@ public:
             cerr << endl << "---OPTIMIZING ASSEMBLY CODE---" << endl << endl;
         optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         optimizeRedundandStoresInContinuousCodeBlocks();
+        optimizeRedundandIncDecInContinuousCodeBlocks();
     }
 
     void generateCode(stringstream& ss){
@@ -151,6 +152,45 @@ public:
 
         if(pflags.verbose())
             cerr << "---REDUNDANT STORES OPTIMIZATION END---" << endl << endl;
+    }
+
+    void optimizeRedundandIncDecInContinuousCodeBlocks() {
+        if(pflags.verbose())
+            cerr << "---REDUNDANT INC DEC OPTIMIZATION---" << endl;
+        size_t linesNum = (size_t)assemblyCode.size();
+
+        vector<bool> linesWithJump = this->getLinesWithJump();
+
+        vector<bool> linesToRemove(linesNum);
+        std::fill(linesToRemove.begin(), linesToRemove.end(), false);
+
+        //OPTIMIZE INC DEC
+        bool lastWasInc = false;
+        int lastStoreLineNumber = -1;
+        for (int i = 0; i < linesNum; ++i) {
+            if (linesWithJump[i]) {
+                lastWasInc = false;
+            }
+            auto incLine = dynamic_cast<INCAssemblyLine *>(assemblyCode[i]);
+            auto decLine = dynamic_cast<DECAssemblyLine *>(assemblyCode[i]);
+
+            if (incLine != nullptr) {
+                lastWasInc = true;
+            } else if (decLine != nullptr) {
+                if(lastWasInc){
+                    linesToRemove[i] = true;
+                    linesToRemove[i-1] = true;
+                }
+                lastWasInc = false;
+            } else {
+                lastWasInc = false;
+            }
+        }
+
+        this->removeLines(linesToRemove);
+
+        if(pflags.verbose())
+            cerr << "---REDUNDANT INC DEC OPTIMIZATION END---" << endl << endl;
     }
 
     vector<bool> getLinesWithJump(){
