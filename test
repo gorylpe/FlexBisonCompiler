@@ -2,20 +2,10 @@
 	ROZWIJANIE PETLI FOR
 )
 VAR
-    n j sito[100]
+    a b c
 BEGIN
-    n := 100-1;
-    FOR i FROM n DOWNTO 2 DO
-        sito[i] := 1;
-    ENDFOR
-    FOR i FROM 2 TO n DO
-        IF sito[i] <> 0 THEN
-            j := i + i;
-            WHILE j <= n DO
-                sito[j] := 0;
-                j := j + i;
-            ENDWHILE
-            WRITE i;
-        ENDIF
-    ENDFOR
+	READ a;
+	b := a - 5;
+	c := b - 4;
+	WRITE c;
 END

@@ -189,6 +189,51 @@ public:
             }
         }
 
+        if(tryToPropagateExpressionsSubtractionToTypeSubtraction(assgnsHelper, usagesHelper, *expr)){
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
+
+            propagated++;
+            expr->simplifyExpression();
+
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED " << toString() << "   --->   ";
+            }
+        }
+
+        if(tryToPropagateExpressionsMultiplicationToTypeMultiplication(assgnsHelper, usagesHelper, *expr)){
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
+
+            propagated++;
+            expr->simplifyExpression();
+
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED " << toString() << "   --->   ";
+            }
+        }
+
+        if(tryToPropagateExpressionsDivisionToTypeDivision(assgnsHelper, usagesHelper, *expr)){
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
+
+            propagated++;
+            expr->simplifyExpression();
+
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED " << toString() << "   --->   ";
+            }
+        }
+
         return propagated;
     }
 
@@ -236,7 +281,118 @@ public:
         return false;
     }
 
+    static bool tryToPropagateExpressionsMultiplicationToTypeMultiplication(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                            IdentifiersUsagesHelper &usagesHelper,
+                                                                            Expression &expr) {
+        if(expr.isTypeMULTIPLICATION()){
+            bool reversed;
+            if(expr.val1->isTypeIDENTIFIER() && expr.val2->isTypeNUM()){
+                reversed = false;
+            } else if(expr.val2->isTypeIDENTIFIER() && expr.val1->isTypeNUM()) {
+                reversed = true;
+            } else {
+                return false;
+            }
 
+            if(expr.hasPidpidOrPidnum()){
+                return false;
+            }
+
+            Value* identValue = reversed ? expr.val2 : expr.val1;
+            Value* numValue = reversed ? expr.val1 : expr.val2;
+
+            auto prevExpr = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *identValue);
+            if(prevExpr != nullptr && prevExpr->isTypeMULTIPLICATION()){
+                bool prevReversed;
+                if(prevExpr->val1->isTypeIDENTIFIER() && prevExpr->val2->isTypeNUM()){
+                    prevReversed = false;
+                } else if(prevExpr->val2->isTypeIDENTIFIER() && prevExpr->val1->isTypeNUM()) {
+                    prevReversed = true;
+                } else {
+                    //addition of 2 numbers of 2 identifiers
+                    return false;
+                }
+
+                Value* prevIdentValue = prevReversed ? prevExpr->val2 : prevExpr->val1;
+                Value* prevNumValue = prevReversed ? prevExpr->val1 : prevExpr->val2;
+
+                numValue->num->num *= prevNumValue->num->num;
+                identValue->ident = prevIdentValue->ident->clone();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool tryToPropagateExpressionsDivisionToTypeDivision(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                            IdentifiersUsagesHelper &usagesHelper,
+                                                                            Expression &expr) {
+        if(expr.isTypeDIVISION()){
+            if(!(expr.val1->isTypeIDENTIFIER() && expr.val2->isTypeNUM())){
+                return false;
+            }
+
+            if(expr.hasPidpidOrPidnum()){
+                return false;
+            }
+
+            Value* identValue = expr.val1;
+            Value* numValue = expr.val2;
+
+            auto prevExpr = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *identValue);
+            if(prevExpr != nullptr && prevExpr->isTypeDIVISION()){
+                if(!(prevExpr->val1->isTypeIDENTIFIER() && prevExpr->val2->isTypeNUM())){
+                    return false;
+                }
+
+                Value* prevIdentValue = prevExpr->val1;
+                Value* prevNumValue = prevExpr->val2;
+
+                numValue->num->num *= prevNumValue->num->num;
+                identValue->ident = prevIdentValue->ident->clone();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool tryToPropagateExpressionsSubtractionToTypeSubtraction(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                            IdentifiersUsagesHelper &usagesHelper,
+                                                                            Expression &expr) {
+        if(expr.isTypeSUBTRACTION()){
+            if(!(expr.val1->isTypeIDENTIFIER() && expr.val2->isTypeNUM())){
+                return false;
+            }
+
+            if(expr.hasPidpidOrPidnum()){
+                return false;
+            }
+
+            Value* identValue = expr.val1;
+            Value* numValue = expr.val2;
+
+            auto prevExpr = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *identValue);
+            if(prevExpr != nullptr && prevExpr->isTypeSUBTRACTION()){
+                if(!(prevExpr->val1->isTypeIDENTIFIER() && prevExpr->val2->isTypeNUM())){
+                    return false;
+                }
+
+                Value* prevIdentValue = prevExpr->val1;
+                Value* prevNumValue = prevExpr->val2;
+
+                numValue->num->num += prevNumValue->num->num;
+                identValue->ident = prevIdentValue->ident->clone();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     static bool tryToPropagateExpressionsAnyTypeToSingleValue(IdentifiersAssignmentsHelper &assgnsHelper,
                                                               IdentifiersUsagesHelper &usagesHelper, Expression &expr) {
