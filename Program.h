@@ -14,7 +14,7 @@ public:
 
     void ASTOptimizations(){
         //block->replaceCommands();
-        //valuesPropagation();
+        valuesPropagation();
         //block->print(0);
         //removeUnusedAssignments();
         block->print(0);

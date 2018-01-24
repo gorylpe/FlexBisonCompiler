@@ -55,11 +55,18 @@ public:
     }
 
     set<int> getLastSSANumsForLoad() const{
+        int lastSSANum = getLastSSANumForStore();
+
+        //for iterator its -1 cause it has no store
+        if(lastSSANum < 0){
+            return set<int>();
+        }
+
         //ones collected in whiles ifs and so one
         set<int> lastSSANums(previousSSANumsForLoad);
 
-        //last storing was to this one, so logically it will be used for load too
-        lastSSANums.insert(getLastSSANumForStore());
+        //last storing was to this one, so it will be used for load too
+        lastSSANums.insert(lastSSANum);
 
         return lastSSANums;
     }
@@ -93,57 +100,6 @@ public:
         }
         ss << "\033[0m" << endl;
 
-        return ss.str();
-    }
-};
-
-class IdentifierUses{
-public:
-    vector<int> uses;
-
-    explicit IdentifierUses()
-    :uses(vector<int>()){}
-
-    IdentifierUses(const IdentifierUses& oldIdentifierUses)
-    :uses(oldIdentifierUses.uses){}
-
-    void addStore(){
-        uses.push_back(0);
-    }
-
-    void addUsagea(Identifier *ident, set<int>& lastSSANums){
-        //iterators has no assignments so lastSSANums would have -1 inside
-        if(lastSSANums.find(-1) == lastSSANums.end()){
-            ident->setSSANums(lastSSANums);
-            for(auto lastSSANum : lastSSANums){
-                uses[lastSSANum]++;
-            }
-        }
-    }
-
-    //for pidpid, they arent identifiers
-    void addUsagea(set<int>& lastSSANums){
-        //iterators has no assignments so lastSSANums would have -1 inside
-        if(lastSSANums.find(-1) == lastSSANums.end()){
-            for(auto lastSSANum : lastSSANums){
-                uses[lastSSANum]++;
-            }
-        }
-    }
-
-    int getUsageForSSANum(int num){
-        return uses[num];
-    }
-
-    int removeUsageForSSANum(int num){
-        uses[num]--;
-    }
-
-    string toString(const string& pid) const {
-        stringstream ss;
-        for(int i = 0; i < uses.size(); ++i){
-            ss << pid << i << " uses: " << uses[i] << endl;
-        }
         return ss.str();
     }
 };
@@ -192,21 +148,27 @@ public:
     }
 
     void addStore(Identifier* ident){
-        getSSA(ident->pid)->addStore(ident);
-        cerr << "STORE " << ident->toString() << endl;
+        if(ident->isTypePID()){
+            getSSA(ident->pid)->addStore(ident);
+        } else if(ident->isTypePIDPID()){
+            addUsage(ident);
+        }
     }
 
-    void addUsage(Identifier *ident) {
-        set<int> lastSSANums = getSSA(ident->pid)->getLastSSANumsForLoad();
+    void addUsage (Identifier *ident) {
+        if(ident->isTypePID()) {
+            set<int> lastSSANums = getSSA(ident->pid)->getLastSSANumsForLoad();
+            ident->setSSANums(lastSSANums);
 
-        ident->setSSANums(lastSSANums);
+        } else if (ident->isTypePIDPID()){
+            set<int> lastSSANumsPidpid = getSSA(ident->pidpid)->getLastSSANumsForLoad();
+            ident->setSSANumsPidpid(lastSSANumsPidpid);
+        }
     }
 
     void addUsages(const vector<Identifier*>& idents) {
         for(auto ident : idents){
-            set<int> lastSSANums = getSSA(ident->pid)->getLastSSANumsForLoad();
-
-            ident->setSSANums(lastSSANums);
+            addUsage(ident);
         }
     };
 

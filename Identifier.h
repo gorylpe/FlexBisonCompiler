@@ -29,6 +29,7 @@ public:
     cl_I num;
 
     set<int> ssaNums;
+    set<int> ssaNumsPidpid;
 
     explicit Identifier(Position* pos, string pid)
     :pos(pos)
@@ -87,11 +88,11 @@ public:
     }
 
     bool isTypePIDNUM() {
-        return type == PID;
+        return type == PIDNUM;
     }
 
     bool isTypePIDPID() {
-        return type == PID;
+        return type == PIDPID;
     }
 
     bool equals(Identifier* ident2){
@@ -115,7 +116,25 @@ public:
         if(this->type == PIDNUM){
             ss << "[" << this->num << "]";
         } else if(this->type == PIDPID){
-            ss << "[" << this->pidpid << "]";
+            ss << "[" << this->pidpid;
+
+            ss << "\033[1;32m";
+            if(isUniquelyDefiniedPidpid()){
+                ss << getUniqueSSANumPidpid();
+            } else if (ssaNumsPidpid.size() > 1) {
+                ss << "(";
+                bool first = true;
+                for(const auto& ssa : ssaNumsPidpid){
+                    if(!first)
+                        ss << ", ";
+                    first = false;
+                    ss << ssa;
+                }
+                ss << ")";
+            }
+            ss << "\033[0m";
+
+            ss << "]";
         }
 
         ss << "\033[1;32m";
@@ -150,6 +169,22 @@ public:
 
     int getUniqueSSANum() {
         return *ssaNums.begin();
+    }
+
+    void setSSANumsPidpid(set<int> newSsaNums) {
+        ssaNumsPidpid = move(newSsaNums);
+    }
+
+    set<int> getSSANumsPidpid() {
+        return ssaNumsPidpid;
+    }
+
+    bool isUniquelyDefiniedPidpid(){
+        return ssaNumsPidpid.size() == 1;
+    }
+
+    int getUniqueSSANumPidpid() {
+        return *ssaNumsPidpid.begin();
     }
 
     void checkPids(Variable* pidV, Variable* pidpidV){
