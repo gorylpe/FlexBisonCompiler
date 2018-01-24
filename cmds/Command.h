@@ -4,11 +4,11 @@
 #include <vector>
 #include <sstream>
 #include <typeinfo>
-#include "Identifier.h"
-#include "Condition.h"
-#include "NumberValueStats.h"
-#include "IdentifiersUsagesHelper.h"
-#include "IdentifiersAssignmentsHelper.h"
+#include "../cmdParts/Identifier.h"
+#include "../cmdParts/Condition.h"
+#include "../cmdParts/NumberValueStats.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
+#include "../cmdParts/IdentifiersAssignmentsHelper.h"
 
 using namespace std;
 using namespace cln;

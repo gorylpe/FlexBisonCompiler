@@ -1,9 +1,9 @@
 #pragma once
 
 
-#include "../Command.h"
+#include "Command.h"
 #include "Assignment.h"
-#include "../IdentifiersUsagesHelper.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
 
 class Write : public Command {
 public:

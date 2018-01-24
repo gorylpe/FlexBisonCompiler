@@ -4,9 +4,9 @@
 #include <vector>
 #include <sstream>
 #include "Variable.h"
-#include "MachineContext.h"
-#include "Utils.h"
-#include "Assembly.h"
+#include "../MachineContext.h"
+#include "../Utils.h"
+#include "../Assembly.h"
 #include "Number.h"
 
 using namespace std;

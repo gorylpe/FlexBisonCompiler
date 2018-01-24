@@ -6,7 +6,7 @@
 #include <sstream>
 #include <map>
 #include <algorithm>
-#include "Variable.h"
+#include "cmdParts/Variable.h"
 #include "Position.h"
 #include "Utils.h"
 #include "ProgramFlags.h"

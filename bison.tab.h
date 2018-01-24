@@ -43,12 +43,12 @@ extern int yydebug;
 #line 1 "compiler.y" /* yacc.c:1909  */
 
     #include "ProgramFlags.h"
-    #include "Number.h"
-    #include "Identifier.h"    
-    #include "Expression.h"    
-    #include "Value.h"
-    #include "Command.h"
-    #include "Condition.h"
+    #include "cmdParts/Number.h"
+    #include "cmdParts/Identifier.h"
+    #include "cmdParts/Expression.h"
+    #include "cmdParts/Value.h"
+    #include "cmdParts/Condition.h"
+    #include "cmds/Command.h"
     #include "cmds/Assignment.h"
     #include "cmds/For.h"
     #include "cmds/If.h"

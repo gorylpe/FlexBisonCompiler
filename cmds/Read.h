@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Command.h"
-#include "../IdentifiersSSAHelper.h"
-#include "../IdentifiersUsagesHelper.h"
+#include "Command.h"
+#include "../cmdParts/IdentifiersSSAHelper.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
 #include "Assignment.h"
 
 class Read : public Command {

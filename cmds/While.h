@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../IdentifiersSSAHelper.h"
-#include "../Command.h"
+#include "../cmdParts/IdentifiersSSAHelper.h"
+#include "Command.h"
 #include "Assignment.h"
-#include "../IdentifiersUsagesHelper.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
 
 class While : public Command {
 public:

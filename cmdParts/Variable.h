@@ -5,7 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
-#include "Position.h"
+#include "../Position.h"
 
 using namespace std;
 using namespace cln;

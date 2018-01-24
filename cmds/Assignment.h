@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Command.h"
-#include "../Expression.h"
-#include "../IdentifiersUsagesHelper.h"
+#include "Command.h"
+#include "../cmdParts/Expression.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
 
 class Assignment : public Command {
 public:

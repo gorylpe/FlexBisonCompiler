@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../IdentifiersSSAHelper.h"
-#include "../Command.h"
-#include "../IdentifiersUsagesHelper.h"
-#include "../Expression.h"
+#include "../cmdParts/IdentifiersSSAHelper.h"
+#include "Command.h"
+#include "../cmdParts/IdentifiersUsagesHelper.h"
+#include "../cmdParts/Expression.h"
 #include "Assignment.h"
 
 class For : public Command {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <sstream>
-#include "Command.h"
+#include "cmds/Command.h"
 #include "cmds/Assignment.h"
 
 class Program {

@@ -1,8 +1,8 @@
 #pragma once
 #include <stack>
-#include "MachineContext.h"
-#include "Utils.h"
-#include "Assembly.h"
+#include "../MachineContext.h"
+#include "../Utils.h"
+#include "../Assembly.h"
 
 using namespace std;
 using namespace cln;

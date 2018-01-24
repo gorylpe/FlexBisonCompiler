@@ -5,7 +5,7 @@ all: compiler
 compiler: bison.tab.c lex.yy.c
 	$(CC) 	bison.tab.c \
 		lex.yy.c \
-		Expression.cpp \
+		cmdParts/Expression.cpp \
 		-l cln -o compiler
 
 lex.yy.c: compiler.l
