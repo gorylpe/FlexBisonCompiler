@@ -144,20 +144,22 @@ commands:                   { blockStack.push(new CommandsBlock()); }
     | commands command      { blockStack.top()->addCommand($2); }
 ;
 
-command: identifier T_ASSIGN expression                                     { $$ = new Assignment($1, $3); }
-    | T_IF condition T_THEN commands T_ENDIF                                { $$ = new If($2, blockStack.top()); blockStack.pop(); }
-    | T_IF condition T_THEN commands T_ELSE commands T_ENDIF                { auto block1 = blockStack.top(); blockStack.pop();
-                                                                              auto block2 = blockStack.top(); blockStack.pop();
-                                                                              if(block1->equals(block2)){
-                                                                                $$ = block1;
-                                                                              } else {
-                                                                                $$ = new IfElse($2, block2, block1);
-                                                                              }}
-    | T_FOR T_PIDIDENTIFIER T_FROM value T_TO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), true); blockStack.pop(); }
+command: identifier T_ASSIGN expression                                         { $$ = new Assignment($1, $3); }
+    | T_IF condition T_THEN commands T_ENDIF                                    { $$ = new If($2, blockStack.top()); blockStack.pop(); }
+    | T_IF condition T_THEN commands T_ELSE commands T_ENDIF                    { auto block1 = blockStack.top(); blockStack.pop();
+                                                                                auto block2 = blockStack.top(); blockStack.pop();
+                                                                                if(block1->equals(block2)){
+                                                                                    $$ = block1;
+                                                                                } else {
+                                                                                    $$ = new IfElse($2, block2, block1);
+                                                                                }}
+    | T_FOR T_PIDIDENTIFIER T_FROM value T_TO value T_DO commands T_ENDFOR      { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), true); blockStack.pop(); }
     | T_FOR T_PIDIDENTIFIER T_FROM value T_DOWNTO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), false); blockStack.pop(); }
-    | T_WHILE condition T_DO commands T_ENDWHILE                            { $$ = new While($2, blockStack.top()); blockStack.pop(); }
-    | T_READ identifier                                                     { $$ = new Read($2); }
-    | T_WRITE value                                                         { $$ = new Write($2); }
+    | T_WHILE condition T_DO commands T_ENDWHILE                                { auto whileCmd = new While($2->clone(), blockStack.top()->clone());
+                                                                                  blockStack.top()->addCommand(whileCmd);
+                                                                                  $$ = new If($2, blockStack.top()); blockStack.pop(); //while -> if with while inside for checking for first time args}
+    | T_READ identifier                                                         { $$ = new Read($2); }
+    | T_WRITE value                                                             { $$ = new Write($2); }
 ;
 
 expression: value                   { $$ = new Expression($1); }
