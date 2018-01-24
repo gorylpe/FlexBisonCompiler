@@ -129,7 +129,7 @@ public:
         cerr << "PRE WHILE" << endl;
         cerr << tmpStats.toString() << endl;
 
-        prevStats.mergeWithSSAs(prewhileSSAs);
+        prevStats.mergeWithOldSSAs(prewhileSSAs);
 
         cerr << "MERGED WHILE WITH PREWHILE" << endl;
         cerr << prevStats.toString() << endl;
@@ -137,7 +137,7 @@ public:
         prevStats.setForUsages(cond->getIdentifiers());
         block->calculateSSANumbersInIdentifiers(prevStats);
 
-        prevStats.mergeWithSSAs(beforeWhileSSAs);
+        prevStats.mergeWithOldSSAs(beforeWhileSSAs);
 
         cerr << "AFTER WHILE" << endl;
         cerr << prevStats.toString() << endl;

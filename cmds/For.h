@@ -228,7 +228,7 @@ public:
         /*cerr << "PRE FOR" << endl;
         cerr << tmpStats.toString() << endl;*/
 
-        stats.mergeWithSSAs(prewhileSSAs);
+        stats.mergeWithOldSSAs(prewhileSSAs);
 
         /*cerr << "FOR MERGED" << endl;
         cerr << stats.toString() << endl;*/
@@ -244,7 +244,7 @@ public:
        /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;
         cerr << IdentifiersSSAHelper::SSAsToString(beforeForSSAs) << endl;*/
 
-        stats.mergeWithSSAs(beforeForSSAs);
+        stats.mergeWithOldSSAs(beforeForSSAs);
 
         /*cerr << "AFTER FOR" << endl;
         cerr << stats.toString() << endl;*/

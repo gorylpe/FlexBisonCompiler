@@ -103,12 +103,13 @@ public:
     }
 
     void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+        prevStats.setForUsages(cond->getIdentifiers());
+
         auto oldSSAs = prevStats.getSSAsCopy();
 
-        prevStats.setForUsages(cond->getIdentifiers());
         block->calculateSSANumbersInIdentifiers(prevStats);
 
-        prevStats.mergeWithSSAs(oldSSAs);
+        prevStats.mergeWithOldSSAs(oldSSAs);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

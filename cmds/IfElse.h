@@ -121,20 +121,27 @@ public:
         this->block2->replaceCommands();
     }
 
-    virtual void replaceValuesWithConst(string pid, cl_I number) {
+    void replaceValuesWithConst(string pid, cl_I number) final {
         cond->replaceValuesWithConst(pid, number);
         block1->replaceValuesWithConst(pid, number);
         block2->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
-        auto oldSSAs = prevStats.getSSAsCopy();
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+        stats.setForUsages(cond->getIdentifiers());
 
-        prevStats.setForUsages(cond->getIdentifiers());
-        block1->calculateSSANumbersInIdentifiers(prevStats);
-        block2->calculateSSANumbersInIdentifiers(prevStats);
+        auto oldSSAs = stats.getSSAsCopy();
 
-        prevStats.mergeWithSSAs(oldSSAs);
+        block1->calculateSSANumbersInIdentifiers(stats);
+
+        auto block1SSAs = stats.getSSAsCopy();
+
+        stats.resetToOldSSAs(oldSSAs);
+
+        block2->calculateSSANumbersInIdentifiers(stats);
+
+        stats.mergeWithOldSSAs(oldSSAs);
+        stats.mergeWithOldSSAs(block1SSAs);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

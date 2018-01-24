@@ -33,11 +33,13 @@ public:
 
 class IdentifierSSA{
 public:
+    int lastSSANum;
     int nextSSANum;
     set<int> previousSSANumsForLoad;
 
     explicit IdentifierSSA()
-    :nextSSANum(0)
+    :lastSSANum(0)
+    ,nextSSANum(0)
     ,previousSSANumsForLoad(set<int>()){}
 
     void addStore(Identifier *ident){
@@ -47,11 +49,12 @@ public:
 
         previousSSANumsForLoad.clear();
 
+        lastSSANum = nextSSANum;
         nextSSANum++;
     }
 
     int getLastSSANumForStore() const {
-        return nextSSANum - 1;
+        return lastSSANum;
     }
 
     set<int> getLastSSANumsForLoad() const{
@@ -72,10 +75,16 @@ public:
     }
 
     //used to merge with values before loops
-    void mergeWithNewIdentifierSSA(IdentifierSSA *oldSSA){
+    void mergeWithOldIdentifierSSA(IdentifierSSA *oldSSA){
         auto oldSSANums = oldSSA->getLastSSANumsForLoad();
 
         previousSSANumsForLoad.insert(oldSSANums.begin(), oldSSANums.end());
+    }
+
+    //used to reset previous vals for IF ELSE without reseting nextSSANum counter
+    void resetPreviousSSANumsWithOldIdentifierSSA(IdentifierSSA* oldSSA){
+        lastSSANum = oldSSA->lastSSANum;
+        previousSSANumsForLoad = set<int>(oldSSA->previousSSANumsForLoad);
     }
 
     string toString(const string& pid) const {
@@ -127,15 +136,27 @@ public:
         return new IdentifiersSSAHelper(*this);
     }
 
-    void mergeWithSSAs(map<string, IdentifierSSA *> &newSSAs){
+    void mergeWithOldSSAs(map<string, IdentifierSSA *> &oldSSAs){
 
-        for(auto& entry : newSSAs){
+        for(auto& entry : oldSSAs){
             const string& pid = entry.first;
 
             if(ssa.find(pid) != ssa.end()){
                 IdentifierSSA* currSSA = ssa.at(pid);
                 IdentifierSSA* oldSSA = entry.second;
-                currSSA->mergeWithNewIdentifierSSA(oldSSA);
+                currSSA->mergeWithOldIdentifierSSA(oldSSA);
+            }
+        }
+    }
+
+    void resetToOldSSAs(map<string, IdentifierSSA *> &oldSSAs){
+        for(auto& entry : oldSSAs){
+            const string& pid = entry.first;
+
+            if(ssa.find(pid) != ssa.end()){
+                IdentifierSSA* currSSA = ssa.at(pid);
+                IdentifierSSA* oldSSA = entry.second;
+                currSSA->resetPreviousSSANumsWithOldIdentifierSSA(oldSSA);
             }
         }
     }
