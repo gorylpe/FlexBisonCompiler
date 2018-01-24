@@ -157,7 +157,7 @@ command: identifier T_ASSIGN expression                                         
     | T_FOR T_PIDIDENTIFIER T_FROM value T_DOWNTO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), false); blockStack.pop(); }
     | T_WHILE condition T_DO commands T_ENDWHILE                                { auto whileCmd = new While($2->clone(), blockStack.top()->clone());
                                                                                   blockStack.top()->addCommand(whileCmd);
-                                                                                  $$ = new If($2, blockStack.top()); blockStack.pop(); //while -> if with while inside for checking for first time args}
+                                                                                  $$ = new If($2, blockStack.top()); blockStack.pop();} //while -> if with while inside for checking for first time args
     | T_READ identifier                                                         { $$ = new Read($2); }
     | T_WRITE value                                                             { $$ = new Write($2); }
 ;
