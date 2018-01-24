@@ -4,9 +4,11 @@
 #include <algorithm>
 #include "MemoryManager.h"
 #include "Assembly.h"
+#include "ProgramFlags.h"
 
 class MachineContext {
     MachineContext() = default;
+
 public:
     static MachineContext& getInstance()
     {
@@ -22,10 +24,12 @@ public:
     set<JumpPosition*> jumps;
 
     void optimize(){
-        cerr << "---OPTIMIZING ASSEMBLY CODE---" << endl;
+        if(pflags.verbose())
+            cerr << endl << "---OPTIMIZING ASSEMBLY CODE---" << endl << endl;
         optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         optimizeRedundandStoresInContinuousCodeBlocks();
-        cerr << "---OPTIMIZING ASSEMBLY CODE END---" << endl << endl;
+        if(pflags.verbose())
+            cerr << endl << "---OPTIMIZING ASSEMBLY CODE END---" << endl << endl;
     }
 
     void generateCode(stringstream& ss){
@@ -34,20 +38,9 @@ public:
         }
     }
 
-    //todo constants propagation in AST - 9-sort test, 5-tab, 1-numbers, program2
-
-    //todo CHECK FOR UNUSED VARS (not likely)
-
-    //todo optimize INC DEC
-
-    //todo if we have assignment -> storing val and next one is loading this val and HAS JUMP TO THIS INSTRUCTION
-    //(something else is using this LOAD)
-    //then GENERATE JUMP TO NEXT INSTRUCTION -> easier to jump than load
-
-    //todo UNROLLING FOR WITH CONSTANS - VERY BIG OPTIMIZATIONS WITH UNUSED ASSIGNMENTS
-
     void optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks() {
-        cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION---" << endl;
+        if(pflags.verbose())
+            cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION---" << endl;
         size_t linesNum = (size_t)assemblyCode.size();
 
         vector<bool> linesWithJump = this->getLinesWithJump();
@@ -86,17 +79,13 @@ public:
 
         this->removeLines(linesToRemove);
 
-        cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION END---" << endl << endl;
+        if(pflags.verbose())
+            cerr << "---REDUNDANT LOADS AFTER STORE OPTIMIZATION END---" << endl << endl;
     }
 
-    /*
-     * for example
-     * a := b + c
-     * a := a + d
-     * storing A after 1st instruction is redundant and it cant be optimized in AST
-     */
     void optimizeRedundandStoresInContinuousCodeBlocks() {
-        cerr << "---REDUNDANT STORES OPTIMIZATION---" << endl;
+        if(pflags.verbose())
+            cerr << "---REDUNDANT STORES OPTIMIZATION---" << endl;
         size_t linesNum = (size_t)assemblyCode.size();
 
         vector<bool> linesWithJump = this->getLinesWithJump();
@@ -162,7 +151,8 @@ public:
 
         this->removeLines(linesToRemove);
 
-        cerr << "---REDUNDANT STORES OPTIMIZATION END---" << endl << endl;
+        if(pflags.verbose())
+            cerr << "---REDUNDANT STORES OPTIMIZATION END---" << endl << endl;
     }
 
     vector<bool> getLinesWithJump(){
@@ -200,7 +190,8 @@ public:
         //remove unused lines
         for(int i = linesNum - 1; i >= 0; --i){
             if(linesToRemove[i]){
-                cerr << "Removing assembly line no. " << i << endl;
+                if(pflags.verbose())
+                    cerr << "Removing assembly line no. " << i << endl;
                 assemblyCode.erase(assemblyCode.begin() + i);
             }
         }
