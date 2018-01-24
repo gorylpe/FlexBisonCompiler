@@ -1,4 +1,5 @@
 %code requires{
+    #include "ProgramFlags.h"
     #include "Number.h"
     #include "Identifier.h"    
     #include "Expression.h"    
@@ -19,7 +20,7 @@ extern "C"
     int yylex(void);
 }
 #include "Utils.h"
-
+#include "ProgramFlags.h"
 #include <exception>
 #include <map>
 #include <iostream>
@@ -58,6 +59,7 @@ stack<CommandsBlock*> blockStack;
 Program program;
 
 void yyerror(const char*);
+Command* unrollWhile(Condition* cond, CommandsBlock* block, int numOfUnrolls);
 %}
 
 %locations
@@ -155,9 +157,7 @@ command: identifier T_ASSIGN expression                                         
                                                                                 }}
     | T_FOR T_PIDIDENTIFIER T_FROM value T_TO value T_DO commands T_ENDFOR      { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), true); blockStack.pop(); }
     | T_FOR T_PIDIDENTIFIER T_FROM value T_DOWNTO value T_DO commands T_ENDFOR  { $$ = new For(createPos(@2), *$2, $4, $6, blockStack.top(), false); blockStack.pop(); }
-    | T_WHILE condition T_DO commands T_ENDWHILE                                { auto whileCmd = new While($2->clone(), blockStack.top()->clone());
-                                                                                  blockStack.top()->addCommand(whileCmd);
-                                                                                  $$ = new If($2, blockStack.top()); blockStack.pop();} //while -> if with while inside for checking for first time args
+    | T_WHILE condition T_DO commands T_ENDWHILE                                { $$ = unrollWhile($2, blockStack.top(), pflags.getWhileUnrollsNumber()); blockStack.pop();} //while -> if with while inside for checking for first time args
     | T_READ identifier                                                         { $$ = new Read($2); }
     | T_WRITE value                                                             { $$ = new Write($2); }
 ;
@@ -204,7 +204,19 @@ identifier: T_PIDIDENTIFIER {
 
 %%
 Position* createPos(YYLTYPE yylpos){
-        return new Position(yylpos.first_line, yylpos.first_column, yylpos.last_line, yylpos.last_column);
+    return new Position(yylpos.first_line, yylpos.first_column, yylpos.last_line, yylpos.last_column);
+}
+
+Command* unrollWhile(Condition* cond, CommandsBlock* block, int numOfUnrolls){
+    Command* lastCommand = new While(cond->clone(), block->clone());
+    for(int i = 0; i < numOfUnrolls; ++i){
+        CommandsBlock* clonedBlock = block->clone();
+        clonedBlock->addCommand(lastCommand);
+
+        lastCommand = new If(cond->clone(), clonedBlock);
+    }
+
+    return lastCommand;
 }
 
 void yyerror (const char* s){
@@ -219,7 +231,7 @@ void poserror(Position* pos, const string& s){
     yyerror(s.c_str());
 }
 
-int main(void) {
+int main(int argc, char* argv[]) {
     cerr << "Compilation started" << endl;
     cerr.flush();
     try {
