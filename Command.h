@@ -7,12 +7,13 @@
 #include "Identifier.h"
 #include "Condition.h"
 #include "NumberValueStats.h"
+#include "IdentifiersUsagesHelper.h"
 
 using namespace std;
 using namespace cln;
 
 class CommandsBlock;
-class IdentifiersSSA;
+class IdentifiersSSAHelper;
 
 class Command {
 public:
@@ -34,10 +35,6 @@ public:
 
     virtual void simplifyExpressions() = 0;
 
-    virtual bool propagateValues(IdentifiersSSA &stats) = 0;
-
-    virtual void getPidVariablesBeingModified(set<Variable *> &variableSet) {}
-
     //used to remove not reachable ifs, unroll for's with constants
     virtual CommandsBlock* blockToReplaceWith() = 0;
 
@@ -46,7 +43,9 @@ public:
     //for FOR unrolling - replacing iterator with consts
     virtual void replaceValuesWithConst(string pid, cl_I number) {}
 
-    virtual void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) = 0;
+    virtual void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &helper) = 0;
+
+    virtual void collectUsagesData(IdentifiersUsagesHelper &helper) = 0;
 
     //for creating numbers optimal
     virtual void collectNumberValues(map<cl_I, NumberValueStats>& stats) {}
@@ -126,23 +125,12 @@ public:
         }
     }
 
-    bool propagateValues(IdentifiersSSA &stats) final {
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
         bool hasPropagated = false;
 
         for(auto cmd : this->commands){
-            //cerr << "PROPAGATING VALUES FOR " << typeid(*cmd).name() << endl;
-            if(cmd->propagateValues(stats)){
-                //cerr << "YES" << endl;
-                hasPropagated = true;
-            }
-        }
-
-        return hasPropagated;
-    }
-
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        for(auto cmd : this->commands){
-            cmd->getPidVariablesBeingModified(variableSet);
+            cerr << "COLLECTING USAGES DATA FOR " << typeid(*cmd).name() << endl;
+            cmd->collectUsagesData(helper);
         }
     }
 
@@ -172,7 +160,7 @@ public:
         }
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         for(auto cmd : this->commands){
             //cerr << "STATS FOR " << typeid(*cmd).name() << endl;
             cmd->calculateSSANumbersInIdentifiers(prevStats);

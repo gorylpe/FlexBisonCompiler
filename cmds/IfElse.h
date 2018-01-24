@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../IdentifiersSSA.h"
+#include "../IdentifiersSSAHelper.h"
 #include "../Command.h"
 #include "Assignment.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class IfElse : public Command{
 public:
@@ -97,29 +98,10 @@ public:
         block2->simplifyExpressions();
     }
 
-    bool propagateValues(IdentifiersSSA &stats) final {
-        bool hasPropagated = false;
-
-        if(Assignment::propagateValue(cond->val1, stats)) {
-            hasPropagated = true;
-        }
-
-        if(Assignment::propagateValue(cond->val2, stats)) {
-            hasPropagated = true;
-        }
-
-        if(block1->propagateValues(stats))
-            hasPropagated = true;
-
-        if(block2->propagateValues(stats))
-            hasPropagated = true;
-
-        return hasPropagated;
-    }
-
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        this->block1->getPidVariablesBeingModified(variableSet);
-        this->block2->getPidVariablesBeingModified(variableSet);
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
+        helper.addUsages(cond->getIdentifiers());
+        block1->collectUsagesData(helper);
+        block2->collectUsagesData(helper);
     }
 
     CommandsBlock* blockToReplaceWith() final{
@@ -145,10 +127,10 @@ public:
         block2->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         auto oldSSAs = prevStats.getSSAsCopy();
 
-        prevStats.addUsages(cond->getIdentifiers());
+        prevStats.setForUsages(cond->getIdentifiers());
         block1->calculateSSANumbersInIdentifiers(prevStats);
         block2->calculateSSANumbersInIdentifiers(prevStats);
 

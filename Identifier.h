@@ -159,7 +159,7 @@ public:
         ssaNums = move(newSsaNums);
     }
 
-    set<int> getSSANums() {
+    set<int>& getSSANums() {
         return ssaNums;
     }
 
@@ -175,7 +175,7 @@ public:
         ssaNumsPidpid = move(newSsaNums);
     }
 
-    set<int> getSSANumsPidpid() {
+    set<int>& getSSANumsPidpid() {
         return ssaNumsPidpid;
     }
 

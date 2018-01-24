@@ -22,17 +22,21 @@ public:
     }
 
     void valuesPropagation(){
-        bool propagated;
+        bool propagated = false;
 
         do{
-            IdentifiersSSA stats;
+            IdentifiersSSAHelper stats;
             cerr << "!!!STATS!!!" << endl;
             block->calculateSSANumbersInIdentifiers(stats);
             cerr << stats.toString() << endl;
 
             block->print(0);
 
-            propagated = block->propagateValues(stats);
+            IdentifiersUsagesHelper usages;
+            cerr << "!!!USAGES!!!" << endl;
+            block->collectUsagesData(usages);
+            cerr << usages.toString() << endl;
+
             if(propagated)
                 cerr << "VALUES PROPAGATED" << endl;
 
@@ -58,7 +62,7 @@ public:
         block->replaceCommands();*/
     }
 
-    /*void removeUnusedAssignmentsForPid(const string &pid, IdentifiersSSA &stats){
+    /*void removeUnusedAssignmentsForPid(const string &pid, IdentifiersSSAHelper &stats){
         IdentifierSSA* pidStats = stats.getStats(pid);
 
         cerr << "Removing unused assignments for " << pid << endl;
@@ -100,7 +104,7 @@ public:
         }
     }
 
-    bool tryToMergeNumberOperationsInWithPreviousAssignment(IdentifiersSSA& stats, IdentifierSSA *pidStats, int SSANum){
+    bool tryToMergeNumberOperationsInWithPreviousAssignment(IdentifiersSSAHelper& stats, IdentifierSSA *pidStats, int SSANum){
         Assignment* assign = pidStats->getAssignementForSSANum(SSANum);
         Expression* expr = assign->expr;
 
@@ -119,7 +123,7 @@ public:
         return false;
     }
 
-    bool tryToMergeAdditionWithPreviousAssignment(IdentifiersSSA& stats, Expression *expr) {
+    bool tryToMergeAdditionWithPreviousAssignment(IdentifiersSSAHelper& stats, Expression *expr) {
         //addition is commutative
         bool reversed = false;
 
@@ -198,7 +202,7 @@ public:
         return false;
     }
 
-    bool tryToMergeValueWithPreviousAssignment(IdentifiersSSA& stats, Expression *expr){
+    bool tryToMergeValueWithPreviousAssignment(IdentifiersSSAHelper& stats, Expression *expr){
         //addition is commutative
         bool reversed = false;
 

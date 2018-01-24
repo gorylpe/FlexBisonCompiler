@@ -104,11 +104,11 @@ public:
     }
 };
 
-class IdentifiersSSA{
+class IdentifiersSSAHelper{
 public:
-    IdentifiersSSA() = default;
+    IdentifiersSSAHelper() = default;
 
-    explicit IdentifiersSSA(const IdentifiersSSA& stats2)
+    explicit IdentifiersSSAHelper(const IdentifiersSSAHelper& stats2)
     :ssa(stats2.getSSAsCopy()){}
 
     map<string, IdentifierSSA*> ssa;
@@ -123,8 +123,8 @@ public:
         return ssaCopy;
     };
 
-    IdentifiersSSA* clone(){
-        return new IdentifiersSSA(*this);
+    IdentifiersSSAHelper* clone(){
+        return new IdentifiersSSAHelper(*this);
     }
 
     void mergeWithSSAs(map<string, IdentifierSSA *> &newSSAs){
@@ -147,28 +147,29 @@ public:
         return ssa.at(pid);
     }
 
-    void addStore(Identifier* ident){
+    void setForStore(Identifier *ident){
         if(ident->isTypePID()){
             getSSA(ident->pid)->addStore(ident);
         } else if(ident->isTypePIDPID()){
-            addUsage(ident);
+            setForUsage(ident);
         }
     }
 
-    void addUsage (Identifier *ident) {
+    void setForUsage(Identifier *ident) {
         if(ident->isTypePID()) {
             set<int> lastSSANums = getSSA(ident->pid)->getLastSSANumsForLoad();
             ident->setSSANums(lastSSANums);
 
-        } else if (ident->isTypePIDPID()){
+        } else if (ident->isTypePIDPID()) {
+            cerr << "USAGES FOR PIDPID" << endl;
             set<int> lastSSANumsPidpid = getSSA(ident->pidpid)->getLastSSANumsForLoad();
             ident->setSSANumsPidpid(lastSSANumsPidpid);
         }
     }
 
-    void addUsages(const vector<Identifier*>& idents) {
+    void setForUsages(const vector<Identifier *> &idents) {
         for(auto ident : idents){
-            addUsage(ident);
+            setForUsage(ident);
         }
     };
 

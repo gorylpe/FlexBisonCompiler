@@ -2,6 +2,7 @@
 
 #include "../Command.h"
 #include "../Expression.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class Assignment : public Command {
 public:
@@ -82,8 +83,9 @@ public:
         expr->simplifyExpression();
     }
 
-    bool propagateValues(IdentifiersSSA &stats) final {
-        bool hasPropagated = false;
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
+        helper.tryToAddUsageForPidpidInStore(ident);
+        helper.addUsages(expr->getIdentifiers());
 
         /*if(!ident->isTypePID())
             return false;
@@ -137,11 +139,9 @@ public:
             propagateValue(expr->val1, stats);
             propagateValue(expr->val2, stats);
         }*/
-
-        return hasPropagated;
     }
 
-    static bool propagateValue(Value* val, IdentifiersSSA &stats) {
+    static bool propagateValue(Value* val, IdentifiersSSAHelper &stats) {
         bool hasPropagated = false;
 
         /*if(val->isTypeIDENTIFIER()){
@@ -177,12 +177,6 @@ public:
         return hasPropagated;
     }
 
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        Variable* var = ident->getPidVariable();
-        if(var->type == Variable::Type::PID)
-            variableSet.insert(var);
-    }
-
     CommandsBlock* blockToReplaceWith() final {
         if(expr->equals(ident)){
             return new CommandsBlock();
@@ -200,9 +194,9 @@ public:
         expr->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
-        prevStats.addUsages(expr->getIdentifiers());
-        prevStats.addStore(ident);
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+        prevStats.setForUsages(expr->getIdentifiers());
+        prevStats.setForStore(ident);
     }
 
     void setUnused(){

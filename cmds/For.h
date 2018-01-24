@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../IdentifiersSSA.h"
+#include "../IdentifiersSSAHelper.h"
 #include "../Command.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class For : public Command {
 public:
@@ -144,26 +145,25 @@ public:
         memory.popTempVariable(); //iterator
     }
 
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        this->block->getPidVariablesBeingModified(variableSet);
-    }
-
     void simplifyExpressions() final {
         block->simplifyExpressions();
     }
 
-    bool propagateValues(IdentifiersSSA &stats) final {
-        bool hasPropagated = false;
-
-        set<Variable*> variablesSet;
-
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
         auto iterator = memory.pushTempNamedVariable(pid, false);
 
-        //TODO
+        auto ident1 = from->getIdentifier();
+        if(ident1 != nullptr){
+            helper.addUsage(ident1);
+        }
+        auto ident2 = to->getIdentifier();
+        if(ident2 != nullptr){
+            helper.addUsage(ident2);
+        }
+
+        block->collectUsagesData(helper);
 
         memory.popTempVariable(); //iterator
-
-        return hasPropagated;
     }
 
     CommandsBlock* blockToReplaceWith() final{
@@ -209,18 +209,18 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
         auto beforeForSSAs = stats.getSSAsCopy();
 
-        IdentifiersSSA & tmpStats = *stats.clone();
+        IdentifiersSSAHelper & tmpStats = *stats.clone();
 
         auto ident1 = from->getIdentifier();
         if(ident1 != nullptr){
-            tmpStats.addUsage(ident1);
+            tmpStats.setForUsage(ident1);
         }
         auto ident2 = to->getIdentifier();
         if(ident2 != nullptr){
-            tmpStats.addUsage(ident2);
+            tmpStats.setForUsage(ident2);
         }
         block->calculateSSANumbersInIdentifiers(tmpStats);
 
@@ -234,15 +234,15 @@ public:
         cerr << stats.toString() << endl;*/
 
         if(ident1 != nullptr){
-            stats.addUsage(ident1);
+            stats.setForUsage(ident1);
         }
         if(ident2 != nullptr){
-            stats.addUsage(ident2);
+            stats.setForUsage(ident2);
         }
 
         block->calculateSSANumbersInIdentifiers(stats);
        /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;
-        cerr << IdentifiersSSA::SSAsToString(beforeForSSAs) << endl;*/
+        cerr << IdentifiersSSAHelper::SSAsToString(beforeForSSAs) << endl;*/
 
         stats.mergeWithSSAs(beforeForSSAs);
 

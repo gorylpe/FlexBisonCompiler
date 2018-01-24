@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../Command.h"
-#include "../IdentifiersSSA.h"
+#include "../IdentifiersSSAHelper.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class Read : public Command {
 public:
@@ -49,7 +50,7 @@ public:
 
     void simplifyExpressions() final {}
 
-    bool propagateValues(IdentifiersSSA &stats) final { return false; }
+    void collectUsagesData(IdentifiersUsagesHelper &stats) final {}
 
     CommandsBlock* blockToReplaceWith() final {
         return nullptr;
@@ -59,13 +60,7 @@ public:
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
-        prevStats.addStore(ident);
-    }
-
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-    Variable* var = this->ident->getPidVariable();
-    if(var->type == Variable::Type::PID)
-        variableSet.insert(var);
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+        prevStats.setForStore(ident);
     }
 };

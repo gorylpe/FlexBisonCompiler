@@ -3,6 +3,7 @@
 
 #include "../Command.h"
 #include "Assignment.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class Write : public Command {
 public:
@@ -56,33 +57,28 @@ public:
 
     void simplifyExpressions() final {}
 
-    bool propagateValues(IdentifiersSSA &stats) final {
-        bool hasPropagated = false;
-
-        if(Assignment::propagateValue(val, stats)){
-            hasPropagated = true;
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
+        if(val->isTypeIDENTIFIER()){
+            helper.addUsage(val->getIdentifier());
         }
-
-        return hasPropagated;
     }
 
-    CommandsBlock* blockToReplaceWith(){
+    CommandsBlock* blockToReplaceWith() final {
         return nullptr;
     }
 
-    virtual void replaceValuesWithConst(string pid, cl_I number) {
+    void replaceValuesWithConst(string pid, cl_I number) final {
         val->replaceIdentifierWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &stats) final {
-        auto ident = val->getIdentifier();
-        if(ident != nullptr){
-            stats.addUsage(ident);
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+        if(val->isTypeIDENTIFIER()){
+            stats.setForUsage(val->getIdentifier());
         }
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {
-        if(val->type == Value::Type::NUM){
+        if(val->isTypeNUM()){
             if(stats.count(val->num->num) == 0){
                 stats[val->num->num] = NumberValueStats();
             }

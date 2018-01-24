@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../IdentifiersSSA.h"
+#include "../IdentifiersSSAHelper.h"
 #include "../Command.h"
 #include "Assignment.h"
+#include "../IdentifiersUsagesHelper.h"
 
 class While : public Command {
 public:
@@ -86,37 +87,16 @@ public:
         this->block->calculateVariablesUsage(numberOfNestedLoops + 1);
     }
 
-    void getPidVariablesBeingModified(set<Variable *>& variableSet) final {
-        this->block->getPidVariablesBeingModified(variableSet);
-    }
-
     void simplifyExpressions() final {
         block->simplifyExpressions();
     }
 
-    bool propagateValues(IdentifiersSSA &stats) final {
-        bool hasPropagated = false;
-
-        //TODO do this edge case, check if cond will be const and false at start
-
-        cerr << "WHILE PROPAGATING COND VAL1" << endl;
-        if(Assignment::propagateValue(cond->val1, stats)) {
-            hasPropagated = true;
-        }
-
-        cerr << "WHILE PROPAGATING COND VAL2" << endl;
-        if(Assignment::propagateValue(cond->val2, stats)) {
-            hasPropagated = true;
-        }
-
-        cerr << "WHILE PROPAGATING BLOCK" << endl;
-        if(this->block->propagateValues(stats)){
-            hasPropagated = true;
-        }
-
-        return hasPropagated;
+    void collectUsagesData(IdentifiersUsagesHelper &helper) final {
+        helper.addUsages(cond->getIdentifiers());
+        block->collectUsagesData(helper);
     }
 
+    //TODO do this edge case, check if cond will be const and false at start
 
     CommandsBlock* blockToReplaceWith() final{
         if(cond->isComparisionConst()){
@@ -137,12 +117,12 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSA &prevStats) final {
+    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         auto beforeWhileSSAs = prevStats.getSSAsCopy();
 
-        IdentifiersSSA & tmpStats = *prevStats.clone();
+        IdentifiersSSAHelper & tmpStats = *prevStats.clone();
 
-        tmpStats.addUsages(cond->getIdentifiers());
+        tmpStats.setForUsages(cond->getIdentifiers());
         block->calculateSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
@@ -154,7 +134,7 @@ public:
         cerr << "MERGED WHILE WITH PREWHILE" << endl;
         cerr << prevStats.toString() << endl;
 
-        prevStats.addUsages(cond->getIdentifiers());
+        prevStats.setForUsages(cond->getIdentifiers());
         block->calculateSSANumbersInIdentifiers(prevStats);
 
         prevStats.mergeWithSSAs(beforeWhileSSAs);
