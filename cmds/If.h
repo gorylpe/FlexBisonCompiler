@@ -50,7 +50,9 @@ public:
     }
 
     void generateCode() final {
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating " << toString() << endl;
+        #endif
         this->cond->prepareValuesIfNeeded();
 
         auto jumpIfTrue = new JumpPosition();
@@ -64,7 +66,9 @@ public:
         machine.setJumpPosition(jumpIfFalse);
 
         this->cond->unprepareValuesIfNeeded();
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating END " << toString() << endl;
+        #endif
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -90,7 +94,14 @@ public:
     }
 
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
-        return block->propagateValues(assgnsHelper, usagesHelper);
+        int propagated = 0;
+
+        if(Assignment::tryToPropagateExpressionsValueToTwoValuesInCondition(assgnsHelper, usagesHelper, *cond))
+            propagated++;
+
+        propagated += block->propagateValues(assgnsHelper, usagesHelper);
+
+        return propagated;
     }
 
     CommandsBlock* blockToReplaceWith() final{
@@ -114,14 +125,14 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
-        prevStats.setForUsages(cond->getIdentifiers());
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+        stats.setForUsages(cond->getIdentifiers());
 
-        auto oldSSAs = prevStats.getSSAsCopy();
+        auto oldSSAs = stats.getSSAsCopy();
 
-        block->collectSSANumbersInIdentifiers(prevStats);
+        block->collectSSANumbersInIdentifiers(stats);
 
-        prevStats.mergeWithOldSSAs(oldSSAs);
+        stats.mergeWithOldSSAs(oldSSAs);
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

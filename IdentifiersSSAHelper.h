@@ -162,7 +162,6 @@ public:
             ident->setSSANums(lastSSANums);
 
         } else if (ident->isTypePIDPID()) {
-            cerr << "USAGES FOR PIDPID" << endl;
             set<int> lastSSANumsPidpid = getSSA(ident->pidpid)->getLastSSANumsForLoad();
             ident->setSSANumsPidpid(lastSSANumsPidpid);
         }

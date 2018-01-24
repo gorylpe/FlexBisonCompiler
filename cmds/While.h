@@ -50,7 +50,9 @@ public:
     }
 
     void generateCode() final {
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating " << toString() << endl;
+        #endif
         if(!this->cond->isComparisionConst()){
             this->cond->prepareValuesIfNeeded();
 
@@ -79,7 +81,9 @@ public:
 
             machine.JUMP(loopStart);
         }
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating END " << toString() << endl;
+        #endif
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -105,7 +109,13 @@ public:
     }
 
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
-        return block->propagateValues(assgnsHelper, usagesHelper);
+        int propagated = 0;
+
+        if(Assignment::tryToPropagateExpressionsValueToTwoValuesInCondition(assgnsHelper, usagesHelper, *cond))
+            propagated++;
+
+        propagated += block->propagateValues(assgnsHelper, usagesHelper);
+        return propagated;
     }
 
     //TODO do this edge case, check if cond will be const and false at start

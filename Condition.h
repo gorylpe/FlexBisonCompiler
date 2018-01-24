@@ -296,10 +296,12 @@ public:
     }
 
     bool isComparisionConst(){
+        optimizeConstants();
         return this->constComparision;
     }
 
     bool getComparisionConstResult(){
+        optimizeConstants();
         return this->constComparisionResult;
     }
 

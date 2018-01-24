@@ -40,7 +40,9 @@ public:
     }
 
     void generateCode() final{
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating " << toString() << endl;
+        #endif
         if(this->val->type != Value::Type::NUM)
             this->val->prepareIfNeeded();
 

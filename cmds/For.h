@@ -3,6 +3,8 @@
 #include "../IdentifiersSSAHelper.h"
 #include "../Command.h"
 #include "../IdentifiersUsagesHelper.h"
+#include "../Expression.h"
+#include "Assignment.h"
 
 class For : public Command {
 public:
@@ -76,7 +78,9 @@ public:
         this->from->prepareIfNeeded();
         this->to->prepareIfNeeded();
 
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating " << toString() << endl;
+        #endif
         auto iterator = memory.pushTempNamedVariable(pid, false);
         auto tmpTo = memory.pushTempVariable();
 
@@ -136,7 +140,9 @@ public:
         this->from->unprepareIfNeeded();
         this->to->unprepareIfNeeded();
 
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating END " << toString() << endl;
+        #endif
     }
 
     void calculateVariablesUsage(cl_I numberOfNestedLoops) final {
@@ -150,8 +156,6 @@ public:
     }
 
     void collectUsagesData(IdentifiersUsagesHelper &helper) final {
-        auto iterator = memory.pushTempNamedVariable(pid, false);
-
         auto ident1 = from->getIdentifier();
         if(ident1 != nullptr){
             helper.addUsage(ident1);
@@ -162,8 +166,6 @@ public:
         }
 
         block->collectUsagesData(helper);
-
-        memory.popTempVariable(); //iterator
     }
 
     int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
@@ -171,7 +173,45 @@ public:
     }
 
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
-        return block->propagateValues(assgnsHelper, usagesHelper);
+        int propagated = 0;
+
+        cerr << "FOR PROPAGATING " << toString() << endl;
+        
+        if(from->isTypeIDENTIFIER() && from->ident->isTypePID()){
+            Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *from);
+
+            if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
+                cerr << "PROPAGATED" << endl;
+                cerr << toString() << endl;
+                cerr << " TO " << endl;
+
+                from = prevExpr->val1->clone();
+
+                cerr << toString() << endl << endl;
+                
+                propagated++;
+            }
+        }
+        
+        if(to->isTypeIDENTIFIER() && to->ident->isTypePID()){
+            Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *to);
+
+            if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
+                cerr << "PROPAGATED" << endl;
+                cerr << toString() << endl;
+                cerr << " TO " << endl;
+
+                to = prevExpr->val1->clone();
+
+                cerr << toString() << endl << endl;
+                
+                propagated++;
+            }
+        }
+        
+        propagated += block->propagateValues(assgnsHelper, usagesHelper);
+        
+        return propagated;
     }
 
     void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
@@ -215,25 +255,26 @@ public:
         this->block->replaceCommands();
     }
 
-    virtual void replaceValuesWithConst(string pid, cl_I number) {
+    void replaceValuesWithConst(string pid, cl_I number) final {
         from->replaceIdentifierWithConst(pid, number);
         to->replaceIdentifierWithConst(pid, number);
         block->replaceValuesWithConst(pid, number);
     }
 
     void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+        auto ident1 = from->getIdentifier();
+        if(ident1 != nullptr){
+            stats.setForUsage(ident1);
+        }
+        auto ident2 = to->getIdentifier();
+        if(ident2 != nullptr){
+            stats.setForUsage(ident2);
+        }
+
         auto beforeForSSAs = stats.getSSAsCopy();
 
         IdentifiersSSAHelper & tmpStats = *stats.clone();
 
-        auto ident1 = from->getIdentifier();
-        if(ident1 != nullptr){
-            tmpStats.setForUsage(ident1);
-        }
-        auto ident2 = to->getIdentifier();
-        if(ident2 != nullptr){
-            tmpStats.setForUsage(ident2);
-        }
         block->collectSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
@@ -244,13 +285,6 @@ public:
 
         /*cerr << "FOR MERGED" << endl;
         cerr << stats.toString() << endl;*/
-
-        if(ident1 != nullptr){
-            stats.setForUsage(ident1);
-        }
-        if(ident2 != nullptr){
-            stats.setForUsage(ident2);
-        }
 
         block->collectSSANumbersInIdentifiers(stats);
        /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;

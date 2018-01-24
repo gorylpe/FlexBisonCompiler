@@ -35,7 +35,9 @@ public:
     }
 
     void generateCode() final {
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating ASSIGNMENT " << toString() << endl;
+        #endif
         this->ident->prepareIfNeeded();
         this->expr->prepareValuesIfNeeded();
 
@@ -124,7 +126,7 @@ public:
             return 1;
         }
 
-        propagated = tryToPropagateExpressionsValueToTwoValues(assgnsHelper, usagesHelper, *expr);
+        propagated = tryToPropagateExpressionsValueToTwoValuesInExpression(assgnsHelper, usagesHelper, *expr);
         if(propagated){
             ss << toString() << endl;
             cerr << ss.str();
@@ -203,8 +205,11 @@ public:
 
         return false;
     }
-    static bool tryToPropagateExpressionsValueToTwoValues(IdentifiersAssignmentsHelper &assgnsHelper,
-                                                              IdentifiersUsagesHelper &usagesHelper, Expression &expr) {
+
+
+    static bool tryToPropagateExpressionsValueToTwoValuesInExpression(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                      IdentifiersUsagesHelper &usagesHelper,
+                                                                      Expression &expr) {
         if(!expr.isTypeVALUE()) {
             bool propagated = false;
 
@@ -224,6 +229,26 @@ public:
         }
 
         return false;
+    }
+
+    static bool tryToPropagateExpressionsValueToTwoValuesInCondition(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                      IdentifiersUsagesHelper &usagesHelper,
+                                                                      Condition &cond) {
+        bool propagated = false;
+
+        auto prevExpr1 = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *cond.val1);
+        if(prevExpr1 != nullptr && prevExpr1->isTypeVALUE()){
+            cond.val1 = prevExpr1->val1->clone();
+            propagated = true;
+        }
+
+        auto prevExpr2 = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *cond.val2);
+        if(prevExpr2 != nullptr && prevExpr2->isTypeVALUE()){
+            cond.val2 = prevExpr2->val1->clone();
+            propagated = true;
+        }
+
+        return propagated;
     }
 
     static Expression* getExpressionAssignedToValueWithOneUsage(IdentifiersAssignmentsHelper &assgnsHelper,
@@ -247,20 +272,24 @@ public:
         if(!prevIdent->isUniquelyDefinied())
             return nullptr;
 
-
         const string& prevPid = prevIdent->pid;
         int prevSSANum = prevIdent->getUniqueSSANum();
 
         int prevIdentUsages = usagesHelper.getUsages(prevPid)->getUsage(prevSSANum);
-        //this 1 usage removes previous assignment from code
-        if(prevIdentUsages != 1)
-            return nullptr;
 
-        Expression* prevExpr = prevAssignment->expr;
-        if(prevExpr->hasPidpidOrPidnum())
-            return nullptr;
+        //this 1 usage is in place to what we want to propagate
+        if(prevIdentUsages == 1){
+            Expression* prevExpr = prevAssignment->expr;
+            if(!prevExpr->hasPidpidOrPidnum())
+                return prevExpr;
+        //no restrictions about propagating constants
+        } else if(prevIdentUsages > 1){
+            Expression* prevExpr = prevAssignment->expr;
+            if(prevExpr->isTypeVALUE() && prevExpr->val1->isTypeNUM())
+                return prevExpr;
 
-        return prevExpr;
+        }
+        return nullptr;
     }
 
     CommandsBlock* blockToReplaceWith() final {
