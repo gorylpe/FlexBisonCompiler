@@ -189,6 +189,13 @@ public:
         return *ssaNumsPidpid.begin();
     }
 
+    void setFromPidpidToPidnum(cl_I newNum){
+        if(type == PIDPID){
+            type = PIDNUM;
+            num = newNum;
+        }
+    }
+
     void checkPids(Variable* pidV, Variable* pidpidV){
         switch(this->type){
             case PID:{

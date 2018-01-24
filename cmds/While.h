@@ -111,6 +111,9 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
 
+        if(Assignment::tryToPropagatePidpidInCondition(assgnsHelper, usagesHelper, *cond))
+            propagated++;
+
         if(Assignment::tryToPropagateExpressionsValueToTwoValuesInCondition(assgnsHelper, usagesHelper, *cond))
             propagated++;
 

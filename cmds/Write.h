@@ -70,23 +70,24 @@ public:
     void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {}
 
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        int propagated = 0;
 
-        if(val->isTypeIDENTIFIER() && !val->ident->isTypePID())
-            return false;
-
-        Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *val);
-
-        if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
-            cerr << "PROPAGATED" << endl;
-            cerr << toString() << endl;
-            cerr << " TO " << endl;
-
-            val = prevExpr->val1->clone();
-
-            cerr << toString() << endl << endl;
-            return 1;
+        if(val->isTypeIDENTIFIER() && val->ident->isTypePIDPID()){
+            if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *val->ident)){
+                ++propagated;
+            }
         }
-        return 0;
+
+        if(val->isTypeIDENTIFIER() && val->ident->isTypePID()){
+            Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *val);
+
+            if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
+                val = prevExpr->val1->clone();
+                ++propagated;
+            }
+        }
+
+        return propagated;
     }
 
     CommandsBlock* blockToReplaceWith() final {

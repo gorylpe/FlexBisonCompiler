@@ -175,8 +175,18 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
 
-        cerr << "FOR PROPAGATING " << toString() << endl;
-        
+        if(from->isTypeIDENTIFIER() && from->ident->isTypePIDPID()){
+            if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *from->ident)){
+                ++propagated;
+            }
+        }
+
+        if(to->isTypeIDENTIFIER() && to->ident->isTypePIDPID()){
+            if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *to->ident)){
+                ++propagated;
+            }
+        }
+
         if(from->isTypeIDENTIFIER() && from->ident->isTypePID()){
             Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *from);
 

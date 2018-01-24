@@ -1,17 +1,25 @@
+( sito Eratostenesa 
+	ROZWIJANIE PETLI FOR
+)
 VAR
-	a b c d e
+    n a t[5]
 BEGIN
-	READ e;
-	a := e;
-	e := a;
-	a := e;
-	b := 20;
-	c := 100000;
-	d := a + b;
-	d := d + c;
-	d := d + e;
-	a := d;
-	d := a + 10;
-	a := d;
-	WRITE d;
+    a := 3;
+	READ t[a];
+    n := 4;
+	t[a] := a;
+	t[n] := n;
+	t[0] := t[a] + t[n];
+	IF t[a] > t[n] THEN
+		WRITE t[n];
+	ENDIF
+	IF t[a] >= t[n] THEN
+		WRITE t[n];
+	ELSE
+		WRITE t[a];
+	ENDIF
+
+	FOR i FROM t[a] TO t[n] DO
+		WRITE i;
+	ENDFOR
 END

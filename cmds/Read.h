@@ -3,6 +3,7 @@
 #include "../Command.h"
 #include "../IdentifiersSSAHelper.h"
 #include "../IdentifiersUsagesHelper.h"
+#include "Assignment.h"
 
 class Read : public Command {
 public:
@@ -56,7 +57,15 @@ public:
 
     void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {}
 
-    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final { return 0; }
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        int propagated = 0;
+        if(ident->isTypePIDPID()){
+            if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
+                ++propagated;
+            }
+        }
+        return propagated;
+    }
 
     CommandsBlock* blockToReplaceWith() final {
         return nullptr;

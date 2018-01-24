@@ -107,9 +107,9 @@ public:
     }
 
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
-        bool propagated;
+        int propagated = 0;
 
-        cerr << "ASSIGNMENT PROPAGATING " << toString() << endl;
+        //cerr << "ASSIGNMENT PROPAGATING " << toString() << endl;
 
         stringstream ss;
 
@@ -117,34 +117,72 @@ public:
         ss << toString() << endl;
         ss << " TO " << endl;
 
-        propagated = tryToPropagateExpressionsAnyTypeToSingleValue(assgnsHelper, usagesHelper, *expr);
-        if(propagated){
+        if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            propagated++;
+
+            ss.clear();
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
+        }
+
+        if(tryToPropagatePidpidInExpression(assgnsHelper, usagesHelper, *expr)){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            propagated++;
+            expr->simplifyExpression();
+
+            ss.clear();
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
+        }
+
+        if(tryToPropagateExpressionsAnyTypeToSingleValue(assgnsHelper, usagesHelper, *expr)){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            propagated++;
+            expr->simplifyExpression();
+
+            ss.clear();
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
+
+        }
+
+        if(tryToPropagateExpressionsValueToTwoValuesInExpression(assgnsHelper, usagesHelper, *expr)){
             ss << toString() << endl;
             cerr << ss.str();
 
             expr->simplifyExpression();
-            return 1;
+            propagated++;
+
+            ss.clear();
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
         }
 
-        propagated = tryToPropagateExpressionsValueToTwoValuesInExpression(assgnsHelper, usagesHelper, *expr);
-        if(propagated){
+        if(tryToPropagateExpressionsAdditionToTypeAddition(assgnsHelper, usagesHelper, *expr)){
             ss << toString() << endl;
             cerr << ss.str();
 
             expr->simplifyExpression();
-            return 1;
-        }
+            propagated++;
 
-        propagated = tryToPropagateExpressionsAdditionToTypeAddition(assgnsHelper, usagesHelper, *expr);
-        if(propagated){
+            ss.clear();
+            ss << "PROPAGATED" << endl;
             ss << toString() << endl;
-            cerr << ss.str();
-
-            expr->simplifyExpression();
-            return 1;
+            ss << " TO " << endl;
         }
 
-        return 0;
+        return propagated;
     }
 
     static bool tryToPropagateExpressionsAdditionToTypeAddition(IdentifiersAssignmentsHelper &assgnsHelper,
@@ -264,6 +302,12 @@ public:
         const string& pid = ident->pid;
         int ssaNum = ident->getUniqueSSANum();
 
+        return getExpressionForPidSSANumWithOneUsageOrConst(assgnsHelper, usagesHelper, pid, ssaNum);
+    }
+
+    static Expression* getExpressionForPidSSANumWithOneUsageOrConst(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                    IdentifiersUsagesHelper &usagesHelper,
+                                                                    const string& pid, int ssaNum){
         if(!assgnsHelper.hasAssignment(pid, ssaNum))
             return nullptr;
 
@@ -282,7 +326,7 @@ public:
             Expression* prevExpr = prevAssignment->expr;
             if(!prevExpr->hasPidpidOrPidnum())
                 return prevExpr;
-        //no restrictions about propagating constants
+            //no restrictions about propagating constants
         } else if(prevIdentUsages > 1){
             Expression* prevExpr = prevAssignment->expr;
             if(prevExpr->isTypeVALUE() && prevExpr->val1->isTypeNUM())
@@ -290,6 +334,62 @@ public:
 
         }
         return nullptr;
+    }
+
+    static bool tryToPropagatePidpidInExpression(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper, Expression& expr){
+        bool propagated = false;
+        if(expr.isTypeVALUE()){
+            if(expr.val1->isTypeIDENTIFIER()){
+                if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *expr.val1->getIdentifier())){
+                    propagated = true;
+                }
+            }
+        } else {
+            if(expr.val1->isTypeIDENTIFIER()){
+                if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *expr.val1->getIdentifier())){
+                    propagated = true;
+                }
+            }
+            if(expr.val2->isTypeIDENTIFIER()){
+                if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *expr.val2->getIdentifier())){
+                    propagated = true;
+                }
+            }
+        }
+        return propagated;
+    }
+
+    static bool tryToPropagatePidpidInCondition(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper, Condition& cond){
+        bool propagated = false;
+        if(cond.val1->isTypeIDENTIFIER()){
+            if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *cond.val1->getIdentifier())){
+                propagated = true;
+            }
+        }
+        if(cond.val2->isTypeIDENTIFIER()){
+            if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *cond.val2->getIdentifier())){
+                propagated = true;
+            }
+        }
+        return propagated;
+    }
+
+    static bool tryToPropagatePidpid(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper, Identifier &ident){
+        if(!ident.isTypePIDPID())
+            return false;
+
+        if(!ident.isUniquelyDefiniedPidpid())
+            return false;
+
+        const string& pid = ident.pidpid;
+        int ssaNum = ident.getUniqueSSANumPidpid();
+
+        auto prevExpr = getExpressionForPidSSANumWithOneUsageOrConst(assgnsHelper, usagesHelper, pid, ssaNum);
+        if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
+            if(prevExpr->val1->isTypeNUM()){
+                ident.setFromPidpidToPidnum(prevExpr->val1->num->num);
+            }
+        }
     }
 
     CommandsBlock* blockToReplaceWith() final {
