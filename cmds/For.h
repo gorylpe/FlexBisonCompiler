@@ -191,36 +191,48 @@ public:
             Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *from);
 
             if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
-                cerr << "PROPAGATED" << endl;
-                cerr << toString() << endl;
-                cerr << " TO " << endl;
+                stringstream ss;
+                if(pflags.verbose()) {
+                    ss << "PROPAGATED" << endl;
+                    ss << toString() << endl;
+                    ss << " TO " << endl;
+                }
 
                 from = prevExpr->val1->clone();
 
-                cerr << toString() << endl << endl;
-                
+                if(pflags.verbose()) {
+                    ss << toString() << endl << endl;
+                    cerr << ss.str();
+                }
+
                 propagated++;
             }
         }
-        
+
         if(to->isTypeIDENTIFIER() && to->ident->isTypePID()){
             Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *to);
 
             if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
-                cerr << "PROPAGATED" << endl;
-                cerr << toString() << endl;
-                cerr << " TO " << endl;
+                stringstream ss;
+                if(pflags.verbose()) {
+                    ss << "PROPAGATED" << endl;
+                    ss << toString() << endl;
+                    ss << " TO " << endl;
+                }
 
                 to = prevExpr->val1->clone();
 
-                cerr << toString() << endl << endl;
-                
+                if(pflags.verbose()) {
+                    ss << toString() << endl << endl;
+                    cerr << ss.str();
+                }
+
                 propagated++;
             }
         }
-        
+
         propagated += block->propagateValues(assgnsHelper, usagesHelper);
-        
+
         return propagated;
     }
 
@@ -234,7 +246,7 @@ public:
                 return new CommandsBlock();
             } else if(!increasing && from->num->num < to->num->num){
                 return new CommandsBlock();
-            } else {
+            } else if(pflags.unrollFors()){
                 auto newBlock = new CommandsBlock();
                 if(increasing){
                     for(cl_I i = from->num->num; i <= to->num->num; ++i){
@@ -252,7 +264,8 @@ public:
                     }
                 }
 
-                cerr << "UNROLLING FOR TO " << newBlock->commands.size() << " CMDS" << endl;
+                if(pflags.verbose())
+                    cerr << "UNROLLING FOR TO " << newBlock->commands.size() << " CMDS" << endl;
 
                 return newBlock;
             }
@@ -288,22 +301,12 @@ public:
         block->collectSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
-        /*cerr << "PRE FOR" << endl;
-        cerr << tmpStats.toString() << endl;*/
 
         stats.mergeWithOldSSAs(prewhileSSAs);
 
-        /*cerr << "FOR MERGED" << endl;
-        cerr << stats.toString() << endl;*/
-
         block->collectSSANumbersInIdentifiers(stats);
-       /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;
-        cerr << IdentifiersSSAHelper::SSAsToString(beforeForSSAs) << endl;*/
 
         stats.mergeWithOldSSAs(beforeForSSAs);
-
-        /*cerr << "AFTER FOR" << endl;
-        cerr << stats.toString() << endl;*/
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

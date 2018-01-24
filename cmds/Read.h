@@ -40,7 +40,9 @@ public:
     }
 
     void generateCode() final{
+        #ifdef DEBUG_LOG_GENERATING_CODE
         cerr << "Generating " << toString() << endl;
+        #endif
         this->ident->prepareIfNeeded();
 
         machine.GET();
@@ -60,8 +62,22 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
         if(ident->isTypePIDPID()){
+            stringstream ss;
+            if(pflags.verbose()) {
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
+
             if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
                 ++propagated;
+            }
+
+            if(pflags.verbose()){
+                if(propagated > 0){
+                    ss << toString() << endl;
+                    cerr << ss.str();
+                }
             }
         }
         return propagated;

@@ -122,11 +122,25 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
 
+        stringstream ss;
+        if(pflags.verbose()) {
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
+        }
+
         if(Assignment::tryToPropagatePidpidInCondition(assgnsHelper, usagesHelper, *cond))
             propagated++;
 
         if(Assignment::tryToPropagateExpressionsValueToTwoValuesInCondition(assgnsHelper, usagesHelper, *cond))
             propagated++;
+
+        if(pflags.verbose()){
+            if(propagated > 0){
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
+        }
 
         propagated += block1->propagateValues(assgnsHelper, usagesHelper);
         propagated += block2->propagateValues(assgnsHelper, usagesHelper);

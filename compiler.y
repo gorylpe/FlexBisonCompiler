@@ -235,9 +235,9 @@ int main(int argc, char* argv[]) {
     cerr << "Compilation started" << endl;
     cerr.flush();
     try {
-        cerr << "---PARSING---" << endl;
+        if(pflags.verbose())
+            cerr << "---PARSING---" << endl;
         yyparse();
-        cerr << "---PARSING END---" << endl << endl;
         cout << program.generateCode();
     } catch(const std::exception&) {
         return EXIT_FAILURE;

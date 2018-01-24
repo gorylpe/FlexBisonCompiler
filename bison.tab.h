@@ -42,6 +42,7 @@ extern int yydebug;
 /* "%code requires" blocks.  */
 #line 1 "compiler.y" /* yacc.c:1909  */
 
+    #include "ProgramFlags.h"
     #include "Number.h"
     #include "Identifier.h"    
     #include "Expression.h"    
@@ -56,7 +57,7 @@ extern int yydebug;
     #include "cmds/While.h"
     #include "cmds/Write.h"
 
-#line 60 "bison.tab.h" /* yacc.c:1909  */
+#line 61 "bison.tab.h" /* yacc.c:1909  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -105,7 +106,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 65 "compiler.y" /* yacc.c:1909  */
+#line 67 "compiler.y" /* yacc.c:1909  */
 
     std::string* str;
     cln::cl_I*   num;
@@ -116,7 +117,7 @@ union YYSTYPE
     Command*     cmd;
     Condition*   cond;
 
-#line 120 "bison.tab.h" /* yacc.c:1909  */
+#line 121 "bison.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

@@ -5,6 +5,7 @@
 
 using namespace std;
 
+#define pflags ProgramFlags::getInstance()
 #define memory MachineContext::getInstance().mem
 #define machine MachineContext::getInstance()
 

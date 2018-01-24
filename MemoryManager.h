@@ -9,6 +9,7 @@
 #include "Variable.h"
 #include "Position.h"
 #include "Utils.h"
+#include "ProgramFlags.h"
 
 using namespace std;
 using namespace cln;
@@ -167,9 +168,11 @@ public:
         optimizeArraysMemoryPointers();
     }
 
-    void optimizeArraysMemoryPointers(){
-        cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION---" << endl;
-        cerr << memoryToString();
+    void optimizeArraysMemoryPointers() {
+        if (pflags.verbose()){
+            cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION---" << endl;
+            cerr << memoryToString();
+        }
 
         vector<Variable*> singles;
         for(auto& entry : variables) {
@@ -204,8 +207,10 @@ public:
             }
         }
 
-        cerr << "AFTER OPTIMIZATION" << endl;
-        cerr << memoryToString();
-        cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION END---" << endl << endl;
+        if(pflags.verbose()) {
+            cerr << "AFTER OPTIMIZATION" << endl;
+            cerr << memoryToString();
+            cerr << "---ARRAYS MOVING TO MEMORY START OPTIMIZATION END---" << endl << endl;
+        }
     }
 };

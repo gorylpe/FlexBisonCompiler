@@ -72,6 +72,13 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
 
+        stringstream ss;
+        if(pflags.verbose()) {
+            ss << "PROPAGATED" << endl;
+            ss << toString() << endl;
+            ss << " TO " << endl;
+        }
+
         if(val->isTypeIDENTIFIER() && val->ident->isTypePIDPID()){
             if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *val->ident)){
                 ++propagated;
@@ -84,6 +91,13 @@ public:
             if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
                 val = prevExpr->val1->clone();
                 ++propagated;
+            }
+        }
+
+        if(pflags.verbose()){
+            if(propagated > 0){
+                ss << toString() << endl;
+                cerr << ss.str();
             }
         }
 

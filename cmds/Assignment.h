@@ -109,77 +109,96 @@ public:
     int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
         int propagated = 0;
 
-        //cerr << "ASSIGNMENT PROPAGATING " << toString() << endl;
-
         stringstream ss;
 
-        ss << "PROPAGATED" << endl;
-        ss << toString() << endl;
-        ss << " TO " << endl;
-
-        if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
-            ss << toString() << endl;
-            cerr << ss.str();
-
-            propagated++;
-
-            ss.clear();
+        if(pflags.verbose()){
             ss << "PROPAGATED" << endl;
             ss << toString() << endl;
             ss << " TO " << endl;
+        }
+
+        if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
+
+            propagated++;
+
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
         }
 
         if(tryToPropagatePidpidInExpression(assgnsHelper, usagesHelper, *expr)){
-            ss << toString() << endl;
-            cerr << ss.str();
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
 
             propagated++;
             expr->simplifyExpression();
 
-            ss.clear();
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
         }
 
         if(tryToPropagateExpressionsAnyTypeToSingleValue(assgnsHelper, usagesHelper, *expr)){
-            ss << toString() << endl;
-            cerr << ss.str();
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
 
             propagated++;
             expr->simplifyExpression();
 
-            ss.clear();
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
-
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
         }
 
         if(tryToPropagateExpressionsValueToTwoValuesInExpression(assgnsHelper, usagesHelper, *expr)){
-            ss << toString() << endl;
-            cerr << ss.str();
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
 
-            expr->simplifyExpression();
             propagated++;
+            expr->simplifyExpression();
 
-            ss.clear();
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
         }
 
         if(tryToPropagateExpressionsAdditionToTypeAddition(assgnsHelper, usagesHelper, *expr)){
-            ss << toString() << endl;
-            cerr << ss.str();
+            if(pflags.verbose()) {
+                ss << toString() << endl;
+                cerr << ss.str();
+            }
 
-            expr->simplifyExpression();
             propagated++;
+            expr->simplifyExpression();
 
-            ss.clear();
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
+            if(pflags.verbose()) {
+                ss.clear();
+                ss << "PROPAGATED" << endl;
+                ss << toString() << endl;
+                ss << " TO " << endl;
+            }
         }
 
         return propagated;

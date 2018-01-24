@@ -1,25 +1,26 @@
-( sito Eratostenesa 
-	ROZWIJANIE PETLI FOR
+( loopiii.imp - zagniezdzone petle 
+	0 0 0
+	31000 40900 2222010
+	
+	1 0 2
+	31001 40900 2222012
 )
-VAR
-    n a t[5]
+VAR 
+	a b c
 BEGIN
-    a := 3;
-	READ t[a];
-    n := 4;
-	t[a] := a;
-	t[n] := n;
-	t[0] := t[a] + t[n];
-	IF t[a] > t[n] THEN
-		WRITE t[n];
-	ENDIF
-	IF t[a] >= t[n] THEN
-		WRITE t[n];
-	ELSE
-		WRITE t[a];
-	ENDIF
-
-	FOR i FROM t[a] TO t[n] DO
-		WRITE i;
+	READ a;
+	READ b;
+	READ c;
+	FOR i FROM 111091 TO 111110 DO
+		FOR j FROM 209 DOWNTO 200 DO
+			FOR k FROM 11 TO 20 DO
+				a := a + k;
+			ENDFOR
+			b := b + j;
+		ENDFOR
+		c := c + i;
 	ENDFOR
+	WRITE a;
+	WRITE b;
+	WRITE c;
 END

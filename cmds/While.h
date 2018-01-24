@@ -151,21 +151,13 @@ public:
         block->collectSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
-        /*cerr << "PRE WHILE" << endl;
-        cerr << tmpStats.toString() << endl;*/
 
         prevStats.mergeWithOldSSAs(prewhileSSAs);
-
-        /*cerr << "MERGED WHILE WITH PREWHILE" << endl;
-        cerr << prevStats.toString() << endl;*/
 
         prevStats.setForUsages(cond->getIdentifiers());
         block->collectSSANumbersInIdentifiers(prevStats);
 
         prevStats.mergeWithOldSSAs(beforeWhileSSAs);
-
-        /*cerr << "AFTER WHILE" << endl;
-        cerr << prevStats.toString() << endl;*/
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

@@ -12,64 +12,50 @@ public:
         this->block = block;
     }
 
-    void ASTOptimizations(){
-        block->replaceCommands();
-        block->simplifyExpressions();
-        valuesPropagation();
-        optimizeNumbers();
-    }
-
     void valuesPropagation(){
         bool propagated;
 
         do{
             propagated = false;
 
-            IdentifiersSSAHelper stats;
-            cerr << "!!!STATS!!!" << endl;
-            block->collectSSANumbersInIdentifiers(stats);
-            cerr << stats.toString() << endl;
+            IdentifiersSSAHelper ssas;
+            block->collectSSANumbersInIdentifiers(ssas);
 
-            block->print(0);
-
-            //collect usages data after propagation
             IdentifiersUsagesHelper usages;
-            cerr << "!!!USAGES!!!" << endl;
             block->collectUsagesData(usages);
-            cerr << usages.toString() << endl;
 
             IdentifiersAssignmentsHelper assignments;
             block->collectAssignmentsForIdentifiers(assignments);
 
-            for(auto& entry : assignments.assignments){
-                cerr << "Collected " << entry.second->assignments.size() << " assignments for " << entry.first << endl;
-            }
-
-            cerr << "PROPAGATING" << endl;
+            if(pflags.verbose())
+                cerr << "---PROPAGATING VALUES---" << endl;
             int propagationsDone = block->propagateValues(assignments, usages);
-            cerr << "Propagated " << propagationsDone << " values" << endl;
+            if(pflags.verbose())
+                cerr << "Propagated " << propagationsDone << " values" << endl;
 
-            block->print(0);
-
-            cerr << "!!!USAGES AFTER PROPAGATION!!!" << endl;
             usages = IdentifiersUsagesHelper();
             block->collectUsagesData(usages);
-            cerr << usages.toString() << endl;
+
 
             int unusedFound = block->searchUnusedAssignmentsAndSetForDeletion(usages);
-            cerr << "FOUND " << unusedFound << " UNUSED ASSIGNMENTS" << endl;
+            if(pflags.verbose())
+                cerr << "FOUND " << unusedFound << " UNUSED ASSIGNMENTS" << endl;
 
             block->simplifyExpressions();
-            cerr << "EXPRESSIONS SIMPLIFIED" << endl;
+            if(pflags.verbose())
+                cerr << "EXPRESSIONS SIMPLIFIED" << endl;
 
             block->replaceCommands();
-            cerr << "REPLACED COMMANDS" << endl;
+            if(pflags.verbose())
+                cerr << "REPLACED COMMANDS" << endl;
 
             block->simplifyExpressions();
-            cerr << "EXPRESSIONS SIMPLIFIED" << endl;
+            if(pflags.verbose())
+                cerr << "EXPRESSIONS SIMPLIFIED" << endl;
 
             block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
-            cerr << "SEMANTIC ANALYSIS DONE" << endl;
+            if(pflags.verbose())
+                cerr << "SEMANTIC ANALYSIS DONE" << endl;
 
             if(unusedFound > 0 || propagationsDone > 0)
                 propagated = true;
@@ -81,12 +67,18 @@ public:
 
         block->collectNumberValues(stats);
 
+        if(pflags.verbose()) {
+            cerr << "---NUMBERS STATS---" << endl;
+        }
+
         for(auto& entry : stats){
             const cl_I& num = entry.first;
             const auto& stat = entry.second;
 
-            cerr << "---NUMBER " << num << " ---" << endl;
-            cerr << stat.toString() << endl;
+            if(pflags.verbose()){
+                cerr << " -NUMBER " << num << " STATS- " << endl;
+                cerr << stat.toString() << endl;
+            }
         }
 
         for(auto& entry : stats){
@@ -98,17 +90,16 @@ public:
                 continue;
             }
 
-            cerr << "Optimizing " << num << endl;
-
             const cl_I opsToLoadSingle = Number::getLoadToAccumulatorOperations(num);
 
             const cl_I& opsToAddSub = num * (stat.numberOfAdditions + stat.numberOfSubtractions);
             const cl_I& opsToAddSubStored = opsToLoadSingle + STORE_OPS + LOAD_OPS * (stat.numberOfAdditions + stat.numberOfSubtractions);
 
-            cerr << "Load ops              " << opsToLoadSingle << endl;
-
-            cerr << "Ops to add+sub stored " << opsToAddSubStored << endl;
-            cerr << "Ops to add+sub        " << opsToAddSub << endl;
+            if(pflags.verbose()) {
+                cerr << "OPTIMIZING NUMBER " << num << endl;
+                cerr << "Time needed for adding and subbing direct number:   " << opsToAddSub << endl;
+                cerr << "Time needed for store and add sub using identifier: " << opsToAddSubStored << endl;
+            }
 
             bool profitable = false;
 
@@ -118,7 +109,10 @@ public:
             }
 
             if(profitable){
-                cerr << "Optimizing subtractions and additions" << endl;
+                if(pflags.verbose()){
+                    cerr << "Optimization profitable!" << endl;
+                    cerr << "Optimizing subtractions and additions" << endl;
+                }
                 string pid = memory.addNumberVariable();
 
                 auto number = new Number(nullptr, num);
@@ -137,7 +131,8 @@ public:
                 }
 
                 if(LOAD_OPS < opsToLoadSingle){
-                    cerr << "Optimizing loads" << endl;
+                    if(pflags.verbose())
+                        cerr << "Optimizing loads" << endl;
                     for(auto valLoad : stat.valsLoaded){
                         valLoad->setIdentifier(new Identifier(ident));
                     }
@@ -149,27 +144,35 @@ public:
 
     string generateCode(){
         block->semanticAnalysis();
+        //replacing commands like for with constants
+        block->replaceCommands();
+        //simplify for example 1+1 to 2
+        block->simplifyExpressions();
+        valuesPropagation();
+        optimizeNumbers();
 
-        this->ASTOptimizations();
+        if(pflags.verbose()) {
+            cerr << "---OPTIMIZED CODE---" << endl;
+            block->print(0);
+            cerr << "---END OPTIMIZED CODE---" << endl << endl;
+        }
 
-        cerr << "---OPTIMIZED CODE---" << endl;
-        block->print(0);
-        cerr << "---END OPTIMIZED CODE---" << endl << endl;
+        if(pflags.optimizeMemory()){
+            //calculate usages for sorting - moving most used tabs to start of memory
+            block->calculateVariablesUsage(0);
+            memory.optimize();
+        }
 
-        //after removing unused variables
-
-        this->block->calculateVariablesUsage(0);
-
-        memory.optimize();
-
-        cerr << "---GENERATING ASSEMBLY CODE---" << endl;
+        if(pflags.verbose())
+            cerr << "---GENERATING ASSEMBLY CODE---" << endl;
         this->block->generateCode();
         machine.HALT();
-        cerr << "---GENERATING ASSEMBLY CODE END---" << endl << endl;
+
 
         machine.optimize();
 
-        cerr << "---SAVING ASSEMBLY CODE---" << endl;
+        if(pflags.verbose())
+            cerr << "---SAVING ASSEMBLY CODE---" << endl;
         stringstream ss;
         machine.generateCode(ss);
 

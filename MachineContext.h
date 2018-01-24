@@ -28,8 +28,6 @@ public:
             cerr << endl << "---OPTIMIZING ASSEMBLY CODE---" << endl << endl;
         optimizeRedundandLoadsAfterStoreInContinuousCodeBlocks();
         optimizeRedundandStoresInContinuousCodeBlocks();
-        if(pflags.verbose())
-            cerr << endl << "---OPTIMIZING ASSEMBLY CODE END---" << endl << endl;
     }
 
     void generateCode(stringstream& ss){

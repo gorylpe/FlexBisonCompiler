@@ -4,16 +4,16 @@
 
 class ProgramFlags{
     ProgramFlags():whileUnrollsNumber(DEFUALT_WHILE_UNROLLS_NUMBER)
-    ,unrollFors(true)
-    ,optimizeSimilarNumbers(true)
-    ,propagateValues(true)
+    ,forsUnrolling(true)
+    ,optimizingSimilarNumbers(true)
+    ,propagatingValues(true)
     ,memoryOptimization(true)
     ,verboseOutput(true){};
 
     int whileUnrollsNumber;
-    bool unrollFors;
-    bool optimizeSimilarNumbers;
-    bool propagateValues;
+    bool forsUnrolling;
+    bool optimizingSimilarNumbers;
+    bool propagatingValues;
     bool memoryOptimization;
     bool verboseOutput;
 
@@ -32,15 +32,15 @@ public:
     }
 
     void setUnrollFors(bool newVal){
-        unrollFors = newVal;
+        forsUnrolling = newVal;
     }
 
     void setOptimizeSimilarNumbers(bool newVal){
-        optimizeSimilarNumbers = newVal;
+        optimizingSimilarNumbers = newVal;
     }
 
     void setPropagateValues(bool newVal){
-        propagateValues = newVal;
+        propagatingValues = newVal;
     }
 
     void setMemoryOptimization(bool newVal){
@@ -55,19 +55,19 @@ public:
         return whileUnrollsNumber;
     }
 
-    bool getUnrollFors(){
-        return unrollFors;
+    bool unrollFors(){
+        return forsUnrolling;
     }
 
-    bool getOptimizeSimilarNumbers(){
-        return optimizeSimilarNumbers;
+    bool optimizeSimilarNumbers(){
+        return optimizingSimilarNumbers;
     }
 
-    bool getPropagateValues(){
-        return propagateValues;
+    bool propagateValues(){
+        return propagatingValues;
     }
 
-    bool getMemoryOptimization(){
+    bool optimizeMemory(){
         return memoryOptimization;
     }
 
