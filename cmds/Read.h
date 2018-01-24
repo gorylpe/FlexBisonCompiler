@@ -64,9 +64,7 @@ public:
         if(ident->isTypePIDPID()){
             stringstream ss;
             if(pflags.verbose()) {
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
 
             if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){

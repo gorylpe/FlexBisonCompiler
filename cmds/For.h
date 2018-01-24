@@ -193,15 +193,13 @@ public:
             if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
                 stringstream ss;
                 if(pflags.verbose()) {
-                    ss << "PROPAGATED" << endl;
-                    ss << toString() << endl;
-                    ss << " TO " << endl;
+                    ss << "PROPAGATED " << toString() << "   --->   ";
                 }
 
                 from = prevExpr->val1->clone();
 
                 if(pflags.verbose()) {
-                    ss << toString() << endl << endl;
+                    ss << toString() << endl;
                     cerr << ss.str();
                 }
 
@@ -215,15 +213,13 @@ public:
             if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
                 stringstream ss;
                 if(pflags.verbose()) {
-                    ss << "PROPAGATED" << endl;
-                    ss << toString() << endl;
-                    ss << " TO " << endl;
+                    ss << "PROPAGATED " << toString() << "   --->   ";
                 }
 
                 to = prevExpr->val1->clone();
 
                 if(pflags.verbose()) {
-                    ss << toString() << endl << endl;
+                    ss << toString() << endl;
                     cerr << ss.str();
                 }
 
@@ -265,7 +261,7 @@ public:
                 }
 
                 if(pflags.verbose())
-                    cerr << "UNROLLING FOR TO " << newBlock->commands.size() << " CMDS" << endl;
+                    cerr << "UNROLLED FOR TO " << newBlock->commands.size() << " COMMANDS" << endl;
 
                 return newBlock;
             }

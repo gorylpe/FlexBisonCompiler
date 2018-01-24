@@ -1,26 +1,21 @@
-( loopiii.imp - zagniezdzone petle 
-	0 0 0
-	31000 40900 2222010
-	
-	1 0 2
-	31001 40900 2222012
+( sito Eratostenesa 
+	ROZWIJANIE PETLI FOR
 )
-VAR 
-	a b c
+VAR
+    n j sito[100]
 BEGIN
-	READ a;
-	READ b;
-	READ c;
-	FOR i FROM 111091 TO 111110 DO
-		FOR j FROM 209 DOWNTO 200 DO
-			FOR k FROM 11 TO 20 DO
-				a := a + k;
-			ENDFOR
-			b := b + j;
-		ENDFOR
-		c := c + i;
-	ENDFOR
-	WRITE a;
-	WRITE b;
-	WRITE c;
+    n := 100-1;
+    FOR i FROM n DOWNTO 2 DO
+        sito[i] := 1;
+    ENDFOR
+    FOR i FROM 2 TO n DO
+        IF sito[i] <> 0 THEN
+            j := i + i;
+            WHILE j <= n DO
+                sito[j] := 0;
+                j := j + i;
+            ENDWHILE
+            WRITE i;
+        ENDIF
+    ENDFOR
 END

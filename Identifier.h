@@ -84,7 +84,6 @@ public:
         return new Identifier(*this);
     }
 
-    //todo DO REFRATOR WITH THIS GETTERS
     bool isTypePID() {
         return type == PID;
     }
@@ -287,9 +286,13 @@ public:
     void replaceValuesWithConst(string pid, cl_I number){
         if(this->type == PIDPID){
             if(pidpid == pid){
-                cerr << "Constant in " << toString() << " propagated" << endl;
+                if(pflags.verbose())
+                    cerr << "PROPAGATED " << toString() << "   --->   ";
                 this->type = PIDNUM;
                 this->num = number;
+
+                if(pflags.verbose())
+                    cerr << toString() << endl;
             }
         }
     }
@@ -327,7 +330,7 @@ public:
             }
             isPreparedForPidpid = true;
 
-            cerr << "Identifier " << pid << "[" << pidpid << "] prepared" << endl;
+            //cerr << "Identifier " << pid << "[" << pidpid << "] prepared" << endl;
         }
     }
 
@@ -341,7 +344,8 @@ public:
                 memory.popTempVariable(); //preparedAddressForPidpid tmp variable
                 preparedAddressForPidpid = nullptr;
             }
-            cerr << "Identifier " << pid << "[" << pidpid << "] unprepared" << endl;
+
+            //cerr << "Identifier " << pid << "[" << pidpid << "] unprepared" << endl;
         }
     }
 

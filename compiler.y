@@ -238,11 +238,12 @@ void showHelp(){
     "Available params\n"
     "   -h --help             - shows this help\n"
     "   -v --verbose          - prints full log - default(false)\n"
-    "   -w --while n          - unroll while loops n times - default(50)\n"
+    "   -w --while n          - unroll while loops n times - default(50) - LOWER THIS IF YOU HAVE MULTIPLE NESTED LOOPS\n"
     "   -nf --no-for          - don't unroll for loops - default(false)\n"
     "   -nm --no-mem          - don't optimize variable declarations in memory - default(false)\n"
     "   -nn --no-num          - don't store similar numbers in new identifier if it's profitable - default(false)\n"
-    "   -np --no-propagation  - don't propagate values - default(false)\n";
+    "   -np --no-propagation  - don't propagate values - default(false)\n"
+    "   -nc --no-opt-code     - don't show resulted optimized code";
 
     cerr << help << endl;
 }
@@ -280,6 +281,8 @@ int main(int argc, char* argv[]) {
             pflags.setOptimizeSimilarNumbers(false);
         } else if(arg == "-np" || arg == "--no-propagation"){
             pflags.setPropagateValues(false);
+        } else if(arg == "-nc" || arg == "--no-opt-code"){
+            pflags.setShowOptimizedCode(false);
         } else {
             cerr << "Wrong param" << endl;
             return EXIT_FAILURE;

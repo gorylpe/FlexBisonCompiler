@@ -112,9 +112,7 @@ public:
         stringstream ss;
 
         if(pflags.verbose()){
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
+            ss << "PROPAGATED " << toString() << "   --->   ";
         }
 
         if(tryToPropagatePidpid(assgnsHelper, usagesHelper, *ident)){
@@ -127,9 +125,7 @@ public:
 
             if(pflags.verbose()) {
                 ss.clear();
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
         }
 
@@ -144,9 +140,7 @@ public:
 
             if(pflags.verbose()) {
                 ss.clear();
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
         }
 
@@ -161,9 +155,7 @@ public:
 
             if(pflags.verbose()) {
                 ss.clear();
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
         }
 
@@ -178,9 +170,7 @@ public:
 
             if(pflags.verbose()) {
                 ss.clear();
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
         }
 
@@ -195,9 +185,7 @@ public:
 
             if(pflags.verbose()) {
                 ss.clear();
-                ss << "PROPAGATED" << endl;
-                ss << toString() << endl;
-                ss << " TO " << endl;
+                ss << "PROPAGATED " << toString() << "   --->   ";
             }
         }
 

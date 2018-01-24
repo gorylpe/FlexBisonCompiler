@@ -124,9 +124,7 @@ public:
 
         stringstream ss;
         if(pflags.verbose()) {
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
+            ss << "PROPAGATED " << toString() << "   --->   ";
         }
 
         if(Assignment::tryToPropagatePidpidInCondition(assgnsHelper, usagesHelper, *cond))

@@ -8,7 +8,8 @@ class ProgramFlags{
     ,optimizingSimilarNumbers(true)
     ,propagatingValues(true)
     ,memoryOptimization(true)
-    ,verboseOutput(false){};
+    ,verboseOutput(false)
+    ,showingOptimizedCode(true){};
 
     int whileUnrollsNumber;
     bool forsUnrolling;
@@ -16,6 +17,7 @@ class ProgramFlags{
     bool propagatingValues;
     bool memoryOptimization;
     bool verboseOutput;
+    bool showingOptimizedCode;
 
 public:
     static ProgramFlags& getInstance()
@@ -51,6 +53,10 @@ public:
         verboseOutput = newVal;
     }
 
+    void setShowOptimizedCode(bool newVal){
+        showingOptimizedCode = newVal;
+    }
+
     int getWhileUnrollsNumber(){
         return whileUnrollsNumber;
     }
@@ -73,5 +79,9 @@ public:
 
     bool verbose(){
         return verboseOutput;
+    }
+
+    bool showOptimizedCode(){
+        return showingOptimizedCode;
     }
 };

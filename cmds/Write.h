@@ -73,11 +73,8 @@ public:
         int propagated = 0;
 
         stringstream ss;
-        if(pflags.verbose()) {
-            ss << "PROPAGATED" << endl;
-            ss << toString() << endl;
-            ss << " TO " << endl;
-        }
+        if(pflags.verbose())
+            ss << "PROPAGATED " << toString() << "   --->   ";
 
         if(val->isTypeIDENTIFIER() && val->ident->isTypePIDPID()){
             if(Assignment::tryToPropagatePidpid(assgnsHelper, usagesHelper, *val->ident)){
