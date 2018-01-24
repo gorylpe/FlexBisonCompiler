@@ -176,6 +176,7 @@ public:
 
     void simplifyExpression();
 
+    void bothNonConstValuesOptimizations();
     void bothConstValuesOptimizations();
     void oneConstLeftValueOptimizations();
     void oneConstRightValueOptimizations();

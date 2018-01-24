@@ -29,6 +29,7 @@ void Expression::simplifyExpression() {
         this->bothConstValuesOptimizations();
         this->oneConstLeftValueOptimizations();
         this->oneConstRightValueOptimizations();
+        this->bothNonConstValuesOptimizations();
         this->addingNumberOptimization();
     }
 }
@@ -64,6 +65,40 @@ void Expression::bothConstValuesOptimizations() {
         }
         //leave single val1
         this->type = VALUE;
+    }
+}
+
+
+void Expression::bothNonConstValuesOptimizations() {
+    if(val1->type == Value::Type::IDENTIFIER && val2->type == Value::Type::IDENTIFIER) {
+        switch (this->type) {
+            case ADDITION:
+                if(val1->equals(val2)){
+                    type = MULTIPLICATION;
+                    val2 = new Value(new Number(val2->ident->pos, 2));
+                }
+                break;
+            case SUBTRACTION:
+                if(val1->equals(val2)){
+                    type = VALUE;
+                    val1 = new Value(new Number(val1->ident->pos, 0));
+                }
+                break;
+            case DIVISION:
+                if(val1->equals(val2)){
+                    type = VALUE;
+                    val1 = new Value(new Number(val1->ident->pos, 1));
+                }
+                break;
+            case MODULO:
+                if(val1->equals(val2)){
+                    type = VALUE;
+                    val1 = new Value(new Number(val1->ident->pos, 0));
+                }
+                break;
+            default:
+                break;
+        }
     }
 }
 
