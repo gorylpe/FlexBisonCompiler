@@ -11,26 +11,6 @@ class Assignment;
 class Read;
 class Write;
 
-class IdentifierAssignment{
-public:
-    vector<Assignment*> assignments;
-
-    explicit IdentifierAssignment()
-    :assignments(vector<Assignment*>()){}
-
-    void addAssignment(Assignment* assignment){
-        assignments.push_back(assignment);
-    }
-
-    bool hasAssignmentForSSANum(int num){
-        return assignments[num] != nullptr;
-    }
-
-    Assignment* getAssignmentForSSANum(int num){
-        return assignments[num];
-    }
-};
-
 class IdentifierSSA{
 public:
     int lastSSANum;

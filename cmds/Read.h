@@ -52,6 +52,12 @@ public:
 
     void collectUsagesData(IdentifiersUsagesHelper &stats) final {}
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final { return 0; }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {}
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final { return 0; }
+
     CommandsBlock* blockToReplaceWith() final {
         return nullptr;
     }
@@ -60,7 +66,7 @@ public:
         this->ident->calculateVariablesUsage(numberOfNestedLoops);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         prevStats.setForStore(ident);
     }
 };

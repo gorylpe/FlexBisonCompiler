@@ -96,6 +96,18 @@ public:
         block->collectUsagesData(helper);
     }
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        return block->searchUnusedAssignmentsAndSetForDeletion(helper);
+    }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        block->collectAssignmentsForIdentifiers(helper);
+    }
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        return block->propagateValues(assgnsHelper, usagesHelper);
+    }
+
     //TODO do this edge case, check if cond will be const and false at start
 
     CommandsBlock* blockToReplaceWith() final{
@@ -117,30 +129,30 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         auto beforeWhileSSAs = prevStats.getSSAsCopy();
 
         IdentifiersSSAHelper & tmpStats = *prevStats.clone();
 
         tmpStats.setForUsages(cond->getIdentifiers());
-        block->calculateSSANumbersInIdentifiers(tmpStats);
+        block->collectSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
-        cerr << "PRE WHILE" << endl;
-        cerr << tmpStats.toString() << endl;
+        /*cerr << "PRE WHILE" << endl;
+        cerr << tmpStats.toString() << endl;*/
 
         prevStats.mergeWithOldSSAs(prewhileSSAs);
 
-        cerr << "MERGED WHILE WITH PREWHILE" << endl;
-        cerr << prevStats.toString() << endl;
+        /*cerr << "MERGED WHILE WITH PREWHILE" << endl;
+        cerr << prevStats.toString() << endl;*/
 
         prevStats.setForUsages(cond->getIdentifiers());
-        block->calculateSSANumbersInIdentifiers(prevStats);
+        block->collectSSANumbersInIdentifiers(prevStats);
 
         prevStats.mergeWithOldSSAs(beforeWhileSSAs);
 
-        cerr << "AFTER WHILE" << endl;
-        cerr << prevStats.toString() << endl;
+        /*cerr << "AFTER WHILE" << endl;
+        cerr << prevStats.toString() << endl;*/
     }
 
     void collectNumberValues(map<cl_I, NumberValueStats>& stats) final {

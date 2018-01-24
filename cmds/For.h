@@ -166,6 +166,18 @@ public:
         memory.popTempVariable(); //iterator
     }
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        return block->searchUnusedAssignmentsAndSetForDeletion(helper);
+    }
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        return block->propagateValues(assgnsHelper, usagesHelper);
+    }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        block->collectAssignmentsForIdentifiers(helper);
+    }
+
     CommandsBlock* blockToReplaceWith() final{
         if(from->type == Value::Type::NUM && to->type == Value::Type::NUM){
             if(increasing && from->num->num > to->num->num){
@@ -209,7 +221,7 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
         auto beforeForSSAs = stats.getSSAsCopy();
 
         IdentifiersSSAHelper & tmpStats = *stats.clone();
@@ -222,7 +234,7 @@ public:
         if(ident2 != nullptr){
             tmpStats.setForUsage(ident2);
         }
-        block->calculateSSANumbersInIdentifiers(tmpStats);
+        block->collectSSANumbersInIdentifiers(tmpStats);
 
         auto prewhileSSAs = tmpStats.getSSAsCopy();
         /*cerr << "PRE FOR" << endl;
@@ -240,7 +252,7 @@ public:
             stats.setForUsage(ident2);
         }
 
-        block->calculateSSANumbersInIdentifiers(stats);
+        block->collectSSANumbersInIdentifiers(stats);
        /* cerr << "AFTER FOR CALCULATIONS beforessa" << endl;
         cerr << IdentifiersSSAHelper::SSAsToString(beforeForSSAs) << endl;*/
 

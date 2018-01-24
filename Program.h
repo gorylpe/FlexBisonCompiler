@@ -13,42 +13,62 @@ public:
     }
 
     void ASTOptimizations(){
-        //block->replaceCommands();
+        block->replaceCommands();
         valuesPropagation();
         //block->print(0);
-        //removeUnusedAssignments();
-        block->print(0);
+        //searchUnusedAssignmentsAndSetForDeletion();
         //optimizeNumbers();
     }
 
     void valuesPropagation(){
-        bool propagated = false;
+        bool propagated;
 
         do{
+            propagated = false;
+
             IdentifiersSSAHelper stats;
             cerr << "!!!STATS!!!" << endl;
-            block->calculateSSANumbersInIdentifiers(stats);
+            block->collectSSANumbersInIdentifiers(stats);
             cerr << stats.toString() << endl;
 
-            block->print(0);
-
+            //collect usages data after propagation
             IdentifiersUsagesHelper usages;
             cerr << "!!!USAGES!!!" << endl;
             block->collectUsagesData(usages);
             cerr << usages.toString() << endl;
 
-            if(propagated)
-                cerr << "VALUES PROPAGATED" << endl;
+            IdentifiersAssignmentsHelper assignments;
+            block->collectAssignmentsForIdentifiers(assignments);
+
+            for(auto& entry : assignments.assignments){
+                cerr << "Collected " << entry.second->assignments.size() << " assignments for " << entry.first << endl;
+            }
+
+            cerr << "PROPAGATING" << endl;
+            int propagationsDone = block->propagateValues(assignments, usages);
+            cerr << "Propagated " << propagationsDone << " values" << endl;
+
+            block->print(0);
+
+            cerr << "!!!USAGES AFTER PROPAGATION!!!" << endl;
+            usages = IdentifiersUsagesHelper();
+            block->collectUsagesData(usages);
+            cerr << usages.toString() << endl;
+
+            int unusedFound = block->searchUnusedAssignmentsAndSetForDeletion(usages);
+            cerr << "FOUND " << unusedFound << " UNUSED ASSIGNMENTS" << endl;
 
             block->simplifyExpressions();
             cerr << "EXPRESSIONS SIMPLIFIED" << endl;
 
-            //block->replaceCommands();
+            block->replaceCommands();
             cerr << "REPLACED COMMANDS" << endl;
 
             block->semanticAnalysis(); //TODO REMOVE - only checking if optimizations didnt mess up
             cerr << "SEMANTIC ANALYSIS DONE" << endl;
-            return;
+
+            if(unusedFound > 0 || propagationsDone > 0)
+                propagated = true;
         } while(propagated);
     }
 
@@ -345,7 +365,7 @@ public:
     }
 
     string generateCode(){
-        //block->semanticAnalysis();
+        block->semanticAnalysis();
 
         this->ASTOptimizations();
 

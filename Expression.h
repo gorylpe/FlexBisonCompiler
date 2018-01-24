@@ -137,6 +137,31 @@ public:
         }
     }
 
+    bool hasPidpidOrPidnum(){
+        switch(type) {
+            case VALUE:
+                if (val1->isTypeIDENTIFIER()) {
+                    if (val1->getIdentifier()->isTypePIDPID() || val1->getIdentifier()->isTypePIDNUM()) {
+                        return true;
+                    }
+                }
+                break;
+            default:
+                if (val1->isTypeIDENTIFIER()) {
+                    if (val1->getIdentifier()->isTypePIDPID() || val1->getIdentifier()->isTypePIDNUM()) {
+                        return true;
+                    }
+                }
+                if (val2->isTypeIDENTIFIER()) {
+                    if (val2->getIdentifier()->isTypePIDPID() || val2->getIdentifier()->isTypePIDNUM()) {
+                        return true;
+                    }
+                }
+                break;
+        }
+        return false;
+    }
+
     void replaceValuesWithConst(string pid, cl_I number){
         switch(type){
             case VALUE:

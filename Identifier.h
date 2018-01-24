@@ -67,7 +67,9 @@ public:
     :pos(new Position(*ident2.pos))
     ,pid(string(ident2.pid))
     ,type(ident2.type)
-    ,isPreparedForPidpid(ident2.isPreparedForPidpid){
+    ,isPreparedForPidpid(ident2.isPreparedForPidpid)
+    ,ssaNums(ident2.ssaNums)
+    ,ssaNumsPidpid(ident2.ssaNumsPidpid){
         switch(ident2.type){
             case PIDNUM:
                 num = cl_I(ident2.num);

@@ -27,7 +27,7 @@ public:
 
     Number(const Number& num2)
     :pos(new Position(*num2.pos))
-    ,num(cl_I(num2.num)){}
+    ,num(num2.num){}
 
     Number* clone(){
         return new Number(*this);

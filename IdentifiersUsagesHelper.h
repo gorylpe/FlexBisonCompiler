@@ -1,38 +1,33 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 #include "Identifier.h"
 
 using namespace std;
 
-class Usages{
-    bool initUsage(int ssaNum){
-        if(usage.find(ssaNum) == usage.end()){
-            usage[ssaNum] = 0;
+class IdentifierUsages{
+    bool initValue(int ssaNum){
+        if(usages.find(ssaNum) == usages.end()){
+            usages[ssaNum] = 0;
             return true;
         }
         return false;
     }
 
 public:
-    map<int, int> usage;
+    unordered_map<int, int> usages;
 
-    explicit Usages() = default;
+    explicit IdentifierUsages() = default;
 
     void increaseUsage(int ssaNum){
-        initUsage(ssaNum);
-        usage[ssaNum]++;
-    }
-
-    void decreaseUsage(int ssaNum){
-        if(!initUsage(ssaNum)){
-            usage[ssaNum]--;
-        }
+        initValue(ssaNum);
+        usages[ssaNum]++;
     }
 
     int getUsage(int ssaNum){
-        initUsage(ssaNum);
-        return usage[ssaNum];
+        initValue(ssaNum);
+        return usages[ssaNum];
     }
 
     void addUsage(set<int>& ssaNums){
@@ -43,7 +38,7 @@ public:
 
     string toString(const string& pid) {
         stringstream ss;
-        for(int i = 0; i < usage.size(); ++i){
+        for(int i = 0; i < usages.size(); ++i){
             ss << pid << i << " uses: " << getUsage(i) << endl;
         }
         return ss.str();
@@ -55,13 +50,13 @@ class IdentifiersUsagesHelper {
 public:
     IdentifiersUsagesHelper() = default;
 
-    map<string, Usages*> usages;
+    map<string, IdentifierUsages*> assignments;
 
-    Usages* getUsages(string pid){
-        if(usages.find(pid) == usages.end()){
-            usages[pid] = new Usages();
+    IdentifierUsages* getUsages(string pid){
+        if(assignments.find(pid) == assignments.end()){
+            assignments[pid] = new IdentifierUsages();
         }
-        return usages.at(pid);
+        return assignments.at(pid);
     }
 
     void tryToAddUsageForPidpidInStore(Identifier* ident){
@@ -84,7 +79,7 @@ public:
         }
     };
 
-    static string usagesToString(map<string, Usages*> usages) {
+    static string usagesToString(map<string, IdentifierUsages*> usages) {
         stringstream ss;
         for(auto& entry : usages){
             const string& pid = entry.first;
@@ -96,7 +91,7 @@ public:
 
     string toString() const{
         stringstream ss;
-        ss << usagesToString(usages);
+        ss << usagesToString(assignments);
         return ss.str();
     }
 };

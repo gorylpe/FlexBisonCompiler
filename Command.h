@@ -8,6 +8,7 @@
 #include "Condition.h"
 #include "NumberValueStats.h"
 #include "IdentifiersUsagesHelper.h"
+#include "IdentifiersAssignmentsHelper.h"
 
 using namespace std;
 using namespace cln;
@@ -35,7 +36,7 @@ public:
 
     virtual void simplifyExpressions() = 0;
 
-    //used to remove not reachable ifs, unroll for's with constants
+    //used to remove not reachable ifs, unroll for's with constants, remove assignments
     virtual CommandsBlock* blockToReplaceWith() = 0;
 
     virtual void replaceCommands() {}
@@ -43,11 +44,17 @@ public:
     //for FOR unrolling - replacing iterator with consts
     virtual void replaceValuesWithConst(string pid, cl_I number) {}
 
-    virtual void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &helper) = 0;
+    virtual void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &helper) = 0;
 
     virtual void collectUsagesData(IdentifiersUsagesHelper &helper) = 0;
 
-    //for creating numbers optimal
+    virtual int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) = 0;
+
+    virtual void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) = 0;
+
+    virtual int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) = 0;
+
+        //for creating numbers optimal
     virtual void collectNumberValues(map<cl_I, NumberValueStats>& stats) {}
 };
 
@@ -126,12 +133,32 @@ public:
     }
 
     void collectUsagesData(IdentifiersUsagesHelper &helper) final {
-        bool hasPropagated = false;
-
         for(auto cmd : this->commands){
-            cerr << "COLLECTING USAGES DATA FOR " << typeid(*cmd).name() << endl;
             cmd->collectUsagesData(helper);
         }
+    }
+
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        int removed = 0;
+        for(auto cmd : this->commands) {
+            removed += cmd->searchUnusedAssignmentsAndSetForDeletion(helper);
+        }
+        return removed;
+    }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        for(auto cmd : this->commands) {
+            cmd->collectAssignmentsForIdentifiers(helper);
+        }
+    }
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        int propagated = 0;
+        for(auto cmd : this->commands) {
+            //cerr << "Propagating " << typeid(*cmd).name() << endl;
+            propagated += cmd->propagateValues(assgnsHelper, usagesHelper);
+        }
+        return propagated;
     }
 
     CommandsBlock* blockToReplaceWith() final {
@@ -160,10 +187,10 @@ public:
         }
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         for(auto cmd : this->commands){
             //cerr << "STATS FOR " << typeid(*cmd).name() << endl;
-            cmd->calculateSSANumbersInIdentifiers(prevStats);
+            cmd->collectSSANumbersInIdentifiers(prevStats);
         }
     };
 

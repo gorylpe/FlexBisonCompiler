@@ -81,6 +81,18 @@ public:
         block->collectUsagesData(helper);
     }
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        return block->searchUnusedAssignmentsAndSetForDeletion(helper);
+    }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        block->collectAssignmentsForIdentifiers(helper);
+    }
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        return block->propagateValues(assgnsHelper, usagesHelper);
+    }
+
     CommandsBlock* blockToReplaceWith() final{
         if(cond->isComparisionConst()){
             if(cond->getComparisionConstResult()){
@@ -102,12 +114,12 @@ public:
         block->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
         prevStats.setForUsages(cond->getIdentifiers());
 
         auto oldSSAs = prevStats.getSSAsCopy();
 
-        block->calculateSSANumbersInIdentifiers(prevStats);
+        block->collectSSANumbersInIdentifiers(prevStats);
 
         prevStats.mergeWithOldSSAs(oldSSAs);
     }

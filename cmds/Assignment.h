@@ -69,7 +69,6 @@ public:
 
         if(!this->expr->equals(assgn2->expr))
             return false;
-        cerr << " asg" << endl;
 
         return true;
     }
@@ -86,95 +85,182 @@ public:
     void collectUsagesData(IdentifiersUsagesHelper &helper) final {
         helper.tryToAddUsageForPidpidInStore(ident);
         helper.addUsages(expr->getIdentifiers());
-
-        /*if(!ident->isTypePID())
-            return false;
-
-        cerr << "ASSIGNMENT PROPAGATE VALUE" << endl;
-        if(ident->isUniquelyDefinied()){
-            const string& pid = ident->pid;
-            const int SSANum = ident->getUniqueSSANum();
-
-            int SSAUses = stats.getUse(pid)->getUsageForSSANum(SSANum);
-            if(SSAUses == 0){
-                setUnused();
-                hasPropagated = true;
-            }
-        }
-
-        if(expr->isTypeVALUE()){
-            if(expr->val1->isTypeIDENTIFIER()){
-                Identifier* previousIdent = expr->val1->getIdentifier();
-
-                if(!previousIdent->isTypePID())
-                    return false;
-
-                if(previousIdent->isUniquelyDefinied()){
-                    const string& prevPid = previousIdent->pid;
-                    const int prevSSANum = previousIdent->getUniqueSSANum();
-
-                    int prevSSAUses = stats.getUse(prevPid)->getUsageForSSANum(prevSSANum);
-                    if(prevSSAUses == 1){
-                        if(stats.getAssignments(prevPid)->hasAssignmentForSSANum(prevSSANum)){
-                            Assignment* prevAssignment = stats.getAssignments(prevPid)->getAssignmentForSSANum(prevSSANum);
-                            Expression* prevExpr = prevAssignment->expr;
-
-                            cerr << "OLD EXPR" << endl;
-                            cerr << toString() << endl;
-                            expr->type = prevExpr->type;
-                            expr->val1 = prevExpr->val1;
-                            expr->val2 = prevExpr->val2;
-
-                            cerr << "NEW EXPR" << endl;
-                            cerr << toString() << endl;
-
-                            stats.getUse(prevPid)->removeUsageForSSANum(prevSSANum);
-
-                            hasPropagated = true;
-                        }
-                    }
-                }
-            }
-        } else {
-            propagateValue(expr->val1, stats);
-            propagateValue(expr->val2, stats);
-        }*/
     }
 
-    static bool propagateValue(Value* val, IdentifiersSSAHelper &stats) {
-        bool hasPropagated = false;
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        if(ident->isTypePID() && ident->isUniquelyDefinied()){
+            int usages = helper.getUsages(ident->pid)->getUsage(ident->getUniqueSSANum());
+            if(usages == 0){
+                this->setUnused();
+                return 1;
+            }
+        }
+        return 0;
+    }
 
-        /*if(val->isTypeIDENTIFIER()){
-            const string& pid = val->ident->pid;
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        if(ident->isUniquelyDefinied()){
+            helper.addAssignment(this, ident->pid, ident->getUniqueSSANum());
+        }
+    }
 
-            if(!val->ident->isTypePID()){
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        bool propagated;
+
+        cerr << "ASSIGNMENT PROPAGATING " << toString() << endl;
+
+        stringstream ss;
+
+        ss << "PROPAGATED" << endl;
+        ss << toString() << endl;
+        ss << " TO " << endl;
+
+        propagated = tryToPropagateExpressionsAnyTypeToSingleValue(assgnsHelper, usagesHelper, *expr);
+        if(propagated){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            expr->simplifyExpression();
+            return 1;
+        }
+
+        propagated = tryToPropagateExpressionsValueToTwoValues(assgnsHelper, usagesHelper, *expr);
+        if(propagated){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            expr->simplifyExpression();
+            return 1;
+        }
+
+        propagated = tryToPropagateExpressionsAdditionToTypeAddition(assgnsHelper, usagesHelper, *expr);
+        if(propagated){
+            ss << toString() << endl;
+            cerr << ss.str();
+
+            expr->simplifyExpression();
+            return 1;
+        }
+
+        return 0;
+    }
+
+    static bool tryToPropagateExpressionsAdditionToTypeAddition(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                IdentifiersUsagesHelper &usagesHelper, Expression &expr) {
+        if(expr.isTypeADDITION()){
+            bool reversed;
+            if(expr.val1->isTypeIDENTIFIER() && expr.val2->isTypeNUM()){
+                reversed = false;
+            } else if(expr.val2->isTypeIDENTIFIER() && expr.val1->isTypeNUM()) {
+                reversed = true;
+            } else {
                 return false;
             }
 
-            if(val->ident->isUniquelyDefinied()){
-                int valSSANum = val->ident->getUniqueSSANum();
-                if(stats.getAssignments(pid)->hasAssignmentForSSANum(valSSANum)){
-                    Assignment* assign = stats.getAssignments(pid)->getAssignmentForSSANum(valSSANum);
-
-                    int ssaUses = stats.getUse(pid)->getUsageForSSANum(valSSANum);
-                    if(ssaUses > 0){
-                        if(assign->expr->isTypeVALUE()){
-                            val->type = assign->expr->val1->type;
-                            val->ident = assign->expr->val1->ident;
-                            val->num = assign->expr->val1->num;
-                            cerr << "PROPAGATING VALUE" << endl;
-                            cerr << pid << " <- " << assign->toString() << endl;
-
-                            stats.getUse(pid)->removeUsageForSSANum(valSSANum);
-
-                            hasPropagated = true;
-                        }
-                    }
-                }
+            if(expr.hasPidpidOrPidnum()){
+                return false;
             }
-        }*/
 
-        return hasPropagated;
+            Value* identValue = reversed ? expr.val2 : expr.val1;
+            Value* numValue = reversed ? expr.val1 : expr.val2;
+
+            auto prevExpr = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *identValue);
+            if(prevExpr != nullptr && prevExpr->isTypeADDITION()){
+                bool prevReversed;
+                if(prevExpr->val1->isTypeIDENTIFIER() && prevExpr->val2->isTypeNUM()){
+                    prevReversed = false;
+                } else if(prevExpr->val2->isTypeIDENTIFIER() && prevExpr->val1->isTypeNUM()) {
+                    prevReversed = true;
+                } else {
+                    //addition of 2 numbers of 2 identifiers
+                    return false;
+                }
+
+                Value* prevIdentValue = prevReversed ? prevExpr->val2 : prevExpr->val1;
+                Value* prevNumValue = prevReversed ? prevExpr->val1 : prevExpr->val2;
+
+                numValue->num->num += prevNumValue->num->num;
+                identValue->ident = prevIdentValue->ident->clone();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
+    static bool tryToPropagateExpressionsAnyTypeToSingleValue(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                              IdentifiersUsagesHelper &usagesHelper, Expression &expr) {
+        if(expr.isTypeVALUE()){
+            auto prevExpr = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *expr.val1);
+            if(prevExpr != nullptr){
+                expr = *prevExpr->clone();
+                return true;
+            }
+        }
+
+        return false;
+    }
+    static bool tryToPropagateExpressionsValueToTwoValues(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                              IdentifiersUsagesHelper &usagesHelper, Expression &expr) {
+        if(!expr.isTypeVALUE()) {
+            bool propagated = false;
+
+            auto prevExpr1 = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *expr.val1);
+            if(prevExpr1 != nullptr && prevExpr1->isTypeVALUE()){
+                expr.val1 = prevExpr1->val1->clone();
+                propagated = true;
+            }
+
+            auto prevExpr2 = getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *expr.val2);
+            if(prevExpr2 != nullptr && prevExpr2->isTypeVALUE()){
+                expr.val2 = prevExpr2->val1->clone();
+                propagated = true;
+            }
+
+            return propagated;
+        }
+
+        return false;
+    }
+
+    static Expression* getExpressionAssignedToValueWithOneUsage(IdentifiersAssignmentsHelper &assgnsHelper,
+                                                                IdentifiersUsagesHelper &usagesHelper, Value &val){
+        if(!val.isTypeIDENTIFIER()) {
+            return nullptr;
+        }
+
+        Identifier* ident = val.getIdentifier();
+        if(!ident->isUniquelyDefinied())
+            return nullptr;
+
+        const string& pid = ident->pid;
+        int ssaNum = ident->getUniqueSSANum();
+
+        if(!assgnsHelper.hasAssignment(pid, ssaNum))
+            return nullptr;
+
+        Assignment* prevAssignment = assgnsHelper.getAssignment(pid, ssaNum);
+        Identifier* prevIdent = prevAssignment->ident;
+        if(!prevIdent->isUniquelyDefinied())
+            return nullptr;
+
+
+        const string& prevPid = prevIdent->pid;
+        int prevSSANum = prevIdent->getUniqueSSANum();
+
+        int prevIdentUsages = usagesHelper.getUsages(prevPid)->getUsage(prevSSANum);
+        //this 1 usage removes previous assignment from code
+        if(prevIdentUsages != 1)
+            return nullptr;
+
+        Expression* prevExpr = prevAssignment->expr;
+        if(prevExpr->hasPidpidOrPidnum())
+            return nullptr;
+
+        return prevExpr;
     }
 
     CommandsBlock* blockToReplaceWith() final {
@@ -194,9 +280,9 @@ public:
         expr->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &prevStats) final {
-        prevStats.setForUsages(expr->getIdentifiers());
-        prevStats.setForStore(ident);
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+        stats.setForUsages(expr->getIdentifiers());
+        stats.setForStore(ident);
     }
 
     void setUnused(){

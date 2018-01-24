@@ -63,6 +63,30 @@ public:
         }
     }
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final { return 0; }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {}
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+
+        if(val->isTypeIDENTIFIER() && !val->ident->isTypePID())
+            return false;
+
+        Expression* prevExpr = Assignment::getExpressionAssignedToValueWithOneUsage(assgnsHelper, usagesHelper, *val);
+
+        if(prevExpr != nullptr && prevExpr->isTypeVALUE()){
+            cerr << "PROPAGATED" << endl;
+            cerr << toString() << endl;
+            cerr << " TO " << endl;
+
+            val = prevExpr->val1->clone();
+
+            cerr << toString() << endl << endl;
+            return 1;
+        }
+        return 0;
+    }
+
     CommandsBlock* blockToReplaceWith() final {
         return nullptr;
     }
@@ -71,7 +95,7 @@ public:
         val->replaceIdentifierWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
         if(val->isTypeIDENTIFIER()){
             stats.setForUsage(val->getIdentifier());
         }

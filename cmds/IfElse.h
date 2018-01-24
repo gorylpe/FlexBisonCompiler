@@ -104,6 +104,25 @@ public:
         block2->collectUsagesData(helper);
     }
 
+    int searchUnusedAssignmentsAndSetForDeletion(IdentifiersUsagesHelper &helper) final {
+        int removed = 0;
+        removed += block1->searchUnusedAssignmentsAndSetForDeletion(helper);
+        removed += block2->searchUnusedAssignmentsAndSetForDeletion(helper);
+        return removed;
+    }
+
+    void collectAssignmentsForIdentifiers(IdentifiersAssignmentsHelper& helper) final {
+        block1->collectAssignmentsForIdentifiers(helper);
+        block2->collectAssignmentsForIdentifiers(helper);
+    }
+
+    int propagateValues(IdentifiersAssignmentsHelper &assgnsHelper, IdentifiersUsagesHelper &usagesHelper) final {
+        int propagated = 0;
+        propagated += block1->propagateValues(assgnsHelper, usagesHelper);
+        propagated += block2->propagateValues(assgnsHelper, usagesHelper);
+        return propagated;
+    }
+
     CommandsBlock* blockToReplaceWith() final{
         if(cond->isComparisionConst()){
             if(cond->getComparisionConstResult()){
@@ -127,18 +146,18 @@ public:
         block2->replaceValuesWithConst(pid, number);
     }
 
-    void calculateSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
+    void collectSSANumbersInIdentifiers(IdentifiersSSAHelper &stats) final {
         stats.setForUsages(cond->getIdentifiers());
 
         auto oldSSAs = stats.getSSAsCopy();
 
-        block1->calculateSSANumbersInIdentifiers(stats);
+        block1->collectSSANumbersInIdentifiers(stats);
 
         auto block1SSAs = stats.getSSAsCopy();
 
         stats.resetToOldSSAs(oldSSAs);
 
-        block2->calculateSSANumbersInIdentifiers(stats);
+        block2->collectSSANumbersInIdentifiers(stats);
 
         stats.mergeWithOldSSAs(oldSSAs);
         stats.mergeWithOldSSAs(block1SSAs);
